@@ -2,6 +2,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
+from django.utils import simplejson as json
 from django.views.generic import View
 
 try:
@@ -24,11 +25,7 @@ class DjrillIndexView(View):
             raise ImproperlyConfigured("You have not added the Mandrill api "
                 "url to your settings.py")
 
-        import pdb
-        pdb.set_trace()
-        r = requests.get("%susers/info.json" % api_url, data={"key": api_key})
+        payload = json.dumps({"key": api_key})
+        r = requests.post("%susers/info.json" % api_url, data=payload)
 
-        return HttpResponse(r)
-
-def admin_list_view(request):
-    return HttpResponse("Djrill Index")
+        return HttpResponse(r.content)
