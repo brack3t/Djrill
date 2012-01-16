@@ -10,21 +10,27 @@ except ImportError:
     raise ImportError("Install the damn requirements!")
 
 
-class DjrillIndexView(View):
+class DjrillApiMixin(object):
+    """
+    Simple Mixin to grab the api info from the settings file.
+    """
+    def __init__(self, *args, **kwargs):
+        self.api_key = getattr(settings, "MANDRILL_API_KEY", None)
+        self.api_url = getattr(settings, "MANDRILL_API_URL", None)
 
-    def get(self, request):
-        #api_key = getattr(settings.MANDRILL_API_KEY, None)
-        #api_url = getattr(settings.MANDRILL_API_URL)
-        api_key = settings.MANDRILL_API_KEY or None
-        api_url = settings.MANDRILL_API_URL or None
-        if not api_key:
+        if not self.api_key:
             raise ImproperlyConfigured("You have not set your mandrill api key "
                 "in the settings file.")
-        if not api_url:
+        if not self.api_url:
             raise ImproperlyConfigured("You have not added the Mandrill api "
                 "url to your settings.py")
 
-        payload = json.dumps({"key": api_key})
-        r = requests.post("%s/users/info.json" % api_url, data=payload)
+
+class DjrillIndexView(DjrillApiMixin, View):
+
+    def get(self, request):
+
+        payload = json.dumps({"key": self.api_key})
+        r = requests.post("%s/users/info.json" % self.api_url, data=payload)
 
         return HttpResponse(r.content)

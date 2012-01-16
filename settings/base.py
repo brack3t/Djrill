@@ -20,8 +20,8 @@ DATABASES = {
     }
 }
 
-# MANDRILL API KEY
-MANDRILL_API_KEY = ""
+#MANDRILL
+MANDRILL_API_KEY = None
 MANDRILL_API_URL = "http://mandrillapp.com/api/1.0/"
 
 
