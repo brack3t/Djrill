@@ -34,7 +34,8 @@ class DjrillApiJsonObjectsMixin(object):
 
     def get_json_objects(self):
         payload = json.dumps({"key": self.api_key})
-        req = requests.post("%s/%s" % (self.api_url, self.api_uri), data=payload)
+        req = requests.post("%s/%s" % (self.api_url, self.api_uri),
+            data=payload)
         if req.status_code == 200:
             return req.content
         raise Exception("OH GOD, NO!")
