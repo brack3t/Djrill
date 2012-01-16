@@ -59,4 +59,4 @@ class DjrillSendersListView(DjrillApiMixin, DjrillApiJsonObjectsMixin,
 
     def get(self, request):
         objects = self.get_json_objects()
-        return self.render_to_response({"objects": objects})
+        return self.render_to_response({"objects": json.loads(objects)})
