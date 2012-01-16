@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.utils import simplejson as json
 from django.views.generic import View
@@ -26,6 +25,6 @@ class DjrillIndexView(View):
                 "url to your settings.py")
 
         payload = json.dumps({"key": api_key})
-        r = requests.post("%susers/info.json" % api_url, data=payload)
+        r = requests.post("%s/users/info.json" % api_url, data=payload)
 
         return HttpResponse(r.content)
