@@ -9,7 +9,7 @@
       <caption>Djrill</caption>
       <tbody>
         {% for path, name in custom_list %}
-          <tr><td><a href="{{ path }}">{{ name }}</a></td></tr>
+          <tr><td><a href="{{ path }}">{{ name|capfirst }}</a></td></tr>
         {% endfor %}
       </tbody>
     </table>

@@ -1,8 +1,7 @@
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.http import HttpResponse
 from django.utils import simplejson as json
-from django.views.generic import View, TemplateView
+from django.views.generic import TemplateView
 
 try:
     import requests
@@ -41,14 +40,15 @@ class DjrillApiJsonObjectsMixin(object):
         raise Exception("OH GOD, NO!")
 
 
-class DjrillIndexView(DjrillApiMixin, View):
+class DjrillIndexView(DjrillApiMixin, TemplateView):
+    template_name = "djrill/status.html"
 
     def get(self, request):
 
         payload = json.dumps({"key": self.api_key})
-        r = requests.post("%s/users/info.json" % self.api_url, data=payload)
+        req = requests.post("%s/users/info.json" % self.api_url, data=payload)
 
-        return HttpResponse(r.content)
+        return self.render_to_response({"status": json.loads(req.content)})
 
 
 class DjrillSendersListView(DjrillApiMixin, DjrillApiJsonObjectsMixin,
