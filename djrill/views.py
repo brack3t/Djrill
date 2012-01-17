@@ -1,7 +1,8 @@
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.http import HttpResponse, HttpResponseForbidden
+from django.core.urlresolvers import reverse
+from django.http import (HttpResponseForbidden, HttpResponseRedirect)
 from django.utils import simplejson as json
 from django.views.generic import TemplateView, View
 
@@ -90,6 +91,6 @@ class DjrillDisableSenderView(DjrillApiMixin, View):
                 data=json.dumps(payload))
 
             if req.status_code == 200:
-                return HttpResponse("success")
+                return HttpResponseRedirect(reverse("admin:djrill_senders"))
 
         return HttpResponseForbidden()

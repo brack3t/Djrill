@@ -4,7 +4,7 @@ from djrill.views import (DjrillIndexView, DjrillSendersListView,
                             DjrillDisableSenderView)
 
 admin.site.register_view("djrill/senders/", DjrillSendersListView.as_view(),
-    "djrill_sender", "senders")
+    "djrill_senders", "senders")
 admin.site.register_view("djrill/status/", DjrillIndexView.as_view(),
     "djrill_status", "status")
 
