@@ -1,5 +1,6 @@
 from django import forms
 from django.conf import settings
+from django.contrib import messages
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.http import (HttpResponseForbidden, HttpResponseRedirect)
@@ -79,6 +80,8 @@ class DjrillSendersListView(DjrillAdminMedia, DjrillApiMixin,
 
 class DjrillSenderView(DjrillApiMixin, View):
     api_action = None
+    error_message = None
+    success_message = None
 
     def post(self, request):
         email = request.POST.get("email", None)
@@ -92,14 +95,21 @@ class DjrillSenderView(DjrillApiMixin, View):
                 data=json.dumps(payload))
 
             if req.status_code == 200:
-                return HttpResponseRedirect(reverse("admin:djrill_senders"))
+                messages.success(request, self.success_message)
+            else:
+                messages.error(request, self.error_message)
+            return HttpResponseRedirect(reverse("admin:djrill_senders"))
 
         return HttpResponseForbidden()
 
 
 class DjrillDisableSenderView(DjrillSenderView):
     api_action = "users/disable-sender.json"
+    error_message = "Sender was not disabled."
+    success_message = "Sender was disabled."
 
 
 class DjrillVerifySenderView(DjrillSenderView):
     api_action = "users/verify-sender.json"
+    error_message = "Sender was not verified."
+    success_message = "Sender was verified."

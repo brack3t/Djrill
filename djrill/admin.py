@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from djrill.views import (DjrillIndexView, DjrillSendersListView,
-                            DjrillDisableSenderView, DjrillVerifySenderView)
+                          DjrillDisableSenderView, DjrillVerifySenderView)
 
 admin.site.register_view("djrill/senders/", DjrillSendersListView.as_view(),
     "djrill_senders", "senders")

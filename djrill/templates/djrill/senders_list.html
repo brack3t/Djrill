@@ -58,47 +58,47 @@
 
       {% block filters %}{% endblock %}
 
-      <form id="changelist-form" action="" method="post">
-          {% csrf_token %}
-
-          {% block result_list %}
-            {% if objects %}
-            <div class="results">
-                <table cellspacing="0" id="result_list">
-                    <thead>
-                        <tr>
-                            {% for header in objects.0.keys %}
-                            <th scope="col">{{ header|capfirst }}</th>
-                            {% endfor %}
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% for result in objects %}
-                        <tr class="{% cycle 'row1' 'row2' %}">
-                            {% for item in result.values %}
-                                <td>{{ item }}</td>
-                            {% endfor %}
+      {% block result_list %}
+        {% if objects %}
+        <div class="results">
+            <table cellspacing="0" id="result_list">
+                <thead>
+                    <tr>
+                        {% for header in objects.0.keys %}
+                        <th scope="col">{{ header|capfirst }}</th>
+                        {% endfor %}
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for result in objects %}
+                    <tr class="{% cycle 'row1' 'row2' %}">
+                        {% for item in result.values %}
+                            <td>{{ item }}</td>
+                        {% endfor %}
+                        <td>
                             {% if result.is_enabled and result.approved_at %}
-                            <td>
-                                <form method="post" action="{% url "admin:djrill_disable_sender" %}">
-                                    <input type="hidden" name="email" value="{{ result.address }}">
-                                    {% csrf_token %}
-                                    <button>disable</buton>
-                                </form>
-                            </td>
+                            <form method="POST" action="{% url "admin:djrill_disable_sender" %}">
                             {% else %}
-                            <td><button>enable</button></td>
+                            <form method="POST" action="{% url "admin:djrill_verify_sender" %}">
                             {% endif %}
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% endif %}
-          {% endblock %}
-          {% block pagination %}{% endblock %}
-      </form>
+                                <input type="hidden" name="email" value="{{ result.address }}">
+                                {% csrf_token %}
+                                {% if result.is_enabled and result.approved_at %}
+                                <button>disable</buton>
+                                {% else %}
+                                <button>enable</buton>
+                                {% endif %}
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+      {% endblock %}
+      {% block pagination %}{% endblock %}
     </div>
   </div>
 {% endblock %}
