@@ -63,7 +63,8 @@ class DjrillSendersListView(DjrillApiMixin, DjrillApiJsonObjectsMixin,
         return self.render_to_response({"objects": json.loads(objects)})
 
 
-class DjrillDisableSenderView(DjrillApiMixin, View):
+class DjrillSenderView(DjrillApiMixin, View):
+    api_action = None
 
     def post(self, request):
         email = request.POST.get("email", None)
@@ -73,10 +74,18 @@ class DjrillDisableSenderView(DjrillApiMixin, View):
                 "key": self.api_key,
                 "email": email
             }
-            req = requests.post("%s/users/disable-sender.json" % self.api_url,
+            req = requests.post("%s/%s" % (self.api_url, self.api_action),
                 data=json.dumps(payload))
 
             if req.status_code == 200:
                 return HttpResponse("success")
 
         return HttpResponseForbidden()
+
+
+class DjrillDisableSenderView(DjrillSenderView):
+    api_action = "users/disable-sender.json"
+
+
+class DjrillVerifySenderView(DjrillSenderView):
+    api_action = "users/verify-sender.json"
