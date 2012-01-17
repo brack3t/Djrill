@@ -89,7 +89,7 @@
                                 <td>{{ item }}</td>
                             {% endfor %}
                             {% if result.is_enabled and result.approved_at %}
-                            <td><button>disable</button></td>
+                            <td><button data-url="{% url "admin:djrill_disable_sender" %}" data-email="{{ result.address }}">disable</button></td>
                             {% else %}
                             <td><button>enable</button></td>
                             {% endif %}

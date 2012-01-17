@@ -1,7 +1,8 @@
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import simplejson as json
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, View
 
 try:
     import requests
@@ -60,3 +61,22 @@ class DjrillSendersListView(DjrillApiMixin, DjrillApiJsonObjectsMixin,
     def get(self, request):
         objects = self.get_json_objects()
         return self.render_to_response({"objects": json.loads(objects)})
+
+
+class DjrillDisableSenderView(DjrillApiMixin, View):
+
+    def post(self, request):
+        email = request.POST.get("email", None)
+
+        if email:
+            payload = {
+                "key": self.api_key,
+                "email": email
+            }
+            req = requests.post("%s/users/disable-sender.json" % self.api_url,
+                data=json.dumps(payload))
+
+            if req.status_code == 200:
+                return HttpResponse("success")
+
+        return HttpResponseForbidden()
