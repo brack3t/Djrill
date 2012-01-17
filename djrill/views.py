@@ -1,3 +1,4 @@
+from django import forms
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponse, HttpResponseForbidden
@@ -8,6 +9,15 @@ try:
     import requests
 except ImportError:
     raise ImportError("Install the damn requirements!")
+
+
+class DjrillAdminMedia(object):
+    def _media(self):
+        js = ["js/core.js", "js/jquery.min.js", "js/jquery.init.js"]
+
+        return forms.Media(js=["%s%s" % (settings.ADMIN_MEDIA_PREFIX, url)
+            for url in js])
+    media = property(_media)
 
 
 class DjrillApiMixin(object):
@@ -52,15 +62,18 @@ class DjrillIndexView(DjrillApiMixin, TemplateView):
         return self.render_to_response({"status": json.loads(req.content)})
 
 
-class DjrillSendersListView(DjrillApiMixin, DjrillApiJsonObjectsMixin,
-    TemplateView):
+class DjrillSendersListView(DjrillAdminMedia, DjrillApiMixin,
+    DjrillApiJsonObjectsMixin, TemplateView):
 
     api_uri = "users/senders.json"
     template_name = "djrill/senders_list.html"
 
     def get(self, request):
         objects = self.get_json_objects()
-        return self.render_to_response({"objects": json.loads(objects)})
+        return self.render_to_response({
+            "objects": json.loads(objects),
+            "media": self.media
+        })
 
 
 class DjrillDisableSenderView(DjrillApiMixin, View):

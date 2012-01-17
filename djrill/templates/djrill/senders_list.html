@@ -15,15 +15,6 @@
 {% block extrahead %}
 {{ block.super }}
 {{ media.js }}
-{% if action_form %}{% if actions_on_top or actions_on_bottom %}
-<script type="text/javascript">
-(function($) {
-    $(document).ready(function($) {
-        $("tr input.action-select").actions();
-    });
-})(django.jQuery);
-</script>
-{% endif %}{% endif %}
 {% endblock %}
 
 {% block bodyclass %}change-list{% endblock %}
@@ -89,7 +80,13 @@
                                 <td>{{ item }}</td>
                             {% endfor %}
                             {% if result.is_enabled and result.approved_at %}
-                            <td><button data-url="{% url "admin:djrill_disable_sender" %}" data-email="{{ result.address }}">disable</button></td>
+                            <td>
+                                <form method="post" action="{% url "admin:djrill_disable_sender" %}">
+                                    <input type="hidden" name="email" value="{{ result.address }}">
+                                    {% csrf_token %}
+                                    <button>disable</buton>
+                                </form>
+                            </td>
                             {% else %}
                             <td><button>enable</button></td>
                             {% endif %}
