@@ -70,8 +70,12 @@ class DjrillBackend(BaseEmailBackend):
             return False
 
         sender = sanitize_address(message.from_email, message.encoding)
-        recipients = [{"email": sanitize_address(addr, message.encoding)}
+        recipients_list = [sanitize_address(addr, message.encoding)
             for addr in message.recipients()]
+        from email.utils import parseaddr
+        recipients = [{"email": email, "name": name} for email,name in parseaddr(recipients_list[:])]
+        #recipients = [{"email": sanitize_address(addr, message.encoding)}
+            #for addr in message.recipients()]
 
         djrill_it = requests.post(self.api_action, data=json.dumps({
             "key": self.api_key,
