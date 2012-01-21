@@ -24,6 +24,9 @@ DATABASES = {
 MANDRILL_API_KEY = None
 MANDRILL_API_URL = "http://mandrillapp.com/api/1.0/"
 
+#EMAIL BACKEND
+EMAIL_BACKEND = "djrill.mail.backends.djrill.DjrillBackend"
+
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
