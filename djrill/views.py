@@ -7,6 +7,8 @@ from django.http import (HttpResponseForbidden, HttpResponseRedirect)
 from django.utils import simplejson as json
 from django.views.generic import TemplateView, View
 
+from djrill.forms import CreateSenderForm
+
 try:
     import requests
 except ImportError:
@@ -71,11 +73,28 @@ class DjrillSendersListView(DjrillAdminMedia, DjrillApiMixin,
     template_name = "djrill/senders_list.html"
 
     def get(self, request):
+        form = CreateSenderForm()
         objects = self.get_json_objects()
         return self.render_to_response({
             "objects": json.loads(objects),
-            "media": self.media
+            "media": self.media,
+            "form": form
         })
+
+    def post(self, request):
+        form = CreateSenderForm(request.POST or None)
+
+        if form.is_valid():
+            return HttpResponseRedirect(reverse("admin:djrill_senders"))
+
+        objects = self.get_json_objects()
+        return self.render_to_response({
+            "objects": json.loads(objects),
+            "media": self.media,
+            "form": form
+        })
+
+
 
 
 class DjrillSenderView(DjrillApiMixin, View):
@@ -113,3 +132,8 @@ class DjrillVerifySenderView(DjrillSenderView):
     api_action = "users/verify-sender.json"
     error_message = "Sender was not verified."
     success_message = "Sender was verified."
+
+
+class DjrillAddSenderView(DjrillVerifySenderView):
+    error_message = "Sender was not added."
+    success_message = "Sender was added."

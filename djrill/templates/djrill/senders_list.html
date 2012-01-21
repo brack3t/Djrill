@@ -52,8 +52,16 @@
         </ul>
       {% endif %}
     {% endblock %}
+
+	<p>Add a new sender</p>
+	<form action="{% url "admin:djrill_add_sender" %}" method="POST">
+		{{ form.as_p }}
+		{% csrf_token %}
+		<input type="submit" value="Submit">
+	</form>
+
     <div class="module" id="changelist">
-      {% block search %}{% endblock %}
+    {% block search %}{% endblock %}
       {% block date_hierarchy %}{% endblock %}
 
       {% block filters %}{% endblock %}
