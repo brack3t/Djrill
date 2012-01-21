@@ -53,18 +53,31 @@
       {% endif %}
     {% endblock %}
 
-	<p>Add a new sender</p>
-	<form action="{% url "admin:djrill_add_sender" %}" method="POST">
-		{{ form.as_p }}
-		{% csrf_token %}
-		<input type="submit" value="Submit">
-	</form>
+    <div class="module filtered" id="changelist">
+        {% block search %}
+        <div id="toolbar">
+	        <form action="{% url "admin:djrill_add_sender" %}" method="POST">
+                <label for="id_email" class="addlink">Add a new sender</label>
+                <input type="email" placeholder="E-mail address" name="email" id="id_email">
+		        {% csrf_token %}
+		        <input type="submit" value="Submit">
+	        </form>
+        </div>
+        {% endblock %}
 
-    <div class="module" id="changelist">
-    {% block search %}{% endblock %}
-      {% block date_hierarchy %}{% endblock %}
+        {% block date_hierarchy %}{% endblock %}
 
-      {% block filters %}{% endblock %}
+      {% block filters %}
+          <div id="changelist-filter">
+            <h2>Tools &amp; Info</h2>
+            <h3>Status</h3>
+            {% if status %}
+            <p>Mandrill is <strong>UP</strong></p>
+            {% else %}
+            <p>Mandrill is <strong>DOWN</strong></p>
+            {% endif %}
+          </div>
+      {% endblock %}
 
       {% block result_list %}
         {% if objects %}

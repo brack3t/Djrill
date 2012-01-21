@@ -22,7 +22,7 @@ DATABASES = {
 
 #MANDRILL
 MANDRILL_API_KEY = None
-MANDRILL_API_URL = "http://mandrillapp.com/api/1.0/"
+MANDRILL_API_URL = "http://mandrillapp.com/api/1.0"
 
 
 # Local time zone for this installation. Choices can be found here:
