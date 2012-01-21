@@ -75,26 +75,19 @@ class DjrillSendersListView(DjrillAdminMedia, DjrillApiMixin,
     def get(self, request):
         form = CreateSenderForm()
         objects = self.get_json_objects()
+
+        status = False
+        req = requests.post("%s/%s" % (self.api_url, "users/ping.json"),
+            data={"key": self.api_key})
+        if req.status_code == 200:
+            status = True
+
         return self.render_to_response({
             "objects": json.loads(objects),
             "media": self.media,
-            "form": form
+            "form": form,
+            "status": status
         })
-
-    def post(self, request):
-        form = CreateSenderForm(request.POST or None)
-
-        if form.is_valid():
-            return HttpResponseRedirect(reverse("admin:djrill_senders"))
-
-        objects = self.get_json_objects()
-        return self.render_to_response({
-            "objects": json.loads(objects),
-            "media": self.media,
-            "form": form
-        })
-
-
 
 
 class DjrillSenderView(DjrillApiMixin, View):
