@@ -106,7 +106,7 @@ class DjrillBackend(BaseEmailBackend):
             "text": message.body,
             "subject": message.subject,
             "from_email": self.sender,
-            "from_name": "Devs - FIX ME",
+            "from_name": message.from_name,
             "to": self.recipients
         }
 
