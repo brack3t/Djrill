@@ -106,7 +106,6 @@ class DjrillBackend(BaseEmailBackend):
             "text": message.body,
             "subject": message.subject,
             "from_email": self.sender,
-            "from_name": message.from_name,
             "to": self.recipients
         }
 
@@ -124,6 +123,7 @@ class DjrillBackend(BaseEmailBackend):
                 "check the alternatives you have attached to your message.")
 
         self.msg_dict.update({
+            "from_name": message.from_name,
             "html": message.alternatives[0][0],
             "tags": message.tags,
             "track_opens": message.track_opens,
