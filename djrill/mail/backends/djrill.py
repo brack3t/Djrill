@@ -80,6 +80,7 @@ class DjrillBackend(BaseEmailBackend):
 
         if getattr(message, "alternative_subtype", None):
             if message.alternative_subtype == "mandrill":
+                self._build_advanced_message_dict(message)
                 if message.alternatives:
                     self._add_alternatives(message)
 
@@ -109,6 +110,25 @@ class DjrillBackend(BaseEmailBackend):
             "to": self.recipients
         }
 
+    def _build_advanced_message_dict(self, message):
+        """
+        Builds advanced message dict and attaches any accepted extra headers.
+        """
+        self.msg_dict.update({
+            "from_name": message.from_name,
+            "tags": message.tags,
+            "track_opens": message.track_opens,
+        })
+
+        if message.extra_headers:
+            accepted_headers = {}
+
+            for k in message.extra_headers.keys():
+                if k.startswith("X-") or k == "Reply-To":
+                    accepted_headers.update(
+                        {"%s" % k: message.extra_headers[k]})
+            self.msg_dict.update({"headers": accepted_headers})
+
     def _add_alternatives(self, message):
         """
         There can be only one! ... alternative attachment.
@@ -123,9 +143,6 @@ class DjrillBackend(BaseEmailBackend):
                 "check the alternatives you have attached to your message.")
 
         self.msg_dict.update({
-            "from_name": message.from_name,
             "html": message.alternatives[0][0],
-            "tags": message.tags,
-            "track_opens": message.track_opens,
             "track_clicks": message.track_clicks
         })
