@@ -69,23 +69,21 @@ class DjrillBackend(BaseEmailBackend):
         if not message.recipients():
             return False
 
-        sender = sanitize_address(message.from_email, message.encoding)
+        self.sender = sanitize_address(message.from_email, message.encoding)
         recipients_list = [sanitize_address(addr, message.encoding)
             for addr in message.recipients()]
         from email.utils import parseaddr
-        recipients = [{"email": e, "name": n} for n,e in [
+        self.recipients = [{"email": e, "name": n} for n,e in [
             parseaddr(r) for r in recipients_list]]
+
+        self.msg_dict = self._build_standard_message_dict(message)
+
+        if message.alternative_subtype == "mandrill" and message.alternatives:
+            self._add_alternatives(message)
 
         djrill_it = requests.post(self.api_action, data=json.dumps({
             "key": self.api_key,
-            "message": {
-                "html": message.body,
-                "text": message.body,
-                "subject": message.subject,
-                "from_email": sender,
-                "from_name": "Devs",
-                "to": recipients
-            }
+            "message": self.msg_dict
         }))
 
         if djrill_it.status_code != 200:
@@ -93,3 +91,39 @@ class DjrillBackend(BaseEmailBackend):
                 raise
             return False
         return True
+
+    def _build_standard_message_dict(self, message):
+        """
+        Build standard message dict.
+
+        Builds the standard dict that Django's send_mail and send_mass_mail
+        use by default. Standard text email messages sent through Django will
+        still work through Mandrill.
+        """
+        return {
+            "text": message.body,
+            "subject": message.subject,
+            "from_email": self.sender,
+            "from_name": "Devs - FIX ME",
+            "to": self.recipients
+        }
+
+    def _add_alternatives(self, message):
+        """
+        There can be only one! ... alternative attachment.
+
+        Since mandrill does not accept image attachments or anything other
+        than HTML, the assumption is the only thing you are attaching is
+        the HTML output for your email.
+        """
+        if len(message.alternatives) > 1:
+            raise ImproperlyConfigured(
+                "Mandrill only accepts plain text and html emails. Please "
+                "check the alternatives you have attached to your message.")
+
+        self.msg_dict.update({
+            "html": message.alternatives[0][0],
+            "tags": message.tags,
+            "track_opens": message.track_opens,
+            "track_clicks": message.track_clicks
+        })
