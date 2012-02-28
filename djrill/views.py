@@ -75,7 +75,9 @@ class DjrillApiJsonObjectsMixin(object):
             data=payload)
         if req.status_code == 200:
             return req.content
-        raise Exception("Mandrill did not return a 200.")
+        messages.error(self.request,
+            "Mandrill returned something other than a 200.")
+        return HttpResponseRedirect(reverse("admin:index"))
 
 
 class DjrillIndexView(DjrillApiMixin, TemplateView):
