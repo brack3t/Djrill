@@ -78,8 +78,10 @@ class DjrillBackend(BaseEmailBackend):
 
         self.msg_dict = self._build_standard_message_dict(message)
 
-        if message.alternative_subtype == "mandrill" and message.alternatives:
-            self._add_alternatives(message)
+        if getattr(message, "alternative_subtype", None):
+            if message.alternative_subtype == "mandrill":
+                if message.alternatives:
+                    self._add_alternatives(message)
 
         djrill_it = requests.post(self.api_action, data=json.dumps({
             "key": self.api_key,
