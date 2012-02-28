@@ -17,7 +17,7 @@
 {{ media.js }}
 {% endblock %}
 
-{% block title %} Djrill Senders | {% trans "Django site admin" %}{% endblock %}
+{% block title %} Djrill Tags | {% trans "Django site admin" %}{% endblock %}
 
 {% block bodyclass %}change-list{% endblock %}
 
@@ -30,7 +30,7 @@
        &rsaquo;
          Djrill
       &rsaquo;
-      Senders
+      Tags
     </div>
   {% endblock %}
 {% endif %}
@@ -54,16 +54,7 @@
     {% endblock %}
 
     <div class="module filtered" id="changelist">
-        {% block search %}
-        <div id="toolbar">
-            <form action="{% url "admin:djrill_add_sender" %}" method="POST">
-                <label for="id_email" class="addlink">Add a new sender</label>
-                <input type="email" placeholder="E-mail address" name="email" id="id_email">
-                {% csrf_token %}
-                <input type="submit" value="Submit">
-            </form>
-        </div>
-        {% endblock %}
+        {% block search %} {% endblock %}
 
         {% block date_hierarchy %}{% endblock %}
 
@@ -77,33 +68,27 @@
             <table cellspacing="0" id="result_list">
                 <thead>
                     <tr>
-                        {% for header in objects.0.keys %}
-                        <th scope="col">{{ header|capfirst }}</th>
-                        {% endfor %}
-                        <th></th>
+                        <th scope="col">Tag</th>
+                        <th scope="col">ID</th>
+                        <th scope="col">Sent</th>
+                        <th scope="col">Opens</th>
+                        <th scope="col">Clicks</th>
+                        <th scope="col">Rejects</th>
+                        <th scope="col">Bounces</th>
+                        <th scope="col">Complaints</th>
                     </tr>
                 </thead>
                 <tbody>
                 {% for result in objects %}
                     <tr class="{% cycle 'row1' 'row2' %}">
-                        {% for item in result.values %}
-                            <td>{{ item }}</td>
-                        {% endfor %}
-                        <td>
-                            {% if result.is_enabled and result.approved_at %}
-                            <form method="POST" action="{% url "admin:djrill_disable_sender" %}">
-                            {% else %}
-                            <form method="POST" action="{% url "admin:djrill_verify_sender" %}">
-                            {% endif %}
-                                <input type="hidden" name="email" value="{{ result.address }}">
-                                {% csrf_token %}
-                                {% if result.is_enabled and result.approved_at %}
-                                <button>disable</buton>
-                                {% else %}
-                                <button>enable</buton>
-                                {% endif %}
-                            </form>
-                        </td>
+                        <td>{{ result.tag }}</td>
+                        <td>{{ result.id }}</td>
+                        <td>{{ result.sent }}</td>
+                        <td>{{ result.opens }}</td>
+                        <td>{{ result.clicks }}</td>
+                        <td>{{ result.rejects }}</td>
+                        <td>{{ result.bounces }}</td>
+                        <td>{{ result.complaints }}</td>
                     </tr>
                 {% endfor %}
                 </tbody>

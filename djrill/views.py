@@ -39,6 +39,18 @@ class DjrillApiMixin(object):
             raise ImproperlyConfigured("You have not added the Mandrill api "
                 "url to your settings.py")
 
+    def get_context_data(self, **kwargs):
+        kwargs = super(DjrillApiMixin, self).get_context_data(**kwargs)
+
+        status = False
+        req = requests.post("%s/%s" % (self.api_url, "users/ping.json"),
+            data={"key": self.api_key})
+        if req.status_code == 200:
+            status = True
+
+        kwargs.update({"status": status})
+        return kwargs
+
 
 class DjrillApiJsonObjectsMixin(object):
     """
@@ -46,13 +58,24 @@ class DjrillApiJsonObjectsMixin(object):
     """
     api_uri = None
 
-    def get_json_objects(self):
-        payload = json.dumps({"key": self.api_key})
-        req = requests.post("%s/%s" % (self.api_url, self.api_uri),
+    def get_api_uri(self):
+        if self.api_uri is None:
+            raise ImproperlyConfigured(u"%(cls)s is missing an api_uri. Define "
+                u"%(cls)s.api_uri or override %(cls)s.get_api_uri()." % {
+                    "cls": self.__class__.__name__
+                })
+
+    def get_json_objects(self, extra_dict=None, extra_api_uri=None):
+        request_dict = {"key": self.api_key}
+        if extra_dict:
+            request_dict.update(extra_dict)
+        payload = json.dumps(request_dict)
+        api_uri = extra_api_uri or self.api_uri
+        req = requests.post("%s/%s" % (self.api_url, api_uri),
             data=payload)
         if req.status_code == 200:
             return req.content
-        raise Exception("OH GOD, NO!")
+        raise Exception("Mandrill did not return a 200.")
 
 
 class DjrillIndexView(DjrillApiMixin, TemplateView):
@@ -75,19 +98,14 @@ class DjrillSendersListView(DjrillAdminMedia, DjrillApiMixin,
     def get(self, request):
         form = CreateSenderForm()
         objects = self.get_json_objects()
-
-        status = False
-        req = requests.post("%s/%s" % (self.api_url, "users/ping.json"),
-            data={"key": self.api_key})
-        if req.status_code == 200:
-            status = True
-
-        return self.render_to_response({
+        context = self.get_context_data()
+        context.update({
             "objects": json.loads(objects),
             "media": self.media,
-            "form": form,
-            "status": status
+            "form": form
         })
+
+        return self.render_to_response(context)
 
 
 class DjrillSenderView(DjrillApiMixin, View):
@@ -130,3 +148,34 @@ class DjrillVerifySenderView(DjrillSenderView):
 class DjrillAddSenderView(DjrillVerifySenderView):
     error_message = "Sender was not added."
     success_message = "Sender was added."
+
+
+class DjrillTagListView(DjrillAdminMedia, DjrillApiMixin,
+    DjrillApiJsonObjectsMixin, TemplateView):
+
+    api_uri = "tags/list.json"
+    template_name = "djrill/tags_list.html"
+
+    def get(self, request):
+        objects = self.get_json_objects()
+        context = self.get_context_data()
+        context.update({
+            "objects": json.loads(objects),
+            "media": self.media,
+        })
+        return self.render_to_response(context)
+
+class DjrillUrlListView(DjrillAdminMedia, DjrillApiMixin,
+    DjrillApiJsonObjectsMixin, TemplateView):
+
+    api_uri = "urls/list.json"
+    template_name = "djrill/urls_list.html"
+
+    def get(self, request):
+        objects = self.get_json_objects()
+        context = self.get_context_data()
+        context.update({
+            "objects": json.loads(objects),
+            "media": self.media
+        })
+        return self.render_to_response(context)

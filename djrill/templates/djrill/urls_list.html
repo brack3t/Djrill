@@ -17,7 +17,7 @@
 {{ media.js }}
 {% endblock %}
 
-{% block title %} Djrill Senders | {% trans "Django site admin" %}{% endblock %}
+{% block title %} Djrill URLs | {% trans "Django site admin" %}{% endblock %}
 
 {% block bodyclass %}change-list{% endblock %}
 
@@ -30,7 +30,7 @@
        &rsaquo;
          Djrill
       &rsaquo;
-      Senders
+      URLs
     </div>
   {% endblock %}
 {% endif %}
@@ -54,16 +54,7 @@
     {% endblock %}
 
     <div class="module filtered" id="changelist">
-        {% block search %}
-        <div id="toolbar">
-            <form action="{% url "admin:djrill_add_sender" %}" method="POST">
-                <label for="id_email" class="addlink">Add a new sender</label>
-                <input type="email" placeholder="E-mail address" name="email" id="id_email">
-                {% csrf_token %}
-                <input type="submit" value="Submit">
-            </form>
-        </div>
-        {% endblock %}
+        {% block search %}{% endblock %}
 
         {% block date_hierarchy %}{% endblock %}
 
