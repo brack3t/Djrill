@@ -1,20 +1,30 @@
 Djrill, for Mandrill
 ====================
 
-Djrill is an email backend and new message class for Django users that want to take advantage of the Mandrill transactional SMTP 
+Djrill is an email backend and new message class for Django users that want to take advantage of the Mandrill transactional email 
 service from MailChimp.
 
 Installation
 ------------
 
-Coming soon.
+``pip install djrill``
+
+or
+
+``pip install -e git+https://github.com/brack3t/Djrill.git``
 
 Configuration
 -------------
 
 In ``settings.py``:
 
-1. Add ``djrill`` to your ``INSTALLED_APPS``.
+1. Add ``djrill`` to your ``INSTALLED_APPS``. ::
+
+    INSTALLED_APPS = (
+        ...
+        "djrill"
+    )
+
 2. Add the following two lines, substituting your own ``MANDRILL_API_KEY``::
 
     MANDRILL_API_KEY = "brack3t-is-awesome"
