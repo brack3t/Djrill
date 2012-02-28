@@ -71,7 +71,6 @@
                         {% for header in objects.0.keys %}
                         <th scope="col">{{ header|capfirst }}</th>
                         {% endfor %}
-                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -80,21 +79,6 @@
                         {% for item in result.values %}
                             <td>{{ item }}</td>
                         {% endfor %}
-                        <td>
-                            {% if result.is_enabled and result.approved_at %}
-                            <form method="POST" action="{% url "admin:djrill_disable_sender" %}">
-                            {% else %}
-                            <form method="POST" action="{% url "admin:djrill_verify_sender" %}">
-                            {% endif %}
-                                <input type="hidden" name="email" value="{{ result.address }}">
-                                {% csrf_token %}
-                                {% if result.is_enabled and result.approved_at %}
-                                <button>disable</buton>
-                                {% else %}
-                                <button>enable</buton>
-                                {% endif %}
-                            </form>
-                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>

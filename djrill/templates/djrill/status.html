@@ -26,6 +26,8 @@
 {% endif %}{% endif %}
 {% endblock %}
 
+{% block title %} Djrill Status | {% trans "Django site admin" %}{% endblock %}
+
 {% block bodyclass %}change-list{% endblock %}
 
 {% if not is_popup %}
@@ -35,9 +37,7 @@
         {% trans "Home" %}
       </a>
        &rsaquo;
-       <a href="../">
          Djrill
-      </a>
       &rsaquo;
       Status
     </div>
