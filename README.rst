@@ -4,14 +4,18 @@ Djrill, for Mandrill
 Djrill is an email backend and new message class for Django users that want to take advantage of the Mandrill transactional email 
 service from MailChimp.
 
+Dependencies
+------------
+
+The only dependency other than Django is the ``requests`` library from Kenneth Reitz. If you do not 
+install through PyPI you will need to do ::
+
+    pip install requests
+
 Installation
 ------------
 
 ``pip install djrill``
-
-or
-
-``pip install -e git+https://github.com/brack3t/Djrill.git``
 
 Configuration
 -------------
