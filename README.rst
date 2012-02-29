@@ -63,11 +63,17 @@ In ``settings.py``:
 Usage
 -----
 
-If you just want to use Mandrill for sending emails through Django's built-in ``send_mail`` and ``send_mass_mail`` methods, all 
-you need to do is follow steps 1 through 3 of the above Configuration. If, however, you want more control over the messages, to 
-include an HTML version, or to attach tags to an email, a little more work is required.
+Since you are replacing the global ``EMAIL_BACKEND``, **all** emails are sent through Mandrill's service.
 
-Example, in a view: ::
+If you just want to use Mandrill for sending emails through Django's built-in ``send_mail`` and ``send_mass_mail`` methods, all 
+you need to do is follow steps 1 through 3 of the above Configuration.
+
+If, however, you want more control over the messages, to include an HTML version, or to attach tags or tracked URLs to an email, 
+usage of our ``DjrillMessage`` class, which is a thin wrapper around Django's ``EmailMultiAlternatives`` is required.
+
+Example, in a view:
+
+.. code-block:: python
 
     from django.views.generic import View
 
@@ -87,3 +93,5 @@ Example, in a view: ::
             msg = DjrillMessage(subject, text_content, from_email, to, tags=tags, from_name=from_name)
             msg.attach_alternative(html_content, "text/html")
             msg.send()
+
+Any tags over 50 characters in length are silently ignored. Same for any alternatives after the first one.
