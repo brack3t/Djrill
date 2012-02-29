@@ -1,10 +1,11 @@
 Djrill, for Mandrill
 ====================
 
-Djrill is an email backend and new message class for Django users that want to take advantage of the Mandrill transactional email 
-service from MailChimp.
+Djrill is an email backend and new message class for Django users that want to take advantage of the Mandrill transactional 
+email service from MailChimp.
 
-An optional Django admin interface is included. The admin interface allows you to: check the status of your Mandrill API connection
+An optional Django admin interface is included. The admin interface allows you to: check the status of your Mandrill API 
+connection
 
 * Check the status of your Mandrill API connection.
 * Add/disable email senders.
@@ -71,9 +72,7 @@ you need to do is follow steps 1 through 3 of the above Configuration.
 If, however, you want more control over the messages, to include an HTML version, or to attach tags or tracked URLs to an email, 
 usage of our ``DjrillMessage`` class, which is a thin wrapper around Django's ``EmailMultiAlternatives`` is required.
 
-Example, in a view:
-
-.. code-block:: python
+Example, in a view: ::
 
     from django.views.generic import View
 
@@ -95,3 +94,10 @@ Example, in a view:
             msg.send()
 
 Any tags over 50 characters in length are silently ignored. Same for any alternatives after the first one.
+
+Not shown above, but settable, are the two options, ``track_clicks`` and ``track_opens``. They are both set to ``True`` by 
+default, but can be set to ``False`` and passed in when you instantiate your ``DjrillMessage`` object.
+
+Just like Django's ``EmailMessage`` and ``EmailMultiAlternatives``, ``DjrillMessage`` accepts extra headers through the 
+``headers`` argument. Currently it only accepts ``Reply-To`` and ``X-*`` headers since that is all that Mandrill accepts. Any 
+extra headers are silently discarded.
