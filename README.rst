@@ -63,4 +63,27 @@ In ``settings.py``:
 Usage
 -----
 
-Coming soon
+If you just want to use Mandrill for sending emails through Django's built-in ``send_mail`` and ``send_mass_mail`` methods, all 
+you need to do is follow steps 1 through 3 of the above Configuration. If, however, you want more control over the messages, to 
+include an HTML version, or to attach tags to an email, a little more work is required.
+
+Example, in a view: ::
+
+    from django.views.generic import View
+
+    from djrill.mail import DjrillMessage
+
+    class SendEmailView(View):
+
+        def get(self, request):
+            subject = "Djrill Message"
+            from_email = "djrill@example.com" # this has to be one of your approved senders
+            from_name = "Djrill" # optional
+            to = ["Djrill Receiver <djrill.receiver@example.com>", "djrill.two@example.com"]
+            text_content = "This is the text version of your email"
+            html_content = "<p>This is the HTML version of your email</p> # optional, requires the ``attach_alternative`` line below
+            tags = ["one tag", "two tag", "red tag", "blue tag"] # optional, can't be over 50 chars or start with an underscore
+
+            msg = DjrillMessage(subject, text_content, from_email, to, tags=tags, from_name=from_name)
+            msg.attach_alternative(html_content, "text/html")
+            msg.send()
