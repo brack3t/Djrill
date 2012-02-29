@@ -1,8 +1,6 @@
 Djrill, for Mandrill
 ====================
 
-:authors: Kenneth Love & Chris Jones
-
 Djrill is an email backend and new message class for Django users that want to take advantage of the Mandrill_ transactional 
 email service from MailChimp_.
 
