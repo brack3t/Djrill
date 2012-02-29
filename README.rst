@@ -6,9 +6,9 @@ service from MailChimp.
 
 An optional Django admin interface is included. The admin interface allows you to: check the status of your Mandrill API connection
 
-    * Check the status of your Mandrill API connection.
-    * Add/disable email senders.
-    * See stats on email tags and urls.
+* Check the status of your Mandrill API connection.
+* Add/disable email senders.
+* See stats on email tags and urls.
 
 Installation
 ------------
