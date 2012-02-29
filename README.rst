@@ -85,7 +85,7 @@ Example, in a view: ::
             from_name = "Djrill" # optional
             to = ["Djrill Receiver <djrill.receiver@example.com>", "djrill.two@example.com"]
             text_content = "This is the text version of your email"
-            html_content = "<p>This is the HTML version of your email</p> # optional, requires the ``attach_alternative`` line below
+            html_content = "<p>This is the HTML version of your email</p>" # optional, requires the ``attach_alternative`` line below
             tags = ["one tag", "two tag", "red tag", "blue tag"] # optional, can't be over 50 chars or start with an underscore
 
             msg = DjrillMessage(subject, text_content, from_email, to, tags=tags, from_name=from_name)
