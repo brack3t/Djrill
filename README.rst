@@ -1,8 +1,10 @@
 Djrill, for Mandrill
 ====================
 
-Djrill is an email backend and new message class for Django users that want to take advantage of the Mandrill transactional 
-email service from MailChimp.
+:authors: Kenneth Love & Chris Jones
+
+Djrill is an email backend and new message class for Django users that want to take advantage of the Mandrill_ transactional 
+email service from MailChimp_.
 
 An optional Django admin interface is included. The admin interface allows you to:
 
@@ -17,8 +19,8 @@ Installation
 
     pip install djrill
 
-The only dependency other than Django is the ``requests`` library from Kenneth Reitz. If you do not 
-install through PyPI you will need to do ::
+The only dependency other than Django is the requests_ library from Kenneth Reitz. If you do not install through PyPI you will 
+need to do ::
 
     pip install requests
 
@@ -92,7 +94,7 @@ Example, in a view: ::
             msg.attach_alternative(html_content, "text/html")
             msg.send()
 
-Any tags over 50 characters in length are silently ignored. Same for any alternatives after the first one.
+Any tags over 50 characters in length are silently ignored. Same for any attached alternatives after the first one.
 
 Not shown above, but settable, are the two options, ``track_clicks`` and ``track_opens``. They are both set to ``True`` by 
 default, but can be set to ``False`` and passed in when you instantiate your ``DjrillMessage`` object.
@@ -100,3 +102,16 @@ default, but can be set to ``False`` and passed in when you instantiate your ``D
 Just like Django's ``EmailMessage`` and ``EmailMultiAlternatives``, ``DjrillMessage`` accepts extra headers through the 
 ``headers`` argument. Currently it only accepts ``Reply-To`` and ``X-*`` headers since that is all that Mandrill accepts. Any 
 extra headers are silently discarded.
+
+Thanks
+------
+
+Thanks to the MailChimp team for asking us to build this nifty little app. Also thanks to James Socol on Github for his 
+django-adminplus_ library that got us off on the right foot for the custom admin views. Oh, and, of course, Kenneth Reitz for 
+the awesome ``requests`` library.
+
+
+.. _Mandrill: http://mandrill.com
+.. _MailChimp: http://mailchimp.com
+.. _requests: http://docs.python-requests.org
+.. _django-adminplus: https://github.com/jsocol/django-adminplus
