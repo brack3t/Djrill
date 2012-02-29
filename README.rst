@@ -91,6 +91,7 @@ Example, in a view: ::
             msg = DjrillMessage(subject, text_content, from_email, to, tags=tags, from_name=from_name)
             msg.attach_alternative(html_content, "text/html")
             msg.send()
+            ... # you'll want to return some sort of HttpResponse
 
 Any tags over 50 characters in length are silently ignored. Same for any attached alternatives after the first one.
 
