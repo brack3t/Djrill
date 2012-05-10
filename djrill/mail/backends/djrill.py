@@ -34,19 +34,20 @@ class DjrillBackend(BaseEmailBackend):
     def open(self, sender):
         """
         """
-        self.connection = None
-
-        valid_sender = requests.post(
-            self.api_verify, data={"key": self.api_key, "email": sender})
-
-        if valid_sender.status_code == 200:
-            data = json.loads(valid_sender.content)
-            if data["is_enabled"]:
-                self.connection = True
-                return True
-        else:
-            if not self.fail_silently:
-                raise
+        self.connection = True
+        # self.connection = None
+        # 
+        # valid_sender = requests.post(
+        #     self.api_verify, data={"key": self.api_key, "email": sender})
+        # 
+        # if valid_sender.status_code == 200:
+        #     data = json.loads(valid_sender.content)
+        #     if data["is_enabled"]:
+        #         self.connection = True
+        #         return True
+        # else:
+        #     if not self.fail_silently:
+        #         raise
 
     def send_messages(self, email_messages):
         if not email_messages:
