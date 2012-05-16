@@ -106,7 +106,7 @@ class DjrillBackend(BaseEmailBackend):
 
         if djrill_it.status_code != 200:
             if not self.fail_silently:
-                raise DjrillBackendHTTPError(status_code=djrill_it.status_code, "Failed to send a message to %s, from %s" % (self.recipients, self.sender))
+                raise DjrillBackendHTTPError(status_code=djrill_it.status_code, log_message="Failed to send a message to %s, from %s" % (self.recipients, self.sender))
             return False
         return True
 
