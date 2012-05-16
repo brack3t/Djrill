@@ -6,7 +6,21 @@ from django.utils import simplejson as json
 
 import requests
 
+class DjrillBackendHTTPError(Exception):
+   """An exception that will turn into an HTTP error response."""
+   def __init__(self, status_code, log_message=None, *args):
+      self.status_code = status_code
+      self.log_message = log_message
+      self.args = args
 
+      def __str__(self):
+         message = "DjrillBackendHTTP %d: %s" % (
+            self.status_code, httplib.responses[self.status_code])
+         if self.log_message:
+            return message + " (" + (self.log_message % self.args) + ")"
+         else:
+            return message
+            
 class DjrillBackend(BaseEmailBackend):
     """
     Mandrill API Email Backend
@@ -92,7 +106,7 @@ class DjrillBackend(BaseEmailBackend):
 
         if djrill_it.status_code != 200:
             if not self.fail_silently:
-                raise
+                raise DjrillBackendHTTPError(status_code=djrill_it.status_code, "Failed to send a message to %s, from %s" % (self.recipients, self.sender))
             return False
         return True
 
