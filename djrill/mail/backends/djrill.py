@@ -7,20 +7,20 @@ from django.utils import simplejson as json
 import requests
 
 class DjrillBackendHTTPError(Exception):
-   """An exception that will turn into an HTTP error response."""
-   def __init__(self, status_code, log_message=None, *args):
-      self.status_code = status_code
-      self.log_message = log_message
-      self.args = args
+    """An exception that will turn into an HTTP error response."""
+    def __init__(self, status_code, log_message=None):
+        super(DjrillBackendHTTPError, self).__init__()
+        self.status_code = status_code
+        self.log_message = log_message
 
-      def __str__(self):
-         message = "DjrillBackendHTTP %d: %s" % (
-            self.status_code, httplib.responses[self.status_code])
-         if self.log_message:
-            return message + " (" + (self.log_message % self.args) + ")"
-         else:
+    def __str__(self):
+        message = "DjrillBackendHTTP %d" % self.status_code
+        if self.log_message:
+            return message + " " + self.log_message
+        else:
             return message
-            
+
+
 class DjrillBackend(BaseEmailBackend):
     """
     Mandrill API Email Backend
