@@ -29,7 +29,7 @@ class DjrillBackend(BaseEmailBackend):
                 "url to your settings.py")
 
         self.api_action = self.api_url + "/messages/send.json"
-        self.api_verify = self.api_url + "/users/verify-sender.json"
+        self.api_verify = self.api_url + "/users/ping.json"
 
     def open(self, sender):
         """
@@ -37,11 +37,9 @@ class DjrillBackend(BaseEmailBackend):
         self.connection = None
 
         valid_sender = requests.post(
-            self.api_verify, data={"key": self.api_key, "email": sender})
+            self.api_verify, data={"key": self.api_key})
 
         if valid_sender.status_code == 200:
-            data = json.loads(valid_sender.content)
-            if data["is_enabled"]:
                 self.connection = True
                 return True
         else:
