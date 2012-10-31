@@ -6,6 +6,20 @@ from django.utils import simplejson as json
 
 import requests
 
+class DjrillBackendHTTPError(Exception):
+    """An exception that will turn into an HTTP error response."""
+    def __init__(self, status_code, log_message=None):
+        super(DjrillBackendHTTPError, self).__init__()
+        self.status_code = status_code
+        self.log_message = log_message
+
+    def __str__(self):
+        message = "DjrillBackendHTTP %d" % self.status_code
+        if self.log_message:
+            return message + " " + self.log_message
+        else:
+            return message
+
 
 class DjrillBackend(BaseEmailBackend):
     """
@@ -19,7 +33,6 @@ class DjrillBackend(BaseEmailBackend):
         super(DjrillBackend, self).__init__(**kwargs)
         self.api_key = getattr(settings, "MANDRILL_API_KEY", None)
         self.api_url = getattr(settings, "MANDRILL_API_URL", None)
-        self.connection = None
 
         if not self.api_key:
             raise ImproperlyConfigured("You have not set your mandrill api key "
@@ -29,35 +42,14 @@ class DjrillBackend(BaseEmailBackend):
                 "url to your settings.py")
 
         self.api_action = self.api_url + "/messages/send.json"
-        self.api_verify = self.api_url + "/users/ping.json"
-
-    def open(self, sender):
-        """
-        """
-        self.connection = None
-
-        valid_sender = requests.post(
-            self.api_verify, data={"key": self.api_key})
-
-        if valid_sender.status_code == 200:
-                self.connection = True
-                return True
-        else:
-            if not self.fail_silently:
-                raise
 
     def send_messages(self, email_messages):
         if not email_messages:
-            return
+            return 0
 
         num_sent = 0
         for message in email_messages:
-            self.open(message.from_email)
-            if not self.connection:
-                return
-
             sent = self._send(message)
-
             if sent:
                 num_sent += 1
 
@@ -89,7 +81,10 @@ class DjrillBackend(BaseEmailBackend):
 
         if djrill_it.status_code != 200:
             if not self.fail_silently:
-                raise
+                raise DjrillBackendHTTPError(
+                    status_code=djrill_it.status_code,
+                    log_message="Failed to send a message to %s, from %s" %
+                                (self.recipients, self.sender))
             return False
         return True
 
