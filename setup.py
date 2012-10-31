@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="djrill",
-    version="0.1.1",
+    version="0.1.2",
     description='Django email backend for Mandrill.',
     long_description='Email backend and new message class to send emails through the Mandrill email service.',
     keywords="django, mailchimp, mandrill, email, email backend",

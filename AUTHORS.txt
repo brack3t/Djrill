@@ -1,0 +1,8 @@
+Django-Djrill
+=============
+
+Kenneth Love
+Chris Jones
+Mike Edmunds
+ArnaudF
+Théo Crevon
