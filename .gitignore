@@ -1,4 +1,5 @@
 .DS_Store
 ._*
 *.pyc
+*.egg-info
 local.py
