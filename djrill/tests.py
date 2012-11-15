@@ -65,6 +65,33 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
             mail.send_mail('Subject', 'Message', 'from@example.com',
                 ['to@example.com'])
 
+    def test_email_message(self):
+        email = mail.EmailMessage('Subject', 'Body goes here',
+            'from@example.com',
+            ['to1@example.com', 'Also To <to2@example.com>'],
+            bcc=['bcc1@example.com', 'Also BCC <bcc2@example.com>'],
+            cc=['cc1@example.com', 'Also CC <cc2@example.com>'],
+            headers={'Reply-To': 'another@example.com',
+                     'X-MyHeader': 'my value',
+                     'Errors-To': 'silently stripped'})
+        email.send()
+        data = self.get_api_call_data()
+        self.assertEqual(data['message']['subject'], "Subject")
+        self.assertEqual(data['message']['text'], "Body goes here")
+        self.assertEqual(data['message']['from_email'], "from@example.com")
+        self.assertEqual(data['message']['headers'],
+            { 'Reply-To': 'another@example.com', 'X-MyHeader': 'my value' })
+        # Mandrill doesn't have a notion of cc, and only allows a single bcc.
+        # Djrill just treats cc and bcc as though they were "to" addresses,
+        # which may or may not be what you want.
+        self.assertEqual(len(data['message']['to']), 6)
+        self.assertEqual(data['message']['to'][0]['email'], "to1@example.com")
+        self.assertEqual(data['message']['to'][1]['email'], "to2@example.com")
+        self.assertEqual(data['message']['to'][2]['email'], "cc1@example.com")
+        self.assertEqual(data['message']['to'][3]['email'], "cc2@example.com")
+        self.assertEqual(data['message']['to'][4]['email'], "bcc1@example.com")
+        self.assertEqual(data['message']['to'][5]['email'], "bcc2@example.com")
+
 
 class DjrillMessageTests(TestCase):
     def setUp(self):

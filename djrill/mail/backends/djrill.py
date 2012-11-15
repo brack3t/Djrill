@@ -96,16 +96,26 @@ class DjrillBackend(BaseEmailBackend):
         use by default. Standard text email messages sent through Django will
         still work through Mandrill.
         """
-        return {
+        msg_dict = {
             "text": message.body,
             "subject": message.subject,
             "from_email": self.sender,
             "to": self.recipients
         }
 
+        if message.extra_headers:
+            accepted_headers = {}
+            for k in message.extra_headers.keys():
+                if k.startswith("X-") or k == "Reply-To":
+                    accepted_headers.update(
+                        {"%s" % k: message.extra_headers[k]})
+            msg_dict.update({"headers": accepted_headers})
+
+        return msg_dict
+
     def _build_advanced_message_dict(self, message):
         """
-        Builds advanced message dict and attaches any accepted extra headers.
+        Builds advanced message dict
         """
         self.msg_dict.update({
             "from_name": message.from_name,
@@ -113,14 +123,6 @@ class DjrillBackend(BaseEmailBackend):
             "track_opens": message.track_opens,
         })
 
-        if message.extra_headers:
-            accepted_headers = {}
-
-            for k in message.extra_headers.keys():
-                if k.startswith("X-") or k == "Reply-To":
-                    accepted_headers.update(
-                        {"%s" % k: message.extra_headers[k]})
-            self.msg_dict.update({"headers": accepted_headers})
 
     def _add_alternatives(self, message):
         """
