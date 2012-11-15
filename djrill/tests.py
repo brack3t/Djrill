@@ -55,6 +55,7 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
         data = self.get_api_call_data()
         self.assertEqual(data['message']['subject'], "Subject here")
         self.assertEqual(data['message']['text'], "Here is the message.")
+        self.assertFalse('from_name' in data['message'])
         self.assertEqual(data['message']['from_email'], "from@example.com")
         self.assertEqual(len(data['message']['to']), 1)
         self.assertEqual(data['message']['to'][0]['email'], "to@example.com")
@@ -64,6 +65,22 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
         with self.assertRaises(ImproperlyConfigured):
             mail.send_mail('Subject', 'Message', 'from@example.com',
                 ['to@example.com'])
+
+    def test_name_addr(self):
+        """Make sure RFC2822 name-addr format (with display-name) is allowed
+
+        (Test both sender and recipient addresses)
+        """
+        mail.send_mail('Subject', 'Message', 'From Name <from@example.com>',
+            ['Recipient #1 <to1@example.com>', 'to2@example.com'])
+        data = self.get_api_call_data()
+        self.assertEqual(data['message']['from_name'], "From Name")
+        self.assertEqual(data['message']['from_email'], "from@example.com")
+        self.assertEqual(len(data['message']['to']), 2)
+        self.assertEqual(data['message']['to'][0]['name'], "Recipient #1")
+        self.assertEqual(data['message']['to'][0]['email'], "to1@example.com")
+        self.assertEqual(data['message']['to'][1]['name'], "")
+        self.assertEqual(data['message']['to'][1]['email'], "to2@example.com")
 
 
 class DjrillMessageTests(TestCase):
