@@ -92,6 +92,42 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
         self.assertEqual(data['message']['to'][4]['email'], "bcc1@example.com")
         self.assertEqual(data['message']['to'][5]['email'], "bcc2@example.com")
 
+    def test_html_message(self):
+        text_content = 'This is an important message.'
+        html_content = '<p>This is an <strong>important</strong> message.</p>'
+        email = mail.EmailMultiAlternatives('Subject', text_content,
+            'from@example.com', ['to@example.com'])
+        email.attach_alternative(html_content, "text/html")
+        email.send()
+        data = self.get_api_call_data()
+        self.assertEqual(data['message']['text'], text_content)
+        self.assertEqual(data['message']['html'], html_content)
+
+    def test_alternative_errors(self):
+        # Multiple alternatives not allowed
+        email = mail.EmailMultiAlternatives('Subject', 'Body',
+            'from@example.com', ['to@example.com'])
+        email.attach_alternative("<p>First html is OK</p>", "text/html")
+        email.attach_alternative("<p>But not second html</p>", "text/html")
+        with self.assertRaises(ValueError):
+            email.send()
+
+        # Only html alternatives allowed
+        email = mail.EmailMultiAlternatives('Subject', 'Body',
+            'from@example.com', ['to@example.com'])
+        email.attach_alternative("{'not': 'allowed'}", "application/json")
+        with self.assertRaises(ValueError):
+            email.send()
+
+        # Make sure fail_silently is respected
+        email = mail.EmailMultiAlternatives('Subject', 'Body',
+            'from@example.com', ['to@example.com'])
+        email.attach_alternative("{'not': 'allowed'}", "application/json")
+        sent = email.send(fail_silently=True)
+        self.assertFalse(self.mock_post.called,
+            msg="Mandrill API should not be called when send fails silently")
+        self.assertEqual(sent, 0)
+
 
 class DjrillMessageTests(TestCase):
     def setUp(self):
