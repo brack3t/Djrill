@@ -150,5 +150,5 @@ class DjrillBackend(BaseEmailBackend):
                              % mimetype)
 
         self.msg_dict.update({
-            "html": message.alternatives[0][0]
+            "html": content
         })
