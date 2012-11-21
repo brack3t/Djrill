@@ -39,32 +39,8 @@
 
 {% block content %}
   <div id="content-main">
-    {% block object-tools %}
-      {% if has_add_permission %}
-        <ul class="object-tools">
-          {% block object-tools-items %}
-            <li>
-              <a href="add/{% if is_popup %}?_popup=1{% endif %}" class="addlink">
-                {% blocktrans %}Add sender{% endblocktrans %}
-              </a>
-            </li>
-          {% endblock %}
-        </ul>
-      {% endif %}
-    {% endblock %}
 
     <div class="module filtered" id="changelist">
-        {% block search %}
-        <div id="toolbar">
-            <form action="{% url "admin:djrill_add_sender" %}" method="POST">
-                <label for="id_email" class="addlink">Add a new sender</label>
-                <input type="email" placeholder="E-mail address" name="email" id="id_email">
-                {% csrf_token %}
-                <input type="submit" value="Submit">
-            </form>
-        </div>
-        {% endblock %}
-
         {% block date_hierarchy %}{% endblock %}
 
       {% block filters %}
@@ -80,7 +56,6 @@
                         {% for header in objects.0.keys %}
                         <th scope="col">{{ header|capfirst }}</th>
                         {% endfor %}
-                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -89,21 +64,6 @@
                         {% for item in result.values %}
                             <td>{{ item }}</td>
                         {% endfor %}
-                        <td>
-                            {% if result.is_enabled and result.approved_at %}
-                            <form method="POST" action="{% url "admin:djrill_disable_sender" %}">
-                            {% else %}
-                            <form method="POST" action="{% url "admin:djrill_verify_sender" %}">
-                            {% endif %}
-                                <input type="hidden" name="email" value="{{ result.address }}">
-                                {% csrf_token %}
-                                {% if result.is_enabled and result.approved_at %}
-                                <button>disable</buton>
-                                {% else %}
-                                <button>enable</buton>
-                                {% endif %}
-                            </form>
-                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>

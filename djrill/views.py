@@ -2,17 +2,10 @@ from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ImproperlyConfigured
-from django.core.urlresolvers import reverse
-from django.http import (HttpResponseForbidden, HttpResponseRedirect)
 from django.utils import simplejson as json
-from django.views.generic import TemplateView, View
+from django.views.generic import TemplateView
 
-from djrill.forms import CreateSenderForm
-
-try:
-    import requests
-except ImportError:
-    raise ImportError("Install the damn requirements!")
+import requests
 
 
 class DjrillAdminMedia(object):
@@ -28,7 +21,7 @@ class DjrillApiMixin(object):
     """
     Simple Mixin to grab the api info from the settings file.
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         self.api_key = getattr(settings, "MANDRILL_API_KEY", None)
         self.api_url = getattr(settings, "MANDRILL_API_URL", None)
 
@@ -90,7 +83,7 @@ class DjrillApiJsonObjectsMixin(object):
 class DjrillIndexView(DjrillApiMixin, TemplateView):
     template_name = "djrill/status.html"
 
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
 
         payload = json.dumps({"key": self.api_key})
         req = requests.post("%s/users/info.json" % self.api_url, data=payload)
@@ -104,59 +97,15 @@ class DjrillSendersListView(DjrillAdminMedia, DjrillApiMixin,
     api_uri = "users/senders.json"
     template_name = "djrill/senders_list.html"
 
-    def get(self, request):
-        form = CreateSenderForm()
+    def get(self, request, *args, **kwargs):
         objects = self.get_json_objects()
         context = self.get_context_data()
         context.update({
             "objects": json.loads(objects),
             "media": self.media,
-            "form": form
         })
 
         return self.render_to_response(context)
-
-
-class DjrillSenderView(DjrillApiMixin, View):
-    api_action = None
-    error_message = None
-    success_message = None
-
-    def post(self, request):
-        email = request.POST.get("email", None)
-
-        if email:
-            payload = {
-                "key": self.api_key,
-                "email": email
-            }
-            req = requests.post("%s/%s" % (self.api_url, self.api_action),
-                data=json.dumps(payload))
-
-            if req.status_code == 200:
-                messages.success(request, self.success_message)
-            else:
-                messages.error(request, self.error_message)
-            return HttpResponseRedirect(reverse("admin:djrill_senders"))
-
-        return HttpResponseForbidden()
-
-
-class DjrillDisableSenderView(DjrillSenderView):
-    api_action = "users/disable-sender.json"
-    error_message = "Sender was not disabled."
-    success_message = "Sender was disabled."
-
-
-class DjrillVerifySenderView(DjrillSenderView):
-    api_action = "users/verify-sender.json"
-    error_message = "Sender was not verified."
-    success_message = "Sender was verified."
-
-
-class DjrillAddSenderView(DjrillVerifySenderView):
-    error_message = "Sender was not added."
-    success_message = "Sender was added."
 
 
 class DjrillTagListView(DjrillAdminMedia, DjrillApiMixin,
@@ -165,7 +114,7 @@ class DjrillTagListView(DjrillAdminMedia, DjrillApiMixin,
     api_uri = "tags/list.json"
     template_name = "djrill/tags_list.html"
 
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
         objects = self.get_json_objects()
         context = self.get_context_data()
         context.update({
@@ -180,7 +129,7 @@ class DjrillUrlListView(DjrillAdminMedia, DjrillApiMixin,
     api_uri = "urls/list.json"
     template_name = "djrill/urls_list.html"
 
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
         objects = self.get_json_objects()
         context = self.get_context_data()
         context.update({
