@@ -10,6 +10,8 @@ An optional Django admin interface is included. The admin interface allows you t
 * Add/disable email senders.
 * See stats on email tags and urls.
 
+Djrill is made available under the BSD license.
+
 Installation
 ------------
 

@@ -16,6 +16,7 @@ setup(
     include_package_data=True,
     classifiers=[
         "Programming Language :: Python",
+        "License :: OSI Approved :: BSD License",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Framework :: Django",
         "Environment :: Web Environment",
