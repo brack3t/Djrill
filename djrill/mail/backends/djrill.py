@@ -26,7 +26,7 @@ class DjrillBackend(BaseEmailBackend):
     Mandrill API Email Backend
     """
 
-    def __init__(self, fail_silently=False, **kwargs):
+    def __init__(self, **kwargs):
         """
         Set the API key, API url and set the action url.
         """
@@ -71,8 +71,13 @@ class DjrillBackend(BaseEmailBackend):
         if getattr(message, "alternative_subtype", None):
             if message.alternative_subtype == "mandrill":
                 self._build_advanced_message_dict(message)
-                if message.alternatives:
-                    self._add_alternatives(message)
+        try:
+            if getattr(message, 'alternatives', None):
+                self._add_alternatives(message)
+        except ValueError:
+            if not self.fail_silently:
+                raise
+            return False
 
         djrill_it = requests.post(self.api_action, data=json.dumps({
             "key": self.api_key,
@@ -96,46 +101,54 @@ class DjrillBackend(BaseEmailBackend):
         use by default. Standard text email messages sent through Django will
         still work through Mandrill.
         """
-        return {
+        msg_dict = {
             "text": message.body,
             "subject": message.subject,
             "from_email": self.sender,
             "to": self.recipients
         }
 
+        if message.extra_headers:
+            accepted_headers = {}
+            for k in message.extra_headers.keys():
+                if k.startswith("X-") or k == "Reply-To":
+                    accepted_headers.update(
+                        {"%s" % k: message.extra_headers[k]})
+            msg_dict.update({"headers": accepted_headers})
+
+        return msg_dict
+
     def _build_advanced_message_dict(self, message):
         """
-        Builds advanced message dict and attaches any accepted extra headers.
+        Builds advanced message dict
         """
         self.msg_dict.update({
             "from_name": message.from_name,
             "tags": message.tags,
             "track_opens": message.track_opens,
+            "track_clicks": message.track_clicks
         })
 
-        if message.extra_headers:
-            accepted_headers = {}
-
-            for k in message.extra_headers.keys():
-                if k.startswith("X-") or k == "Reply-To":
-                    accepted_headers.update(
-                        {"%s" % k: message.extra_headers[k]})
-            self.msg_dict.update({"headers": accepted_headers})
 
     def _add_alternatives(self, message):
         """
-        There can be only one! ... alternative attachment.
+        There can be only one! ... alternative attachment, and it must be text/html.
 
         Since mandrill does not accept image attachments or anything other
         than HTML, the assumption is the only thing you are attaching is
         the HTML output for your email.
         """
         if len(message.alternatives) > 1:
-            raise ImproperlyConfigured(
-                "Mandrill only accepts plain text and html emails. Please "
-                "check the alternatives you have attached to your message.")
+            raise ValueError(
+                "Too many alternatives attached to the message. "
+                "Mandrill only accepts plain text and html emails.")
+
+        (content, mimetype) = message.alternatives[0]
+        if mimetype != 'text/html':
+            raise ValueError("Invalid alternative mimetype '%s'. "
+                             "Mandrill only accepts plain text and html emails."
+                             % mimetype)
 
         self.msg_dict.update({
-            "html": message.alternatives[0][0],
-            "track_clicks": message.track_clicks
+            "html": content
         })
