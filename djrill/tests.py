@@ -1,8 +1,69 @@
+from mock import patch
+
 from django.conf import settings
+from django.core import mail
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
+from django.utils import simplejson as json
 
 from djrill.mail import DjrillMessage
+
+class DjrillBackendMockAPITestCase(TestCase):
+    """TestCase that uses Djrill EmailBackend with a mocked Mandrill API"""
+
+    class MockResponse:
+        """requests.post return value mock sufficient for DjrillBackend"""
+        def __init__(self, status_code=200):
+            self.status_code = status_code
+
+    def setUp(self):
+        self.patch = patch('requests.post')
+        self.mock_post = self.patch.start()
+        self.mock_post.return_value = self.MockResponse()
+
+        settings.MANDRILL_API_KEY = "FAKE_API_KEY_FOR_TESTING"
+        settings.MANDRILL_API_URL = "http://mandrillapp.com/api/1.0"
+
+        # Django TestCase sets up locmem EmailBackend; override it here
+        self.original_email_backend = settings.EMAIL_BACKEND
+        settings.EMAIL_BACKEND = "djrill.mail.backends.djrill.DjrillBackend"
+
+    def tearDown(self):
+        self.patch.stop()
+        settings.EMAIL_BACKEND = self.original_email_backend
+
+    def get_api_call_data(self):
+        """Returns the data posted to the Mandrill API.
+
+        Fails test if API wasn't called.
+        """
+        if self.mock_post.call_args is None:
+            raise AssertionError("Mandrill API was not called")
+        (args, kwargs) = self.mock_post.call_args
+        if 'data' not in kwargs:
+            raise AssertionError("requests.post was called without data kwarg "
+                "-- Maybe tests need to be updated for backend changes?")
+        return json.loads(kwargs['data'])
+
+
+class DjrillBackendTests(DjrillBackendMockAPITestCase):
+    """Test Djrill's support for Django mail wrappers"""
+
+    def test_send_mail(self):
+        mail.send_mail('Subject here', 'Here is the message.',
+            'from@example.com', ['to@example.com'], fail_silently=False)
+        data = self.get_api_call_data()
+        self.assertEqual(data['message']['subject'], "Subject here")
+        self.assertEqual(data['message']['text'], "Here is the message.")
+        self.assertEqual(data['message']['from_email'], "from@example.com")
+        self.assertEqual(len(data['message']['to']), 1)
+        self.assertEqual(data['message']['to'][0]['email'], "to@example.com")
+
+    def test_missing_api_key(self):
+        del settings.MANDRILL_API_KEY
+        with self.assertRaises(ImproperlyConfigured):
+            mail.send_mail('Subject', 'Message', 'from@example.com',
+                ['to@example.com'])
 
 
 class DjrillMessageTests(TestCase):

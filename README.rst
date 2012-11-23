@@ -106,6 +106,21 @@ Just like Django's ``EmailMessage`` and ``EmailMultiAlternatives``, ``DjrillMess
 ``headers`` argument. Currently it only accepts ``Reply-To`` and ``X-*`` headers since that is all that Mandrill accepts. Any 
 extra headers are silently discarded.
 
+Testing
+-------
+
+The included tests verify that Djrill constructs the expected Mandrill API
+calls, without actually calling Mandrill or sending any email. So the tests
+don't require a Mandrill API key, but they *do* require mock_
+(``pip install mock``). To run the tests, either::
+
+    python setup.py test
+
+or::
+
+    python runtests.py
+
+
 Thanks
 ------
 
@@ -118,3 +133,4 @@ the awesome ``requests`` library.
 .. _MailChimp: http://mailchimp.com
 .. _requests: http://docs.python-requests.org
 .. _django-adminplus: https://github.com/jsocol/django-adminplus
+.. _mock: http://www.voidspace.org.uk/python/mock/index.html
