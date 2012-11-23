@@ -39,19 +39,6 @@
 
 {% block content %}
   <div id="content-main">
-    {% block object-tools %}
-      {% if has_add_permission %}
-        <ul class="object-tools">
-          {% block object-tools-items %}
-            <li>
-              <a href="add/{% if is_popup %}?_popup=1{% endif %}" class="addlink">
-                {% blocktrans %}Add sender{% endblocktrans %}
-              </a>
-            </li>
-          {% endblock %}
-        </ul>
-      {% endif %}
-    {% endblock %}
 
     <div class="module filtered" id="changelist">
         {% block search %} {% endblock %}
