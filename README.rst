@@ -9,6 +9,8 @@ An optional Django admin interface is included. The admin interface allows you t
 * Check the status of your Mandrill API connection.
 * See stats on email tags and urls.
 
+Djrill is made available under the BSD license.
+
 Installation
 ------------
 
