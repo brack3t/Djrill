@@ -1,3 +1,3 @@
-include README.rst AUTHORS.txt
+include README.rst AUTHORS.txt LICENSE
 recursive-include djrill/templates/djrill *.html
 recursive-include djrill/mail *.py
