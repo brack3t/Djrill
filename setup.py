@@ -15,7 +15,7 @@ setup(
     install_requires=["requests", "django"],
     include_package_data=True,
     test_suite="runtests.runtests",
-    test_requires=["mock"],
+    tests_require=["mock"],
     classifiers=[
         "Programming Language :: Python",
         "License :: OSI Approved :: BSD License",
