@@ -1,7 +1,10 @@
 Djrill, for Mandrill
 ====================
 
-Djrill is an email backend and new message class for Django users that want to take advantage of the Mandrill_ transactional 
+.. image:: https://travis-ci.org/brack3t/Djrill.png
+        :target: https://secure.travis-ci.org/brack3t/Djrill
+
+Djrill is an email backend and new message class for Django users that want to take advantage of the Mandrill_ transactional
 email service from MailChimp_.
 
 An optional Django admin interface is included. The admin interface allows you to:
@@ -109,6 +112,13 @@ extra headers are silently discarded.
 
 Testing
 -------
+
+Djrill is tested against Django 1.3 and 1.4 on Python 2.6 and 2.7.
+(It may also work with Django 1.2 and Python 2.5, if you use an older
+version of requests compatible with that code.)
+
+.. image:: https://travis-ci.org/brack3t/Djrill.png
+        :target: https://secure.travis-ci.org/brack3t/Djrill
 
 The included tests verify that Djrill constructs the expected Mandrill API
 calls, without actually calling Mandrill or sending any email. So the tests
