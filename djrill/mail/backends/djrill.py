@@ -128,7 +128,8 @@ class DjrillBackend(BaseEmailBackend):
         self.msg_dict.update({
             "tags": message.tags,
             "track_opens": message.track_opens,
-            "track_clicks": message.track_clicks
+            "track_clicks": message.track_clicks,
+            "preserve_recipients": message.preserve_recipients,
         })
         if message.from_name:
             self.msg_dict["from_name"] = message.from_name
