@@ -10,6 +10,8 @@ from django.test import TestCase
 from django.utils import simplejson as json
 
 from djrill.mail import DjrillMessage
+from djrill.mail.backends.djrill import DjrillBackendHTTPError
+
 
 class DjrillBackendMockAPITestCase(TestCase):
     """TestCase that uses Djrill EmailBackend with a mocked Mandrill API"""
@@ -26,7 +28,6 @@ class DjrillBackendMockAPITestCase(TestCase):
         self.mock_post.return_value = self.MockResponse()
 
         settings.MANDRILL_API_KEY = "FAKE_API_KEY_FOR_TESTING"
-        settings.MANDRILL_API_URL = "http://mandrillapp.com/api/1.0"
 
         # Django TestCase sets up locmem EmailBackend; override it here
         self.original_email_backend = settings.EMAIL_BACKEND
@@ -93,8 +94,7 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
             bcc=['bcc1@example.com', 'Also BCC <bcc2@example.com>'],
             cc=['cc1@example.com', 'Also CC <cc2@example.com>'],
             headers={'Reply-To': 'another@example.com',
-                     'X-MyHeader': 'my value',
-                     'Errors-To': 'silently stripped'})
+                     'X-MyHeader': 'my value'})
         email.send()
         data = self.get_api_call_data()
         self.assertEqual(data['message']['subject'], "Subject")
@@ -124,6 +124,22 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
         self.assertEqual(data['message']['text'], text_content)
         self.assertEqual(data['message']['html'], html_content)
 
+    def test_extra_header_errors(self):
+        email = mail.EmailMessage('Subject', 'Body', 'from@example.com',
+            ['to@example.com'],
+            headers={'Non-X-Non-Reply-To-Header': 'not permitted'})
+        with self.assertRaises(ValueError):
+            email.send()
+
+        # Make sure fail_silently is respected
+        email = mail.EmailMessage('Subject', 'Body', 'from@example.com',
+            ['to@example.com'],
+            headers={'Non-X-Non-Reply-To-Header': 'not permitted'})
+        sent = email.send(fail_silently=True)
+        self.assertFalse(self.mock_post.called,
+            msg="Mandrill API should not be called when send fails silently")
+        self.assertEqual(sent, 0)
+
     def test_alternative_errors(self):
         # Multiple alternatives not allowed
         email = mail.EmailMultiAlternatives('Subject', 'Body',
@@ -148,6 +164,112 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
         self.assertFalse(self.mock_post.called,
             msg="Mandrill API should not be called when send fails silently")
         self.assertEqual(sent, 0)
+
+    def test_mandrill_api_failure(self):
+        self.mock_post.return_value = self.MockResponse(status_code=400)
+        with self.assertRaises(DjrillBackendHTTPError):
+            sent = mail.send_mail('Subject', 'Body', 'from@example.com',
+                ['to@example.com'])
+            self.assertEqual(sent, 0)
+
+        # Make sure fail_silently is respected
+        self.mock_post.return_value = self.MockResponse(status_code=400)
+        sent = mail.send_mail('Subject', 'Body', 'from@example.com',
+            ['to@example.com'], fail_silently=True)
+        self.assertEqual(sent, 0)
+
+
+class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
+    """Test Djrill backend support for Mandrill-specific features"""
+
+    def setUp(self):
+        super(DjrillMandrillFeatureTests, self).setUp()
+        self.message = mail.EmailMessage('Subject', 'Text Body',
+            'from@example.com', ['to@example.com'])
+
+    def test_tracking(self):
+        # First make sure we're not setting the API param if the track_click
+        # attr isn't there. (The Mandrill account option of True for html,
+        # False for plaintext can't be communicated through the API, other than
+        # by omitting the track_clicks API param to use your account default.)
+        self.message.send()
+        data = self.get_api_call_data()
+        self.assertFalse('track_clicks' in data['message'])
+        # Now re-send with the params set
+        self.message.track_opens = True
+        self.message.track_clicks = True
+        self.message.url_strip_qs = True
+        self.message.send()
+        data = self.get_api_call_data()
+        self.assertEqual(data['message']['track_opens'], True)
+        self.assertEqual(data['message']['track_clicks'], True)
+        self.assertEqual(data['message']['url_strip_qs'], True)
+
+    def test_message_options(self):
+        self.message.auto_text = True
+        self.message.preserve_recipients = True
+        self.message.send()
+        data = self.get_api_call_data()
+        self.assertEqual(data['message']['auto_text'], True)
+        self.assertEqual(data['message']['preserve_recipients'], True)
+
+    def test_merge(self):
+        # Djrill expands simple python dicts into the more-verbose name/value
+        # structures the Mandrill API uses
+        self.message.global_merge_vars = { 'GREETING': "Hello",
+                                           'ACCOUNT_TYPE': "Basic" }
+        self.message.merge_vars = {
+            "customer@example.com": { 'GREETING': "Dear Customer",
+                                      'ACCOUNT_TYPE': "Premium" },
+            "guest@example.com": { 'GREETING': "Dear Guest" },
+        }
+        self.message.send()
+        data = self.get_api_call_data()
+        self.assertEqual(data['message']['global_merge_vars'],
+            [ {'name': 'ACCOUNT_TYPE', 'value': "Basic"},
+              {'name': "GREETING", 'value': "Hello"} ])
+        self.assertEqual(data['message']['merge_vars'],
+            [ { 'rcpt': "customer@example.com",
+                'vars': [{ 'name': 'ACCOUNT_TYPE', 'value': "Premium" },
+                         { 'name': "GREETING", 'value': "Dear Customer"}] },
+              { 'rcpt': "guest@example.com",
+                'vars': [{ 'name': "GREETING", 'value': "Dear Guest"}] }
+            ])
+
+    def test_tags(self):
+        self.message.tags = ["receipt", "repeat-user"]
+        self.message.send()
+        data = self.get_api_call_data()
+        self.assertEqual(data['message']['tags'], ["receipt", "repeat-user"])
+
+    def test_google_analytics(self):
+        self.message.google_analytics_domains = ["example.com"]
+        self.message.google_analytics_campaign = "Email Receipts"
+        self.message.send()
+        data = self.get_api_call_data()
+        self.assertEqual(data['message']['google_analytics_domains'],
+            ["example.com"])
+        self.assertEqual(data['message']['google_analytics_campaign'],
+            "Email Receipts")
+
+    def test_metadata(self):
+        self.message.metadata = { 'batch_num': "12345", 'type': "Receipts" }
+        self.message.recipient_metadata = {
+            # Djrill expands simple python dicts into the more-verbose
+            # name/value structures the Mandrill API uses
+            "customer@example.com": { 'cust_id': "67890", 'order_id': "54321" },
+            "guest@example.com": { 'cust_id': "94107", 'order_id': "43215" }
+        }
+        self.message.send()
+        data = self.get_api_call_data()
+        self.assertEqual(data['message']['metadata'], { 'batch_num': "12345",
+                                                        'type': "Receipts" })
+        self.assertEqual(data['message']['recipient_metadata'],
+            [ { 'rcpt': "customer@example.com",
+                'values': { 'cust_id': "67890", 'order_id': "54321" } },
+              { 'rcpt': "guest@example.com",
+                'values': { 'cust_id': "94107", 'order_id': "43215" } }
+            ])
 
 
 def reset_admin_site():
