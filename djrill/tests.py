@@ -271,6 +271,29 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
                 'values': { 'cust_id': "94107", 'order_id': "43215" } }
             ])
 
+    def test_default_omits_options(self):
+        """Make sure by default we don't send any Mandrill-specific options.
+
+        Options not specified by the caller should be omitted entirely from
+        the Mandrill API call (*not* sent as False or empty). This ensures
+        that your Mandrill account settings apply by default.
+        """
+        self.message.send()
+        data = self.get_api_call_data()
+        self.assertFalse('from_name' in data['message'])
+        self.assertFalse('track_opens' in data['message'])
+        self.assertFalse('track_clicks' in data['message'])
+        self.assertFalse('auto_text' in data['message'])
+        self.assertFalse('url_strip_qs' in data['message'])
+        self.assertFalse('tags' in data['message'])
+        self.assertFalse('preserve_recipients' in data['message'])
+        self.assertFalse('google_analytics_domains' in data['message'])
+        self.assertFalse('google_analytics_campaign' in data['message'])
+        self.assertFalse('metadata' in data['message'])
+        self.assertFalse('global_merge_vars' in data['message'])
+        self.assertFalse('merge_vars' in data['message'])
+        self.assertFalse('recipient_metadata' in data['message'])
+
 
 def reset_admin_site():
     """Return the Django admin globals to their original state"""
