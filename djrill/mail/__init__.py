@@ -8,7 +8,7 @@ class DjrillMessage(EmailMultiAlternatives):
     def __init__(self, subject='', body='', from_email=None, to=None, bcc=None,
         connection=None, attachments=None, headers=None, alternatives=None,
         cc=None, from_name=None, tags=None, track_opens=True,
-        track_clicks=True):
+        track_clicks=True, preserve_recipients=True):
 
         super(DjrillMessage, self).__init__(subject, body, from_email, to, bcc,
             connection, attachments, headers, alternatives, cc)
@@ -17,6 +17,7 @@ class DjrillMessage(EmailMultiAlternatives):
         self.tags = self._set_mandrill_tags(tags)
         self.track_opens = track_opens
         self.track_clicks = track_clicks
+        self.preserve_recipients = preserve_recipients
 
     def _set_mandrill_tags(self, tags):
         """
