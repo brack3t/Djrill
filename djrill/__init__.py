@@ -27,7 +27,11 @@ class DjrillAdminSite(AdminSite):
     def get_urls(self):
         """Add our custom views to the admin urlconf."""
         urls = super(DjrillAdminSite, self).get_urls()
-        from django.conf.urls.defaults import patterns, url
+        try:
+            from django.conf.urls import include, patterns, url
+        except ImportError:
+            # Django 1.3
+            from django.conf.urls.defaults import include, patterns, url
         for path, view, name, display_name in self.custom_views:
             urls += patterns('',
                 url(r'^%s$' % path, self.admin_view(view), name=name),
