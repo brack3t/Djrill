@@ -5,6 +5,8 @@ from django.core.exceptions import ImproperlyConfigured
 from django.utils import simplejson as json
 from django.views.generic import TemplateView
 
+from djrill.mail.backends.djrill import MANDRILL_API_URL
+
 import requests
 
 
@@ -23,14 +25,11 @@ class DjrillApiMixin(object):
     """
     def __init__(self):
         self.api_key = getattr(settings, "MANDRILL_API_KEY", None)
-        self.api_url = getattr(settings, "MANDRILL_API_URL", None)
+        self.api_url = getattr(settings, "MANDRILL_API_URL", MANDRILL_API_URL)
 
         if not self.api_key:
             raise ImproperlyConfigured("You have not set your mandrill api key "
                 "in the settings file.")
-        if not self.api_url:
-            raise ImproperlyConfigured("You have not added the Mandrill api "
-                "url to your settings.py")
 
     def get_context_data(self, **kwargs):
         kwargs = super(DjrillApiMixin, self).get_context_data(**kwargs)
@@ -53,7 +52,7 @@ class DjrillApiJsonObjectsMixin(object):
 
     def get_api_uri(self):
         if self.api_uri is None:
-            raise ImproperlyConfigured(u"%(cls)s is missing an api_uri. Define "
+            raise NotImplementedError(u"%(cls)s is missing an api_uri. Define "
                 u"%(cls)s.api_uri or override %(cls)s.get_api_uri()." % {
                     "cls": self.__class__.__name__
                 })
