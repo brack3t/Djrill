@@ -392,7 +392,7 @@ class DjrillMessageTests(TestCase):
         self.assertEqual(msg.alternatives[0][0], self.html_content)
 
     def test_djrill_message_tag_failure(self):
-        with self.assertRaises(ImproperlyConfigured):
+        with self.assertRaises(ValueError):
             DjrillMessage(self.subject, self.text_content, self.from_email,
                 self.to, tags=["_fail"])
 
@@ -409,3 +409,15 @@ class DjrillMessageTests(TestCase):
         self.assertIn(tags[0], msg.tags)
         self.assertIn(tags[1], msg.tags)
         self.assertNotIn(tags[2], msg.tags)
+
+    def test_djrill_message_no_options(self):
+        """DjrillMessage with only basic EmailMessage options should work"""
+        msg = DjrillMessage(self.subject, self.text_content,
+            self.from_email, self.to) # no Mandrill-specific options
+
+        self.assertIsInstance(msg, DjrillMessage)
+        self.assertEqual(msg.body, self.text_content)
+        self.assertEqual(msg.recipients(), self.to)
+        self.assertFalse(hasattr(msg, 'tags'))
+        self.assertFalse(hasattr(msg, 'from_name'))
+        self.assertFalse(hasattr(msg, 'preserve_recipients'))

@@ -2,4 +2,6 @@
 ._*
 *.pyc
 *.egg-info
+dist/
+TODO.txt
 local.py
