@@ -1,6 +1,9 @@
 from django.core.mail import EmailMultiAlternatives
 
 
+# DjrillMessage class is deprecated as of 0.2.0, but retained for
+# compatibility with existing code. (New code can just set Mandrill-specific
+# options directly on an EmailMessage or EmailMultiAlternatives object.)
 class DjrillMessage(EmailMultiAlternatives):
     alternative_subtype = "mandrill"
 

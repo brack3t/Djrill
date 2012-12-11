@@ -2,9 +2,8 @@ from setuptools import setup
 
 setup(
     name="djrill",
-    version="0.1.4.1",
+    version="0.2.0",
     description='Django email backend for Mandrill.',
-    long_description='Email backend and new message class to send emails through the Mandrill email service.',
     keywords="django, mailchimp, mandrill, email, email backend",
     author="Kenneth Love <kenneth@brack3t.com>, Chris Jones <chris@brack3t.com>",
     author_email="kenneth@brack3t.com",
@@ -23,4 +22,14 @@ setup(
         "Framework :: Django",
         "Environment :: Web Environment",
     ],
+    long_description="""\
+Djrill is an email backend for Django users who want to take advantage of the
+`Mandrill <http://mandrill.com>`_ transactional email service from MailChimp.
+
+In general, Djrill "just works" with Django's built-in ``django.core.mail``
+package. You can also take advantage of Mandrill-specific features like tags,
+metadata, and tracking. An optional Django admin interface is included.
+
+Full details are on the `project page <https://github.com/brack3t/Djrill>`_.
+""",
 )

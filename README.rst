@@ -4,13 +4,13 @@ Djrill, for Mandrill
 .. image:: https://secure.travis-ci.org/brack3t/Djrill.png?branch=master
         :target: https://travis-ci.org/brack3t/Djrill
 
-Djrill is an email backend and new message class for Django users that want to take advantage of the Mandrill_ transactional
-email service from MailChimp_.
+Djrill is an email backend for Django users who want to take advantage of the
+Mandrill_ transactional email service from MailChimp_.
 
 An optional Django admin interface is included. The admin interface allows you to:
 
 * Check the status of your Mandrill API connection.
-* See stats on email tags and urls.
+* See stats on email senders, tags and urls.
 
 Djrill is made available under the BSD license.
 
@@ -81,35 +81,38 @@ package, including ``send_mail``, ``send_mass_mail``, ``EmailMessage`` and
 ``EmailMultiAlternatives``.
 
 You can also take advantage of Mandrill-specific features like tags, metadata,
-and tracking by creating a ``django.mail.EmailMessage`` (or for HTML,
-``django.mail.EmailMultiAlternatives``) object and setting Mandrill-specific
+and tracking by creating a Django EmailMessage_ (or for HTML,
+EmailMultiAlternatives_) object and setting Mandrill-specific
 properties on it before calling its ``send`` method.
 
-Example:
+Example, sending HTML email with Mandrill tags and metadata:
 
 .. code:: python
 
-    from django.core.mail import EmailMultiAlternatives # or just EmailMessage if you don't need HTML
+    from django.core.mail import EmailMultiAlternatives
 
-    subject = "Djrill Message"
-    from_email = "Djrill Sender <djrill@example.com>" # this has to be in your Mandrill account's sending domains
-    to = ["Djrill Receiver <djrill.receiver@example.com>", "djrill.two@example.com"]
-    reply_email = "Customer Service <support@example.com>" # optional
-    text_content = "This is the text version of your email"
-    html_content = "<p>This is the HTML version of your email</p>" # optional, use with ``attach_alternative`` below
+    msg = EmailMultiAlternatives(
+        subject="Djrill Message",
+        body="This is the text version of your email",
+        from_email="Djrill Sender <djrill@example.com>",
+        to=["Djrill Receiver <djrill.receiver@example.com>", "another.person@example.com"],
+        headers={'Reply-To': "Service <support@example.com>"} # optional extra headers
+    )
+    msg.attach_alternative("<p>This is the HTML version of your email</p>", "text/html")
 
-    msg = EmailMultiAlternatives(subject, text_content, from_email, to, headers={'Reply-To': reply_email})
-    msg.tags = ["one tag", "two tag", "red tag", "blue tag"] # optional, Mandrill-specific message extension
-    msg.metadata = {'user_id': "8675309"} # optional, Mandrill-specific message extension
-    msg.attach_alternative(html_content, "text/html")
+    # Optional Mandrill-specific extensions (see full list below):
+    msg.tags = ["one tag", "two tag", "red tag", "blue tag"]
+    msg.metadata = {'user_id': "8675309"}
+
+    # Send it:
     msg.send()
 
 If the Mandrill API returns an error response for any reason, the send call will
 raise a ``djrill.mail.backends.djrill.DjrillBackendHTTPError`` exception
 (unless called with fail_silently=True).
 
-Djrill supports most of the functionality of Django's ``EmailMessage`` and
-``EmailMultiAlternatives``. Some limitations:
+Djrill supports most of the functionality of Django's `EmailMessage`_ and
+`EmailMultiAlternatives`_ classes. Some limitations:
 
 * Djrill accepts additional headers, but only ``Reply-To`` and ``X-*`` (since
   that is all that Mandrill accepts). Any other extra headers will raise a
@@ -125,6 +128,10 @@ Djrill supports most of the functionality of Django's ``EmailMessage`` and
   which Djrill doesn't use. *Caution:* depending on the ``preserve_recipients``
   setting, this could result in exposing bcc addresses to all recipients. It's
   probably best to just avoid bcc.)
+* All email addresses (from, to, cc) can be simple ("email@example.com") or
+  can include a display name ("Real Name <email@example.com>").
+* The ``from_email`` must be in one of the approved sending domains in your
+  Mandrill account.
 
 Many of the options from the Mandrill `messages/send.json API`_ ``message``
 struct can be set directly on an ``EmailMessage`` (or subclass) object:
@@ -160,7 +167,8 @@ see ``DjrillMandrillFeatureTests`` in tests.py for examples.
 Testing
 -------
 
-Djrill is tested against Django 1.3 and 1.4 on Python 2.6 and 2.7.
+Djrill is tested against Django 1.3 and 1.4 on Python 2.6 and 2.7, and
+Django 1.5beta on Python 2.7.
 (It may also work with Django 1.2 and Python 2.5, if you use an older
 version of requests compatible with that code.)
 
@@ -179,6 +187,18 @@ or::
     python runtests.py
 
 
+Release Notes
+-------------
+
+Version 0.2.0:
+
+* ``MANDRILL_API_URL`` is no longer required in settings.py
+* Earlier versions of Djrill required use of a ``DjrillMessage`` class to
+  specify Mandrill-specific options. This is no longer needed -- Mandrill
+  options can now be set directly on a Django EmailMessage_ object or any
+  subclass. (Existing code can continue to use ``DjrillMessage``.)
+
+
 Thanks
 ------
 
@@ -193,5 +213,7 @@ the awesome ``requests`` library.
 .. _django-adminplus: https://github.com/jsocol/django-adminplus
 .. _mock: http://www.voidspace.org.uk/python/mock/index.html
 .. _django.core.mail: https://docs.djangoproject.com/en/dev/topics/email/
+.. _EmailMessage: https://docs.djangoproject.com/en/dev/topics/email/#django.core.mail.EmailMessage
+.. _EmailMultiAlternatives: https://docs.djangoproject.com/en/dev/topics/email/#sending-alternative-content-types
 .. _messages/send.json API: https://mandrillapp.com/api/docs/messages.html#method=send
 
