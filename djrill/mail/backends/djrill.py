@@ -45,6 +45,7 @@ class DjrillBackend(BaseEmailBackend):
                 "in the settings.py file.")
 
         self.api_action = self.api_url + "/messages/send.json"
+        self.template_api_action = self.api_url + "/messages/send-template.json"
 
     def send_messages(self, email_messages):
         if not email_messages:
@@ -73,10 +74,23 @@ class DjrillBackend(BaseEmailBackend):
                 raise
             return False
 
-        djrill_it = requests.post(self.api_action, data=json.dumps({
-            "key": self.api_key,
-            "message": msg_dict
-        }))
+        # check if template is set in message to send it via
+        # api url: /messages/send-template.json
+        if hasattr(message, 'template_name'):
+            template_content = getattr(message, 'template_content',
+                    None)
+            djrill_it = requests.post(self.template_api_action,
+                data=json.dumps({
+                    "key": self.api_key,
+                    "template_name": message.template_name,
+                    "template_content": template_content,
+                    "message": msg_dict
+            }))
+        else:
+            djrill_it = requests.post(self.api_action, data=json.dumps({
+                "key": self.api_key,
+                "message": msg_dict
+            }))
 
         if djrill_it.status_code != 200:
             if not self.fail_silently:
