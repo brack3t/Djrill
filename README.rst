@@ -161,7 +161,7 @@ object, so you can use them with many other apps that add Django mail
 functionality (such as Django template-based messages).
 
 If you have any questions about the python syntax for any of these properties,
-see ``DjrillMandrillFeatureTests`` in tests.py for examples.
+see ``DjrillMandrillFeatureTests`` in tests/test_mandrill_send.py for examples.
 
 
 Testing
@@ -180,11 +180,11 @@ calls, without actually calling Mandrill or sending any email. So the tests
 don't require a Mandrill API key, but they *do* require mock_
 (``pip install mock``). To run the tests, either::
 
-    python setup.py test
+    python -Wall setup.py test
 
 or::
 
-    python runtests.py
+    python -Wall runtests.py
 
 
 Release Notes
