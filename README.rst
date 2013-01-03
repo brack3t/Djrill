@@ -187,6 +187,18 @@ or::
     python -Wall runtests.py
 
 
+Contributing
+------------
+
+Djrill is maintained by its users -- it's not managed by the folks at MailChimp.
+Pull requests are always welcome to improve support for Mandrill and Django
+features.
+
+Please include test cases with pull requests. (And by submitting a pull request,
+you're agreeing to release your changes under under the same BSD license as the
+rest of this project.)
+
+
 Release Notes
 -------------
 
