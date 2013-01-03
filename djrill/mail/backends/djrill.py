@@ -1,10 +1,13 @@
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.mail.backends.base import BaseEmailBackend
-from django.core.mail.message import sanitize_address
+from django.core.mail.message import sanitize_address, DEFAULT_ATTACHMENT_MIME_TYPE
 from django.utils import simplejson as json
 
+from base64 import b64encode
+from email.mime.base import MIMEBase
 from email.utils import parseaddr
+import mimetypes
 import requests
 
 # This backend was developed against this API endpoint.
@@ -68,6 +71,7 @@ class DjrillBackend(BaseEmailBackend):
             self._add_mandrill_options(message, msg_dict)
             if getattr(message, 'alternatives', None):
                 self._add_alternatives(message, msg_dict)
+            self._add_attachments(message, msg_dict)
         except ValueError:
             if not self.fail_silently:
                 raise
@@ -186,3 +190,39 @@ class DjrillBackend(BaseEmailBackend):
                              % mimetype)
 
         msg_dict['html'] = content
+
+    def _add_attachments(self, message, msg_dict):
+        """Extend msg_dict to include any attachments in message"""
+        if message.attachments:
+            attachments = [
+            self._make_mandrill_attachment(attachment)
+            for attachment in message.attachments
+            ]
+            if len(attachments) > 0:
+                msg_dict['attachments'] = attachments
+
+    def _make_mandrill_attachment(self, attachment):
+        """Return a Mandrill dict for an EmailMessage.attachments item"""
+        # Note that an attachment can be either a tuple of (filename, content,
+        # mimetype) or a MIMEBase object. (Also, both filename and mimetype may
+        # be missing.)
+        if isinstance(attachment, MIMEBase):
+            filename = attachment.get_filename()
+            content = attachment.get_payload(decode=True)
+            mimetype = attachment.get_content_type()
+        else:
+            (filename, content, mimetype) = attachment
+
+        # Guess missing mimetype, borrowed from
+        # django.core.mail.EmailMessage._create_attachment()
+        if mimetype is None and filename is not None:
+            mimetype, _ = mimetypes.guess_type(filename)
+        if mimetype is None:
+            mimetype = DEFAULT_ATTACHMENT_MIME_TYPE
+
+        return {
+            'type': mimetype,
+            'name': filename or "",
+            'content': b64encode(content),
+        }
+
