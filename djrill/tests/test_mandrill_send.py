@@ -1,3 +1,6 @@
+from base64 import b64encode
+from email.mime.base import MIMEBase
+
 from django.conf import settings
 from django.core import mail
 from django.core.exceptions import ImproperlyConfigured
@@ -78,6 +81,40 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
         data = self.get_api_call_data()
         self.assertEqual(data['message']['text'], text_content)
         self.assertEqual(data['message']['html'], html_content)
+        # Don't accidentally send the html part as an attachment:
+        self.assertFalse('attachments' in data['message'])
+
+    def test_attachments(self):
+        email = mail.EmailMessage('Subject', 'Body goes here',
+            'from@example.com', ['to1@example.com'])
+
+        content1 = "* Item one\n* Item two\n* Item three"
+        email.attach(filename="test.txt", content=content1,
+            mimetype="text/plain")
+
+        # Should guess mimetype if not provided...
+        content2 = "PNG* pretend this is the contents of a png file"
+        email.attach(filename="test.png", content=content2)
+
+        # Should work with a MIMEBase object (also tests no filename)...
+        content3 = "PDF* pretend this is valid pdf data"
+        mimeattachment = MIMEBase('application', 'pdf')
+        mimeattachment.set_payload(content3)
+        email.attach(mimeattachment)
+
+        email.send()
+        data = self.get_api_call_data()
+        attachments = data['message']['attachments']
+        self.assertEqual(len(attachments), 3)
+        self.assertEqual(attachments[0]["type"], "text/plain")
+        self.assertEqual(attachments[0]["name"], "test.txt")
+        self.assertEqual(attachments[0]["content"], b64encode(content1))
+        self.assertEqual(attachments[1]["type"], "image/png") # inferred
+        self.assertEqual(attachments[1]["name"], "test.png")
+        self.assertEqual(attachments[1]["content"], b64encode(content2))
+        self.assertEqual(attachments[2]["type"], "application/pdf")
+        self.assertEqual(attachments[2]["name"], "") # none
+        self.assertEqual(attachments[2]["content"], b64encode(content3))
 
     def test_extra_header_errors(self):
         email = mail.EmailMessage('Subject', 'Body', 'from@example.com',
