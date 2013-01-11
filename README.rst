@@ -83,7 +83,8 @@ package, including ``send_mail``, ``send_mass_mail``, ``EmailMessage`` and
 You can also take advantage of Mandrill-specific features like tags, metadata,
 and tracking by creating a Django EmailMessage_ (or for HTML,
 EmailMultiAlternatives_) object and setting Mandrill-specific
-properties on it before calling its ``send`` method.
+properties on it before calling its ``send`` method. (See
+`Mandrill Message Options`_ below.)
 
 Example, sending HTML email with Mandrill tags and metadata:
 
@@ -111,6 +112,9 @@ If the Mandrill API returns an error response for any reason, the send call will
 raise a ``djrill.mail.backends.djrill.DjrillBackendHTTPError`` exception
 (unless called with fail_silently=True).
 
+Django EmailMessage Support
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Djrill supports most of the functionality of Django's `EmailMessage`_ and
 `EmailMultiAlternatives`_ classes. Some limitations:
 
@@ -136,7 +140,10 @@ Djrill supports most of the functionality of Django's `EmailMessage`_ and
 * The ``from_email`` must be in one of the approved sending domains in your
   Mandrill account.
 
-Many of the options from the Mandrill `messages/send.json API`_ ``message``
+Mandrill Message Options
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Many of the options from the Mandrill `messages/send API`_ ``message``
 struct can be set directly on an ``EmailMessage`` (or subclass) object:
 
 * ``track_opens`` - Boolean
@@ -166,6 +173,33 @@ functionality (such as Django template-based messages).
 If you have any questions about the python syntax for any of these properties,
 see ``DjrillMandrillFeatureTests`` in tests/test_mandrill_send.py for examples.
 
+Mandrill Templates
+~~~~~~~~~~~~~~~~~~
+
+To use a Mandrill (MailChimp) template, set a ``template_name`` and (optionally)
+``template_content`` on your ``EmailMessage`` object:
+
+.. code:: python
+
+    msg = EmailMessage(subject="Shipped!", from_email="store@example.com",
+        to=["customer@example.com", "accounting@example.com"])
+    msg.template_name = "SHIPPING_NOTICE"   # A Mandrill template name
+    msg.template_content = {                # Content blocks to fill in
+        'TRACKING_BLOCK': "<a href='.../\*\|TRACKINGNO\|\*'>track it</a>" }
+    msg.global_merge_vars = {               # Merge tags in your template
+        'ORDERNO': "12345", 'TRACKINGNO': "1Z987" }
+    msg.merge_vars = {                      # Per-recipient merge tags
+        'accounting@example.com': { 'NAME': "Pat" },
+        'customer@example.com':   { 'NAME': "Kim" } }
+    msg.send()
+
+If template_name is set, Djrill will use Mandrill's `messages/send-template API`_,
+rather than messages/send. All of the other options listed above can be used.
+
+(This is for *MailChimp* templates stored in your Mandrill account. If you
+want to use a *Django* template, you can use Django's render_to_string_ template
+shortcut to build the body and html, and send using EmailMultiAlternatives as
+in the earlier examples.)
 
 Testing
 -------
@@ -230,5 +264,7 @@ the awesome ``requests`` library.
 .. _django.core.mail: https://docs.djangoproject.com/en/dev/topics/email/
 .. _EmailMessage: https://docs.djangoproject.com/en/dev/topics/email/#django.core.mail.EmailMessage
 .. _EmailMultiAlternatives: https://docs.djangoproject.com/en/dev/topics/email/#sending-alternative-content-types
-.. _messages/send.json API: https://mandrillapp.com/api/docs/messages.html#method=send
+.. _render_to_string: https://docs.djangoproject.com/en/dev/ref/templates/api/#the-render-to-string-shortcut
+.. _messages/send API: https://mandrillapp.com/api/docs/messages.html#method=send
+.. _messages/send-template API: https://mandrillapp.com/api/docs/messages.html#method=send-template
 
