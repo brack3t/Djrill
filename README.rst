@@ -74,7 +74,9 @@ In ``settings.py``:
 Usage
 -----
 
-Since you are replacing the global ``EMAIL_BACKEND``, **all** emails are sent through Mandrill's service.
+Since you are replacing the global ``EMAIL_BACKEND``, **all** emails are sent
+through Mandrill's service. (To selectively use Mandrill for some messages, see
+`Using Multiple Email Backends`_ below.)
 
 In general, Djrill "just works" with Django's built-in `django.core.mail`_
 package, including ``send_mail``, ``send_mass_mail``, ``EmailMessage`` and
@@ -200,6 +202,32 @@ rather than messages/send. All of the other options listed above can be used.
 want to use a *Django* template, you can use Django's render_to_string_ template
 shortcut to build the body and html, and send using EmailMultiAlternatives as
 in the earlier examples.)
+
+Using Multiple Email Backends
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can use Django mail's optional ``connection`` argument to send some mail
+through Mandrill and others through a different system. This can be useful to
+send customer emails with Mandrill, but admin emails directly through an SMTP
+server. Example:
+
+.. code:: python
+
+    from django.core.mail import send_mail, get_connection
+
+    # send_mail connection defaults to the settings EMAIL_BACKEND, which
+    # we've set to DjrillBackend. This will be sent using Mandrill:
+    send_mail("Subject", "Body", "support@example.com", ["user@example.com"])
+
+    # Get a connection to an SMTP backend, and send using that instead:
+    smtp_backend = get_connection('django.core.mail.backends.smtp.EmailBackend')
+    send_mail("Subject", "Body", "admin@example.com", ["alert@example.com"],
+        connection=smtp_backend)
+
+You can supply a different connection to Django's `django.core.mail`_
+``send_mail`` and ``send_mass_mail`` helpers, and in the constructor for an
+EmailMessage_ or EmailMultiAlternatives_.
+
 
 Testing
 -------
