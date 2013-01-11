@@ -47,8 +47,8 @@ class DjrillBackend(BaseEmailBackend):
             raise ImproperlyConfigured("You have not set your mandrill api key "
                 "in the settings.py file.")
 
-        self.api_action = self.api_url + "/messages/send.json"
-        self.template_api_action = self.api_url + "/messages/send-template.json"
+        self.api_send = self.api_url + "/messages/send.json"
+        self.api_send_template = self.api_url + "/messages/send-template.json"
 
     def send_messages(self, email_messages):
         if not email_messages:
@@ -78,29 +78,28 @@ class DjrillBackend(BaseEmailBackend):
                 raise
             return False
 
+        api_url = self.api_send
+        api_params = {
+            "key": self.api_key,
+            "message": msg_dict
+        }
+
         # check if template is set in message to send it via
         # api url: /messages/send-template.json
         if hasattr(message, 'template_name'):
-            template_content = getattr(message, 'template_content',
-                    None)
-            djrill_it = requests.post(self.template_api_action,
-                data=json.dumps({
-                    "key": self.api_key,
-                    "template_name": message.template_name,
-                    "template_content": template_content,
-                    "message": msg_dict
-            }))
-        else:
-            djrill_it = requests.post(self.api_action, data=json.dumps({
-                "key": self.api_key,
-                "message": msg_dict
-            }))
+            api_url = self.api_send_template
+            api_params['template_name'] = message.template_name
+            if hasattr(message, 'template_content'):
+                api_params['template_content'] = \
+                    self._expand_merge_vars(message.template_content)
 
-        if djrill_it.status_code != 200:
+        response = requests.post(api_url, data=json.dumps(api_params))
+
+        if response.status_code != 200:
             if not self.fail_silently:
                 raise DjrillBackendHTTPError(
-                    status_code=djrill_it.status_code,
-                    response = djrill_it,
+                    status_code=response.status_code,
+                    response=response,
                     log_message="Failed to send a message to %s, from %s" %
                                 (msg_dict['to'], msg_dict['from_email']))
             return False
