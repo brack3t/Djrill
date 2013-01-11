@@ -14,7 +14,7 @@ class DjrillBackendMockAPITestCase(TestCase):
             self.content = content
 
     def setUp(self):
-        self.patch = patch('requests.post')
+        self.patch = patch('requests.post', autospec=True)
         self.mock_post = self.patch.start()
         self.mock_post.return_value = self.MockResponse()
 
@@ -28,6 +28,25 @@ class DjrillBackendMockAPITestCase(TestCase):
         self.patch.stop()
         settings.EMAIL_BACKEND = self.original_email_backend
 
+    def assert_mandrill_called(self, endpoint):
+        """Verifies the (mock) Mandrill API was called on endpoint.
+
+        endpoint is a Mandrill API, e.g., "/messages/send.json"
+        """
+        # This assumes the last (or only) call to requests.post is the
+        # Mandrill API call of interest.
+        if self.mock_post.call_args is None:
+            raise AssertionError("Mandrill API was not called")
+        (args, kwargs) = self.mock_post.call_args
+        try:
+            post_url = kwargs.get('url', None) or args[0]
+        except IndexError:
+            raise AssertionError("requests.post was called without an url (?!)")
+        if not post_url.endswith(endpoint):
+            raise AssertionError(
+                "requests.post was not called on %s\n(It was called on %s)"
+                % (endpoint, post_url))
+
     def get_api_call_data(self):
         """Returns the data posted to the Mandrill API.
 
@@ -36,9 +55,10 @@ class DjrillBackendMockAPITestCase(TestCase):
         if self.mock_post.call_args is None:
             raise AssertionError("Mandrill API was not called")
         (args, kwargs) = self.mock_post.call_args
-        if 'data' not in kwargs:
-            raise AssertionError("requests.post was called without data kwarg "
-                                 "-- Maybe tests need to be updated for backend changes?")
-        return json.loads(kwargs['data'])
+        try:
+            post_data = kwargs.get('data', None) or args[1]
+        except IndexError:
+            raise AssertionError("requests.post was called without data")
+        return json.loads(post_data)
 
 

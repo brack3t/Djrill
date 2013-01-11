@@ -15,6 +15,7 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
     def test_send_mail(self):
         mail.send_mail('Subject here', 'Here is the message.',
             'from@example.com', ['to@example.com'], fail_silently=False)
+        self.assert_mandrill_called("/messages/send.json")
         data = self.get_api_call_data()
         self.assertEqual(data['message']['subject'], "Subject here")
         self.assertEqual(data['message']['text'], "Here is the message.")
@@ -54,6 +55,7 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
             headers={'Reply-To': 'another@example.com',
                      'X-MyHeader': 'my value'})
         email.send()
+        self.assert_mandrill_called("/messages/send.json")
         data = self.get_api_call_data()
         self.assertEqual(data['message']['subject'], "Subject")
         self.assertEqual(data['message']['text'], "Body goes here")
@@ -78,6 +80,7 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
             'from@example.com', ['to@example.com'])
         email.attach_alternative(html_content, "text/html")
         email.send()
+        self.assert_mandrill_called("/messages/send.json")
         data = self.get_api_call_data()
         self.assertEqual(data['message']['text'], text_content)
         self.assertEqual(data['message']['html'], html_content)
@@ -271,6 +274,7 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
         that your Mandrill account settings apply by default.
         """
         self.message.send()
+        self.assert_mandrill_called("/messages/send.json")
         data = self.get_api_call_data()
         self.assertFalse('from_name' in data['message'])
         self.assertFalse('track_opens' in data['message'])
