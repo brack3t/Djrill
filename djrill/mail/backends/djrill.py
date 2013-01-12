@@ -226,6 +226,18 @@ class DjrillBackend(BaseEmailBackend):
         if mimetype is None:
             mimetype = DEFAULT_ATTACHMENT_MIME_TYPE
 
+        # Mandrill silently filters attachments with unsupported mimetypes.
+        # This can be confusing, so we raise an exception instead.
+        (main, sub) = mimetype.lower().split('/')
+        attachment_allowed = (
+            main == 'text' or main == 'image'
+            or (main == 'application' and sub == 'pdf'))
+        if not attachment_allowed:
+            raise NotSupportedByMandrillError(
+                "Invalid attachment mimetype '%s'. Mandrill only supports "
+                "text/*, image/*, and application/pdf attachments."
+                % mimetype)
+
         return {
             'type': mimetype,
             'name': filename or "",

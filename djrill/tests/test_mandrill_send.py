@@ -160,6 +160,24 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
             msg="Mandrill API should not be called when send fails silently")
         self.assertEqual(sent, 0)
 
+    def test_attachment_errors(self):
+        # Mandrill silently strips attachments that aren't text/*, image/*,
+        # or application/pdf. We want to alert the Djrill user:
+        with self.assertRaises(NotSupportedByMandrillError):
+            msg = mail.EmailMessage('Subject', 'Body',
+                'from@example.com', ['to@example.com'])
+            # This is the default mimetype, but won't work with Mandrill:
+            msg.attach(content="test", mimetype="application/octet-stream")
+            msg.send()
+
+        with self.assertRaises(NotSupportedByMandrillError):
+            msg = mail.EmailMessage('Subject', 'Body',
+                'from@example.com', ['to@example.com'])
+            # Can't send Office docs, either:
+            msg.attach(filename="presentation.ppt", content="test",
+                mimetype="application/vnd.ms-powerpoint")
+            msg.send()
+
     def test_mandrill_api_failure(self):
         self.mock_post.return_value = self.MockResponse(status_code=400)
         with self.assertRaises(MandrillAPIError):

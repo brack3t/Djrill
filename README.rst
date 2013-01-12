@@ -134,10 +134,10 @@ Djrill supports most of the functionality of Django's `EmailMessage`_ and
   raise a ``djrill.NotSupportedByMandrillError`` exception when you attempt to
   send the message. (Mandrill doesn't support sending multiple html alternative
   parts, or any non-html alternatives.)
-* Djrill attempts to include a message's attachments, but Mandrill will
-  (silently) ignore any attachment types it doesn't allow. According to
-  Mandrill's docs, attachments are only allowed with the mimetypes "text/\*",
-  "image/\*", or "application/pdf".
+* Djrill includes a message's attachments, but only with the mimetypes "text/\*",
+  "image/\*", or "application/pdf" (since that is all Mandrill allows). Any
+  other attachment types will raise a ``djrill.NotSupportedByMandrillError``
+  exception when you attempt to send the message.
 * Djrill treats all cc and bcc recipients as if they were additional "to"
   addresses. (Mandrill does not distinguish cc, and only allows a single bcc --
   which Djrill doesn't use. *Caution:* depending on the ``preserve_recipients``
