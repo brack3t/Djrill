@@ -249,7 +249,7 @@ Testing
 -------
 
 Djrill is tested against Django 1.3 and 1.4 on Python 2.6 and 2.7, and
-Django 1.5beta on Python 2.7.
+Django 1.5RC on Python 2.7 and 3.2.
 (It may also work with Django 1.2 and Python 2.5, if you use an older
 version of requests compatible with that code.)
 
