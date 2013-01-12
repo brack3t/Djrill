@@ -7,6 +7,10 @@ Djrill, for Mandrill
 Djrill is an email backend for Django users who want to take advantage of the
 Mandrill_ transactional email service from MailChimp_.
 
+In general, Djrill "just works" with Django's built-in `django.core.mail`_
+package. You can also take advantage of Mandrill-specific features like tags,
+metadata, and tracking.
+
 An optional Django admin interface is included. The admin interface allows you to:
 
 * Check the status of your Mandrill API connection.
