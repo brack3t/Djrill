@@ -110,9 +110,14 @@ Example, sending HTML email with Mandrill tags and metadata:
     # Send it:
     msg.send()
 
-If the Mandrill API returns an error response for any reason, the send call will
-raise a ``djrill.mail.backends.djrill.DjrillBackendHTTPError`` exception
-(unless called with fail_silently=True).
+If the email tries to use features that aren't supported by Mandrill, the send
+call will raise a ``djrill.NotSupportedByMandrillError`` exception (a subclass
+of ValueError).
+
+If the Mandrill API fails or returns an error response, the send call will
+raise a ``djrill.MandrillAPIError`` exception (a subclass of
+requests.HTTPError).
+
 
 Django EmailMessage Support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -122,12 +127,13 @@ Djrill supports most of the functionality of Django's `EmailMessage`_ and
 
 * Djrill accepts additional headers, but only ``Reply-To`` and ``X-*`` (since
   that is all that Mandrill accepts). Any other extra headers will raise a
-  ``ValueError`` exception when you attempt to send the message.
+  ``djrill.NotSupportedByMandrillError`` exception when you attempt to send the
+  message.
 * Djrill requires that if you ``attach_alternative`` to a message, there must be
   only one alternative type, and it must be text/html. Otherwise, Djrill will
-  raise a ``ValueError`` exception when you attempt to send the message.
-  (Mandrill doesn't support sending multiple html alternative parts, or any
-  non-html alternatives.)
+  raise a ``djrill.NotSupportedByMandrillError`` exception when you attempt to
+  send the message. (Mandrill doesn't support sending multiple html alternative
+  parts, or any non-html alternatives.)
 * Djrill attempts to include a message's attachments, but Mandrill will
   (silently) ignore any attachment types it doesn't allow. According to
   Mandrill's docs, attachments are only allowed with the mimetypes "text/\*",

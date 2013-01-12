@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core import mail
 from django.core.exceptions import ImproperlyConfigured
 
-from djrill.mail.backends.djrill import DjrillBackendHTTPError
+from djrill import MandrillAPIError, NotSupportedByMandrillError
 from djrill.tests.mock_backend import DjrillBackendMockAPITestCase
 
 
@@ -123,7 +123,7 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
         email = mail.EmailMessage('Subject', 'Body', 'from@example.com',
             ['to@example.com'],
             headers={'Non-X-Non-Reply-To-Header': 'not permitted'})
-        with self.assertRaises(ValueError):
+        with self.assertRaises(NotSupportedByMandrillError):
             email.send()
 
         # Make sure fail_silently is respected
@@ -141,14 +141,14 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
             'from@example.com', ['to@example.com'])
         email.attach_alternative("<p>First html is OK</p>", "text/html")
         email.attach_alternative("<p>But not second html</p>", "text/html")
-        with self.assertRaises(ValueError):
+        with self.assertRaises(NotSupportedByMandrillError):
             email.send()
 
         # Only html alternatives allowed
         email = mail.EmailMultiAlternatives('Subject', 'Body',
             'from@example.com', ['to@example.com'])
         email.attach_alternative("{'not': 'allowed'}", "application/json")
-        with self.assertRaises(ValueError):
+        with self.assertRaises(NotSupportedByMandrillError):
             email.send()
 
         # Make sure fail_silently is respected
@@ -162,7 +162,7 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
 
     def test_mandrill_api_failure(self):
         self.mock_post.return_value = self.MockResponse(status_code=400)
-        with self.assertRaises(DjrillBackendHTTPError):
+        with self.assertRaises(MandrillAPIError):
             sent = mail.send_mail('Subject', 'Body', 'from@example.com',
                 ['to@example.com'])
             self.assertEqual(sent, 0)

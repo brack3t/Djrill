@@ -4,6 +4,7 @@ from django.utils.text import capfirst
 VERSION = (0, 2, 0)
 __version__ = '.'.join([str(x) for x in VERSION])
 
+from exceptions import MandrillAPIError, NotSupportedByMandrillError
 
 class DjrillAdminSite(AdminSite):
     index_template = "djrill/index.html"
@@ -31,6 +32,7 @@ class DjrillAdminSite(AdminSite):
             from django.conf.urls import include, patterns, url
         except ImportError:
             # Django 1.3
+            #noinspection PyDeprecation
             from django.conf.urls.defaults import include, patterns, url
         for path, view, name, display_name in self.custom_views:
             urls += patterns('',

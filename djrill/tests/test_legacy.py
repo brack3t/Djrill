@@ -3,6 +3,7 @@
 from django.test import TestCase
 
 from djrill.mail import DjrillMessage
+from djrill import MandrillAPIError, NotSupportedByMandrillError
 
 
 class DjrillMessageTests(TestCase):
@@ -72,3 +73,17 @@ class DjrillMessageTests(TestCase):
         self.assertFalse(hasattr(msg, 'tags'))
         self.assertFalse(hasattr(msg, 'from_name'))
         self.assertFalse(hasattr(msg, 'preserve_recipients'))
+
+
+class DjrillLegacyExceptionTests(TestCase):
+    def test_DjrillBackendHTTPError(self):
+        """MandrillApiError was DjrillBackendHTTPError in 0.2.0"""
+        # ... and had to be imported from deep in the package:
+        from djrill.mail.backends.djrill import DjrillBackendHTTPError
+        ex = MandrillAPIError("testing")
+        self.assertIsInstance(ex, DjrillBackendHTTPError)
+
+    def test_NotSupportedByMandrillError(self):
+        """Unsupported features used to just raise ValueError in 0.2.0"""
+        ex = NotSupportedByMandrillError("testing")
+        self.assertIsInstance(ex, ValueError)

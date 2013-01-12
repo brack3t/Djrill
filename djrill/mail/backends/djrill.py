@@ -4,6 +4,10 @@ from django.core.mail.backends.base import BaseEmailBackend
 from django.core.mail.message import sanitize_address, DEFAULT_ATTACHMENT_MIME_TYPE
 from django.utils import simplejson as json
 
+# Oops: this file has the same name as our app, and cannot be renamed.
+#from djrill import MandrillAPIError, NotSupportedByMandrillError
+from ... import MandrillAPIError, NotSupportedByMandrillError
+
 from base64 import b64encode
 from email.mime.base import MIMEBase
 from email.utils import parseaddr
@@ -14,21 +18,7 @@ import requests
 # You can override in settings.py, if desired.
 MANDRILL_API_URL = "http://mandrillapp.com/api/1.0"
 
-class DjrillBackendHTTPError(Exception):
-    """An exception that will turn into an HTTP error response."""
-    def __init__(self, status_code, response=None, log_message=None):
-        super(DjrillBackendHTTPError, self).__init__()
-        self.status_code = status_code
-        self.response = response # often contains helpful Mandrill info
-        self.log_message = log_message
-
-    def __str__(self):
-        message = "DjrillBackendHTTP %d" % self.status_code
-        if self.log_message:
-            return message + " " + self.log_message
-        else:
-            return message
-
+DjrillBackendHTTPError = MandrillAPIError # Backwards-compat Djrill<=0.2.0
 
 class DjrillBackend(BaseEmailBackend):
     """
@@ -73,7 +63,7 @@ class DjrillBackend(BaseEmailBackend):
             if getattr(message, 'alternatives', None):
                 self._add_alternatives(message, msg_dict)
             self._add_attachments(message, msg_dict)
-        except ValueError:
+        except NotSupportedByMandrillError:
             if not self.fail_silently:
                 raise
             return False
@@ -97,7 +87,7 @@ class DjrillBackend(BaseEmailBackend):
 
         if response.status_code != 200:
             if not self.fail_silently:
-                raise DjrillBackendHTTPError(
+                raise MandrillAPIError(
                     status_code=response.status_code,
                     response=response,
                     log_message="Failed to send a message to %s, from %s" %
@@ -112,8 +102,9 @@ class DjrillBackend(BaseEmailBackend):
         use by default. Standard text email messages sent through Django will
         still work through Mandrill.
 
-        Raises ValueError for any standard EmailMessage features that cannot be
-        accurately communicated to Mandrill (e.g., prohibited headers).
+        Raises NotSupportedByMandrillError for any standard EmailMessage
+        features that cannot be accurately communicated to Mandrill
+        (e.g., prohibited headers).
         """
         sender = sanitize_address(message.from_email, message.encoding)
         from_name, from_email = parseaddr(sender)
@@ -135,8 +126,9 @@ class DjrillBackend(BaseEmailBackend):
         if message.extra_headers:
             for k in message.extra_headers.keys():
                 if k != "Reply-To" and not k.startswith("X-"):
-                    raise ValueError("Invalid message header '%s' - Mandrill "
-                                     "only allows Reply-To and X-* headers" % k)
+                    raise NotSupportedByMandrillError(
+                        "Invalid message header '%s' - Mandrill "
+                        "only allows Reply-To and X-* headers" % k)
             msg_dict["headers"] = message.extra_headers
 
         return msg_dict
@@ -192,15 +184,16 @@ class DjrillBackend(BaseEmailBackend):
         the HTML output for your email.
         """
         if len(message.alternatives) > 1:
-            raise ValueError(
+            raise NotSupportedByMandrillError(
                 "Too many alternatives attached to the message. "
                 "Mandrill only accepts plain text and html emails.")
 
         (content, mimetype) = message.alternatives[0]
         if mimetype != 'text/html':
-            raise ValueError("Invalid alternative mimetype '%s'. "
-                             "Mandrill only accepts plain text and html emails."
-                             % mimetype)
+            raise NotSupportedByMandrillError(
+                "Invalid alternative mimetype '%s'. "
+                "Mandrill only accepts plain text and html emails."
+                % mimetype)
 
         msg_dict['html'] = content
 
