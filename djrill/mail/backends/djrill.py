@@ -206,14 +206,15 @@ class DjrillBackend(BaseEmailBackend):
     def _add_attachments(self, message, msg_dict):
         """Extend msg_dict to include any attachments in message"""
         if message.attachments:
+            str_encoding = message.encoding or settings.DEFAULT_CHARSET
             attachments = [
-            self._make_mandrill_attachment(attachment)
-            for attachment in message.attachments
+                self._make_mandrill_attachment(attachment, str_encoding)
+                for attachment in message.attachments
             ]
             if len(attachments) > 0:
                 msg_dict['attachments'] = attachments
 
-    def _make_mandrill_attachment(self, attachment):
+    def _make_mandrill_attachment(self, attachment, str_encoding=None):
         """Return a Mandrill dict for an EmailMessage.attachments item"""
         # Note that an attachment can be either a tuple of (filename, content,
         # mimetype) or a MIMEBase object. (Also, both filename and mimetype may
@@ -244,9 +245,19 @@ class DjrillBackend(BaseEmailBackend):
                 "text/*, image/*, and application/pdf attachments."
                 % mimetype)
 
+        try:
+            content_b64 = b64encode(content)
+        except TypeError:
+            # Python 3 b64encode requires bytes. Convert str attachment:
+            if isinstance(content, str):
+                content_bytes = content.encode(str_encoding)
+                content_b64 = b64encode(content_bytes)
+            else:
+                raise
+
         return {
             'type': mimetype,
             'name': filename or "",
-            'content': b64encode(content),
+            'content': content_b64.decode('ascii'),
         }
 
