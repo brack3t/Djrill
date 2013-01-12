@@ -35,22 +35,32 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
 
         (Test both sender and recipient addresses)
         """
-        mail.send_mail('Subject', 'Message', 'From Name <from@example.com>',
-            ['Recipient #1 <to1@example.com>', 'to2@example.com'])
+        msg = mail.EmailMessage('Subject', 'Message',
+            'From Name <from@example.com>',
+            ['Recipient #1 <to1@example.com>', 'to2@example.com'],
+            cc=['Carbon Copy <cc1@example.com>', 'cc2@example.com'],
+            bcc=['Blind Copy <bcc@example.com>'])
+        msg.send()
         data = self.get_api_call_data()
         self.assertEqual(data['message']['from_name'], "From Name")
         self.assertEqual(data['message']['from_email'], "from@example.com")
-        self.assertEqual(len(data['message']['to']), 2)
+        self.assertEqual(len(data['message']['to']), 4)
         self.assertEqual(data['message']['to'][0]['name'], "Recipient #1")
         self.assertEqual(data['message']['to'][0]['email'], "to1@example.com")
         self.assertEqual(data['message']['to'][1]['name'], "")
         self.assertEqual(data['message']['to'][1]['email'], "to2@example.com")
+        self.assertEqual(data['message']['to'][2]['name'], "Carbon Copy")
+        self.assertEqual(data['message']['to'][2]['email'], "cc1@example.com")
+        self.assertEqual(data['message']['to'][3]['name'], "")
+        self.assertEqual(data['message']['to'][3]['email'], "cc2@example.com")
+        # Mandrill only supports email, not name, for bcc:
+        self.assertEqual(data['message']['bcc_address'], "bcc@example.com")
 
     def test_email_message(self):
         email = mail.EmailMessage('Subject', 'Body goes here',
             'from@example.com',
             ['to1@example.com', 'Also To <to2@example.com>'],
-            bcc=['bcc1@example.com', 'Also BCC <bcc2@example.com>'],
+            bcc=['bcc@example.com'],
             cc=['cc1@example.com', 'Also CC <cc2@example.com>'],
             headers={'Reply-To': 'another@example.com',
                      'X-MyHeader': 'my value'})
@@ -62,16 +72,15 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
         self.assertEqual(data['message']['from_email'], "from@example.com")
         self.assertEqual(data['message']['headers'],
             { 'Reply-To': 'another@example.com', 'X-MyHeader': 'my value' })
-        # Mandrill doesn't have a notion of cc, and only allows a single bcc.
-        # Djrill just treats cc and bcc as though they were "to" addresses,
+        # Mandrill doesn't have a notion of cc.
+        # Djrill just treats cc as additional "to" addresses,
         # which may or may not be what you want.
-        self.assertEqual(len(data['message']['to']), 6)
+        self.assertEqual(len(data['message']['to']), 4)
         self.assertEqual(data['message']['to'][0]['email'], "to1@example.com")
         self.assertEqual(data['message']['to'][1]['email'], "to2@example.com")
         self.assertEqual(data['message']['to'][2]['email'], "cc1@example.com")
         self.assertEqual(data['message']['to'][3]['email'], "cc2@example.com")
-        self.assertEqual(data['message']['to'][4]['email'], "bcc1@example.com")
-        self.assertEqual(data['message']['to'][5]['email'], "bcc2@example.com")
+        self.assertEqual(data['message']['bcc_address'], "bcc@example.com")
 
     def test_html_message(self):
         text_content = 'This is an important message.'
@@ -176,6 +185,14 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
             # Can't send Office docs, either:
             msg.attach(filename="presentation.ppt", content="test",
                 mimetype="application/vnd.ms-powerpoint")
+            msg.send()
+
+    def test_bcc_errors(self):
+        # Mandrill only allows a single bcc address
+        with self.assertRaises(NotSupportedByMandrillError):
+            msg = mail.EmailMessage('Subject', 'Body',
+                'from@example.com', ['to@example.com'],
+                bcc=['bcc1@example.com>', 'bcc2@example.com'])
             msg.send()
 
     def test_mandrill_api_failure(self):
@@ -295,6 +312,7 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
         self.assert_mandrill_called("/messages/send.json")
         data = self.get_api_call_data()
         self.assertFalse('from_name' in data['message'])
+        self.assertFalse('bcc_address' in data['message'])
         self.assertFalse('track_opens' in data['message'])
         self.assertFalse('track_clicks' in data['message'])
         self.assertFalse('auto_text' in data['message'])

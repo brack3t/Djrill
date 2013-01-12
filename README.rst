@@ -138,11 +138,16 @@ Djrill supports most of the functionality of Django's `EmailMessage`_ and
   "image/\*", or "application/pdf" (since that is all Mandrill allows). Any
   other attachment types will raise a ``djrill.NotSupportedByMandrillError``
   exception when you attempt to send the message.
-* Djrill treats all cc and bcc recipients as if they were additional "to"
-  addresses. (Mandrill does not distinguish cc, and only allows a single bcc --
-  which Djrill doesn't use. *Caution:* depending on the ``preserve_recipients``
-  setting, this could result in exposing bcc addresses to all recipients. It's
-  probably best to just avoid bcc.)
+* Djrill treats all "cc" recipients as if they were additional "to" addresses.
+  (Mandrill does not distinguish "cc" from "to".) Note that you will also need
+  to set ``preserve_recipients`` True if you want each recipient to see the
+  other recipients listed in the email headers.
+* Mandrill does not permit more than one "bcc" address. Djrill raises
+  ``djrill.NotSupportedByMandrillError`` if you attempt to send a message with
+  multiple bcc's. (Mandrill's bcc option seems intended primarily for logging.
+  To send a single message to multiple recipients without exposing their
+  email addresses to each other, simply include them all in the "to" list and
+  leave ``preserve_recipients`` set to False.)
 * All email addresses (from, to, cc) can be simple ("email@example.com") or
   can include a display name ("Real Name <email@example.com>").
 * The ``from_email`` must be in one of the approved sending domains in your

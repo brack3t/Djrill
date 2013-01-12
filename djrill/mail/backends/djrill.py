@@ -105,10 +105,11 @@ class DjrillBackend(BaseEmailBackend):
         sender = sanitize_address(message.from_email, message.encoding)
         from_name, from_email = parseaddr(sender)
 
-        recipients = [parseaddr(sanitize_address(addr, message.encoding))
-                      for addr in message.recipients()]
+        recipients = message.to + message.cc # message.recipients() w/o bcc
+        parsed_rcpts = [parseaddr(sanitize_address(addr, message.encoding))
+                        for addr in recipients]
         to_list = [{"email": to_email, "name": to_name}
-                   for (to_name, to_email) in recipients]
+                   for (to_name, to_email) in parsed_rcpts]
 
         msg_dict = {
             "text": message.body,
@@ -118,6 +119,15 @@ class DjrillBackend(BaseEmailBackend):
         }
         if from_name:
             msg_dict["from_name"] = from_name
+
+        if len(message.bcc) == 1:
+            bcc = message.bcc[0]
+            _, bcc_addr = parseaddr(sanitize_address(bcc, message.encoding))
+            msg_dict['bcc_address'] = bcc_addr
+        elif len(message.bcc) > 1:
+            raise NotSupportedByMandrillError(
+                "Too many bcc addresses (%d) - Mandrill only allows one"
+                % len(message.bcc))
 
         if message.extra_headers:
             for k in message.extra_headers.keys():
