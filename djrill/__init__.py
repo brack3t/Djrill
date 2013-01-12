@@ -2,6 +2,8 @@ from django.conf import settings
 from django.contrib.admin.sites import AdminSite
 from django.utils.text import capfirst
 
+from djrill.exceptions import MandrillAPIError, NotSupportedByMandrillError
+
 VERSION = (0, 2, 0)
 __version__ = '.'.join([str(x) for x in VERSION])
 
@@ -9,8 +11,6 @@ __version__ = '.'.join([str(x) for x in VERSION])
 # You can override in settings.py, if desired.
 MANDRILL_API_URL = getattr(settings, "MANDRILL_API_URL",
     "http://mandrillapp.com/api/1.0")
-
-from exceptions import MandrillAPIError, NotSupportedByMandrillError
 
 class DjrillAdminSite(AdminSite):
     index_template = "djrill/index.html"
