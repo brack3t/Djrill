@@ -5,18 +5,14 @@ from django.core.mail.message import sanitize_address, DEFAULT_ATTACHMENT_MIME_T
 from django.utils import simplejson as json
 
 # Oops: this file has the same name as our app, and cannot be renamed.
-#from djrill import MandrillAPIError, NotSupportedByMandrillError
-from ... import MandrillAPIError, NotSupportedByMandrillError
+#from djrill import MANDRILL_API_URL, MandrillAPIError, NotSupportedByMandrillError
+from ... import MANDRILL_API_URL, MandrillAPIError, NotSupportedByMandrillError
 
 from base64 import b64encode
 from email.mime.base import MIMEBase
 from email.utils import parseaddr
 import mimetypes
 import requests
-
-# This backend was developed against this API endpoint.
-# You can override in settings.py, if desired.
-MANDRILL_API_URL = "http://mandrillapp.com/api/1.0"
 
 DjrillBackendHTTPError = MandrillAPIError # Backwards-compat Djrill<=0.2.0
 
@@ -31,7 +27,7 @@ class DjrillBackend(BaseEmailBackend):
         """
         super(DjrillBackend, self).__init__(**kwargs)
         self.api_key = getattr(settings, "MANDRILL_API_KEY", None)
-        self.api_url = getattr(settings, "MANDRILL_API_URL", MANDRILL_API_URL)
+        self.api_url = MANDRILL_API_URL
 
         if not self.api_key:
             raise ImproperlyConfigured("You have not set your mandrill api key "
