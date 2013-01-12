@@ -123,35 +123,36 @@ Django EmailMessage Support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Djrill supports most of the functionality of Django's `EmailMessage`_ and
-`EmailMultiAlternatives`_ classes. Some limitations:
+`EmailMultiAlternatives`_ classes. Some notes and limitations:
 
-* Djrill accepts additional headers, but only ``Reply-To`` and ``X-*`` (since
-  that is all that Mandrill accepts). Any other extra headers will raise a
-  ``djrill.NotSupportedByMandrillError`` exception when you attempt to send the
+* **Display Names:** All email addresses (from, to, cc) can be simple
+  ("email@example.com") or can include a display name
+  ("Real Name <email@example.com>").
+* **From Address:** The ``from_email`` must be in one of the approved sending
+  domains in your Mandrill account.
+* **CC Recipients:** Djrill treats all "cc" recipients as if they were
+  additional "to" addresses. (Mandrill does not distinguish "cc" from "to".)
+  Note that you will also need to set ``preserve_recipients`` True if you want
+  each recipient to see the other recipients listed in the email headers.
+* **BCC Recipients:** Mandrill does not permit more than one "bcc" address.
+  Djrill raises ``djrill.NotSupportedByMandrillError`` if you attempt to send a
+  message with multiple bcc's. (Mandrill's bcc option seems intended primarily
+  for logging. To send a single message to multiple recipients without exposing
+  their email addresses to each other, simply include them all in the "to" list
+  and leave ``preserve_recipients`` set to False.)
+* **Attachments:** Djrill includes a message's attachments, but only with the
+  mimetypes "text/\*", "image/\*", or "application/pdf" (since that is all
+  Mandrill allows). Any other attachment types will raise
+  ``djrill.NotSupportedByMandrillError`` when you attempt to send the message.
+* **Headers:** Djrill accepts additional headers, but only ``Reply-To`` and
+  ``X-*`` (since that is all that Mandrill accepts). Any other extra headers
+  will raise ``djrill.NotSupportedByMandrillError`` when you attempt to send the
   message.
-* Djrill requires that if you ``attach_alternative`` to a message, there must be
-  only one alternative type, and it must be text/html. Otherwise, Djrill will
-  raise a ``djrill.NotSupportedByMandrillError`` exception when you attempt to
-  send the message. (Mandrill doesn't support sending multiple html alternative
-  parts, or any non-html alternatives.)
-* Djrill includes a message's attachments, but only with the mimetypes "text/\*",
-  "image/\*", or "application/pdf" (since that is all Mandrill allows). Any
-  other attachment types will raise a ``djrill.NotSupportedByMandrillError``
-  exception when you attempt to send the message.
-* Djrill treats all "cc" recipients as if they were additional "to" addresses.
-  (Mandrill does not distinguish "cc" from "to".) Note that you will also need
-  to set ``preserve_recipients`` True if you want each recipient to see the
-  other recipients listed in the email headers.
-* Mandrill does not permit more than one "bcc" address. Djrill raises
-  ``djrill.NotSupportedByMandrillError`` if you attempt to send a message with
-  multiple bcc's. (Mandrill's bcc option seems intended primarily for logging.
-  To send a single message to multiple recipients without exposing their
-  email addresses to each other, simply include them all in the "to" list and
-  leave ``preserve_recipients`` set to False.)
-* All email addresses (from, to, cc) can be simple ("email@example.com") or
-  can include a display name ("Real Name <email@example.com>").
-* The ``from_email`` must be in one of the approved sending domains in your
-  Mandrill account.
+* **Alternative Parts:** Djrill requires that if you ``attach_alternative`` to a
+  message, there must be only one alternative part, and it must be text/html.
+  Otherwise, Djrill will raise ``djrill.NotSupportedByMandrillError`` when you
+  attempt to send the message. (Mandrill doesn't support sending multiple html
+  alternative parts, or any non-html alternatives.)
 
 Mandrill Message Options
 ~~~~~~~~~~~~~~~~~~~~~~~~
