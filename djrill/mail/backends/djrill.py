@@ -1,31 +1,20 @@
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.mail.backends.base import BaseEmailBackend
-from django.core.mail.message import sanitize_address
+from django.core.mail.message import sanitize_address, DEFAULT_ATTACHMENT_MIME_TYPE
 from django.utils import simplejson as json
 
+# Oops: this file has the same name as our app, and cannot be renamed.
+#from djrill import MANDRILL_API_URL, MandrillAPIError, NotSupportedByMandrillError
+from ... import MANDRILL_API_URL, MandrillAPIError, NotSupportedByMandrillError
+
+from base64 import b64encode
+from email.mime.base import MIMEBase
 from email.utils import parseaddr
+import mimetypes
 import requests
 
-# This backend was developed against this API endpoint.
-# You can override in settings.py, if desired.
-MANDRILL_API_URL = "http://mandrillapp.com/api/1.0"
-
-class DjrillBackendHTTPError(Exception):
-    """An exception that will turn into an HTTP error response."""
-    def __init__(self, status_code, response=None, log_message=None):
-        super(DjrillBackendHTTPError, self).__init__()
-        self.status_code = status_code
-        self.response = response # often contains helpful Mandrill info
-        self.log_message = log_message
-
-    def __str__(self):
-        message = "DjrillBackendHTTP %d" % self.status_code
-        if self.log_message:
-            return message + " " + self.log_message
-        else:
-            return message
-
+DjrillBackendHTTPError = MandrillAPIError # Backwards-compat Djrill<=0.2.0
 
 class DjrillBackend(BaseEmailBackend):
     """
@@ -38,13 +27,14 @@ class DjrillBackend(BaseEmailBackend):
         """
         super(DjrillBackend, self).__init__(**kwargs)
         self.api_key = getattr(settings, "MANDRILL_API_KEY", None)
-        self.api_url = getattr(settings, "MANDRILL_API_URL", MANDRILL_API_URL)
+        self.api_url = MANDRILL_API_URL
 
         if not self.api_key:
             raise ImproperlyConfigured("You have not set your mandrill api key "
                 "in the settings.py file.")
 
-        self.api_action = self.api_url + "/messages/send.json"
+        self.api_send = self.api_url + "/messages/send.json"
+        self.api_send_template = self.api_url + "/messages/send-template.json"
 
     def send_messages(self, email_messages):
         if not email_messages:
@@ -68,21 +58,34 @@ class DjrillBackend(BaseEmailBackend):
             self._add_mandrill_options(message, msg_dict)
             if getattr(message, 'alternatives', None):
                 self._add_alternatives(message, msg_dict)
-        except ValueError:
+            self._add_attachments(message, msg_dict)
+        except NotSupportedByMandrillError:
             if not self.fail_silently:
                 raise
             return False
 
-        djrill_it = requests.post(self.api_action, data=json.dumps({
+        api_url = self.api_send
+        api_params = {
             "key": self.api_key,
             "message": msg_dict
-        }))
+        }
 
-        if djrill_it.status_code != 200:
+        # check if template is set in message to send it via
+        # api url: /messages/send-template.json
+        if hasattr(message, 'template_name'):
+            api_url = self.api_send_template
+            api_params['template_name'] = message.template_name
+            if hasattr(message, 'template_content'):
+                api_params['template_content'] = \
+                    self._expand_merge_vars(message.template_content)
+
+        response = requests.post(api_url, data=json.dumps(api_params))
+
+        if response.status_code != 200:
             if not self.fail_silently:
-                raise DjrillBackendHTTPError(
-                    status_code=djrill_it.status_code,
-                    response = djrill_it,
+                raise MandrillAPIError(
+                    status_code=response.status_code,
+                    response=response,
                     log_message="Failed to send a message to %s, from %s" %
                                 (msg_dict['to'], msg_dict['from_email']))
             return False
@@ -95,16 +98,18 @@ class DjrillBackend(BaseEmailBackend):
         use by default. Standard text email messages sent through Django will
         still work through Mandrill.
 
-        Raises ValueError for any standard EmailMessage features that cannot be
-        accurately communicated to Mandrill (e.g., prohibited headers).
+        Raises NotSupportedByMandrillError for any standard EmailMessage
+        features that cannot be accurately communicated to Mandrill
+        (e.g., prohibited headers).
         """
         sender = sanitize_address(message.from_email, message.encoding)
         from_name, from_email = parseaddr(sender)
 
-        recipients = [parseaddr(sanitize_address(addr, message.encoding))
-                      for addr in message.recipients()]
+        recipients = message.to + message.cc # message.recipients() w/o bcc
+        parsed_rcpts = [parseaddr(sanitize_address(addr, message.encoding))
+                        for addr in recipients]
         to_list = [{"email": to_email, "name": to_name}
-                   for (to_name, to_email) in recipients]
+                   for (to_name, to_email) in parsed_rcpts]
 
         msg_dict = {
             "text": message.body,
@@ -115,11 +120,21 @@ class DjrillBackend(BaseEmailBackend):
         if from_name:
             msg_dict["from_name"] = from_name
 
+        if len(message.bcc) == 1:
+            bcc = message.bcc[0]
+            _, bcc_addr = parseaddr(sanitize_address(bcc, message.encoding))
+            msg_dict['bcc_address'] = bcc_addr
+        elif len(message.bcc) > 1:
+            raise NotSupportedByMandrillError(
+                "Too many bcc addresses (%d) - Mandrill only allows one"
+                % len(message.bcc))
+
         if message.extra_headers:
             for k in message.extra_headers.keys():
                 if k != "Reply-To" and not k.startswith("X-"):
-                    raise ValueError("Invalid message header '%s' - Mandrill "
-                                     "only allows Reply-To and X-* headers" % k)
+                    raise NotSupportedByMandrillError(
+                        "Invalid message header '%s' - Mandrill "
+                        "only allows Reply-To and X-* headers" % k)
             msg_dict["headers"] = message.extra_headers
 
         return msg_dict
@@ -175,14 +190,74 @@ class DjrillBackend(BaseEmailBackend):
         the HTML output for your email.
         """
         if len(message.alternatives) > 1:
-            raise ValueError(
+            raise NotSupportedByMandrillError(
                 "Too many alternatives attached to the message. "
                 "Mandrill only accepts plain text and html emails.")
 
         (content, mimetype) = message.alternatives[0]
         if mimetype != 'text/html':
-            raise ValueError("Invalid alternative mimetype '%s'. "
-                             "Mandrill only accepts plain text and html emails."
-                             % mimetype)
+            raise NotSupportedByMandrillError(
+                "Invalid alternative mimetype '%s'. "
+                "Mandrill only accepts plain text and html emails."
+                % mimetype)
 
         msg_dict['html'] = content
+
+    def _add_attachments(self, message, msg_dict):
+        """Extend msg_dict to include any attachments in message"""
+        if message.attachments:
+            str_encoding = message.encoding or settings.DEFAULT_CHARSET
+            attachments = [
+                self._make_mandrill_attachment(attachment, str_encoding)
+                for attachment in message.attachments
+            ]
+            if len(attachments) > 0:
+                msg_dict['attachments'] = attachments
+
+    def _make_mandrill_attachment(self, attachment, str_encoding=None):
+        """Return a Mandrill dict for an EmailMessage.attachments item"""
+        # Note that an attachment can be either a tuple of (filename, content,
+        # mimetype) or a MIMEBase object. (Also, both filename and mimetype may
+        # be missing.)
+        if isinstance(attachment, MIMEBase):
+            filename = attachment.get_filename()
+            content = attachment.get_payload(decode=True)
+            mimetype = attachment.get_content_type()
+        else:
+            (filename, content, mimetype) = attachment
+
+        # Guess missing mimetype, borrowed from
+        # django.core.mail.EmailMessage._create_attachment()
+        if mimetype is None and filename is not None:
+            mimetype, _ = mimetypes.guess_type(filename)
+        if mimetype is None:
+            mimetype = DEFAULT_ATTACHMENT_MIME_TYPE
+
+        # Mandrill silently filters attachments with unsupported mimetypes.
+        # This can be confusing, so we raise an exception instead.
+        (main, sub) = mimetype.lower().split('/')
+        attachment_allowed = (
+            main == 'text' or main == 'image'
+            or (main == 'application' and sub == 'pdf'))
+        if not attachment_allowed:
+            raise NotSupportedByMandrillError(
+                "Invalid attachment mimetype '%s'. Mandrill only supports "
+                "text/*, image/*, and application/pdf attachments."
+                % mimetype)
+
+        try:
+            content_b64 = b64encode(content)
+        except TypeError:
+            # Python 3 b64encode requires bytes. Convert str attachment:
+            if isinstance(content, str):
+                content_bytes = content.encode(str_encoding)
+                content_b64 = b64encode(content_bytes)
+            else:
+                raise
+
+        return {
+            'type': mimetype,
+            'name': filename or "",
+            'content': content_b64.decode('ascii'),
+        }
+

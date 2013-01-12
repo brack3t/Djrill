@@ -1,9 +1,16 @@
+from django.conf import settings
 from django.contrib.admin.sites import AdminSite
 from django.utils.text import capfirst
 
-VERSION = (0, 2, 0)
+from djrill.exceptions import MandrillAPIError, NotSupportedByMandrillError
+
+VERSION = (0, 3, 0)
 __version__ = '.'.join([str(x) for x in VERSION])
 
+# This backend was developed against this API endpoint.
+# You can override in settings.py, if desired.
+MANDRILL_API_URL = getattr(settings, "MANDRILL_API_URL",
+    "http://mandrillapp.com/api/1.0")
 
 class DjrillAdminSite(AdminSite):
     index_template = "djrill/index.html"
@@ -31,6 +38,7 @@ class DjrillAdminSite(AdminSite):
             from django.conf.urls import include, patterns, url
         except ImportError:
             # Django 1.3
+            #noinspection PyDeprecation
             from django.conf.urls.defaults import include, patterns, url
         for path, view, name, display_name in self.custom_views:
             urls += patterns('',

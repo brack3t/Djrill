@@ -1,14 +1,19 @@
 from setuptools import setup
 
+with open('LICENSE') as file:
+    license_text = file.read()
+with open('README.rst') as file:
+    long_description = file.read()
+
 setup(
     name="djrill",
-    version="0.2.0",
+    version="0.3.0",
     description='Django email backend for Mandrill.',
     keywords="django, mailchimp, mandrill, email, email backend",
     author="Kenneth Love <kenneth@brack3t.com>, Chris Jones <chris@brack3t.com>",
     author_email="kenneth@brack3t.com",
     url="https://github.com/brack3t/Djrill/",
-    license="BSD",
+    license=license_text,
     packages=["djrill"],
     zip_safe=False,
     install_requires=["requests", "django"],
@@ -22,14 +27,5 @@ setup(
         "Framework :: Django",
         "Environment :: Web Environment",
     ],
-    long_description="""\
-Djrill is an email backend for Django users who want to take advantage of the
-`Mandrill <http://mandrill.com>`_ transactional email service from MailChimp.
-
-In general, Djrill "just works" with Django's built-in ``django.core.mail``
-package. You can also take advantage of Mandrill-specific features like tags,
-metadata, and tracking. An optional Django admin interface is included.
-
-Full details are on the `project page <https://github.com/brack3t/Djrill>`_.
-""",
+    long_description=long_description,
 )
