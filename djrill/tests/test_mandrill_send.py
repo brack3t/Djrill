@@ -115,19 +115,23 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
         email.attach(mimeattachment)
 
         email.send()
+
+        def decode_att(att):
+            return b64decode(att.encode('ascii'))
+
         data = self.get_api_call_data()
         attachments = data['message']['attachments']
         self.assertEqual(len(attachments), 3)
         self.assertEqual(attachments[0]["type"], "text/plain")
         self.assertEqual(attachments[0]["name"], "test.txt")
-        self.assertEqual(b64decode(attachments[0]["content"]).decode('ascii'),
+        self.assertEqual(decode_att(attachments[0]["content"]).decode('ascii'),
             text_content)
         self.assertEqual(attachments[1]["type"], "image/png") # inferred
         self.assertEqual(attachments[1]["name"], "test.png")
-        self.assertEqual(b64decode(attachments[1]["content"]), png_content)
+        self.assertEqual(decode_att(attachments[1]["content"]), png_content)
         self.assertEqual(attachments[2]["type"], "application/pdf")
         self.assertEqual(attachments[2]["name"], "") # none
-        self.assertEqual(b64decode(attachments[2]["content"]), pdf_content)
+        self.assertEqual(decode_att(attachments[2]["content"]), pdf_content)
 
     def test_extra_header_errors(self):
         email = mail.EmailMessage('Subject', 'Body', 'from@example.com',
