@@ -4,7 +4,7 @@ from django.utils.text import capfirst
 
 from djrill.exceptions import MandrillAPIError, NotSupportedByMandrillError
 
-VERSION = (0, 2, 0)
+VERSION = (0, 3, 0)
 __version__ = '.'.join([str(x) for x in VERSION])
 
 # This backend was developed against this API endpoint.

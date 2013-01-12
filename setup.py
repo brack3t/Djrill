@@ -7,7 +7,7 @@ with open('README.rst') as file:
 
 setup(
     name="djrill",
-    version="0.2.0",
+    version="0.3.0",
     description='Django email backend for Mandrill.',
     keywords="django, mailchimp, mandrill, email, email backend",
     author="Kenneth Love <kenneth@brack3t.com>, Chris Jones <chris@brack3t.com>",

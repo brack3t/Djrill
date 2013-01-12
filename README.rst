@@ -170,7 +170,7 @@ struct can be set directly on an ``EmailMessage`` (or subclass) object:
   default in your Mandrill account sending options.)
 * ``auto_text`` - Boolean
 * ``url_strip_qs`` - Boolean
-* ``preserve_recipients`` - Boolean -- see the caution about bcc addresses above
+* ``preserve_recipients`` - Boolean
 * ``global_merge_vars`` - a dict -- e.g.,
   ``{ 'company': "ACME", 'offer': "10% off" }``
 * ``recipient_merge_vars`` - a dict whose keys are the recipient email addresses
@@ -282,6 +282,19 @@ rest of this project.)
 
 Release Notes
 -------------
+
+Version 0.3.0:
+
+* Attachments are now supported
+* Mandrill templates are now supported
+* A bcc address is now passed to Mandrill as bcc, rather than being lumped in
+  with the "to" recipients. Multiple bcc recipients will now raise an exception,
+  as Mandrill only allows one.
+* Python 3 support (with Django 1.5)
+* Exceptions should be more useful: ``djrill.NotSupportedByMandrillError``
+  replaces generic ValueError; ``djrill.MandrillAPIError`` replaces
+  DjrillBackendHTTPError, and is now derived from requests.HTTPError. (New
+  exceptions are backwards compatible with old ones for existing code.)
 
 Version 0.2.0:
 
