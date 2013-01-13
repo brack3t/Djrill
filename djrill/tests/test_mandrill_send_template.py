@@ -18,13 +18,13 @@ class DjrillMandrillSendTemplateTests(DjrillBackendMockAPITestCase):
         self.assert_mandrill_called("/messages/send-template.json")
         data = self.get_api_call_data()
         self.assertEqual(data['template_name'], "PERSONALIZED_SPECIALS")
-        # Djrill expands simple python dicts into the more-verbose name/value
+        # Djrill expands simple python dicts into the more-verbose name/content
         # structures the Mandrill API uses
         self.assertEqual(data['template_content'],
             [ {'name': "HEADLINE",
-               'value': "<h1>Specials Just For *|FNAME|*</h1>"},
+               'content': "<h1>Specials Just For *|FNAME|*</h1>"},
               {'name': "OFFER_BLOCK",
-               'value': "<p><em>Half off</em> all fruit</p>"} ]
+               'content': "<p><em>Half off</em> all fruit</p>"} ]
         )
 
     def test_no_template_content(self):

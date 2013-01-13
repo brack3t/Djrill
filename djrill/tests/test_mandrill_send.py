@@ -249,7 +249,7 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
         self.assertEqual(data['message']['preserve_recipients'], True)
 
     def test_merge(self):
-        # Djrill expands simple python dicts into the more-verbose name/value
+        # Djrill expands simple python dicts into the more-verbose name/content
         # structures the Mandrill API uses
         self.message.global_merge_vars = { 'GREETING': "Hello",
                                            'ACCOUNT_TYPE': "Basic" }
@@ -261,14 +261,14 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
         self.message.send()
         data = self.get_api_call_data()
         self.assertEqual(data['message']['global_merge_vars'],
-            [ {'name': 'ACCOUNT_TYPE', 'value': "Basic"},
-              {'name': "GREETING", 'value': "Hello"} ])
+            [ {'name': 'ACCOUNT_TYPE', 'content': "Basic"},
+              {'name': "GREETING", 'content': "Hello"} ])
         self.assertEqual(data['message']['merge_vars'],
             [ { 'rcpt': "customer@example.com",
-                'vars': [{ 'name': 'ACCOUNT_TYPE', 'value': "Premium" },
-                         { 'name': "GREETING", 'value': "Dear Customer"}] },
+                'vars': [{ 'name': 'ACCOUNT_TYPE', 'content': "Premium" },
+                         { 'name': "GREETING", 'content': "Dear Customer"}] },
               { 'rcpt': "guest@example.com",
-                'vars': [{ 'name': "GREETING", 'value': "Dear Guest"}] }
+                'vars': [{ 'name': "GREETING", 'content': "Dear Guest"}] }
             ])
 
     def test_tags(self):
@@ -291,7 +291,7 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
         self.message.metadata = { 'batch_num': "12345", 'type': "Receipts" }
         self.message.recipient_metadata = {
             # Djrill expands simple python dicts into the more-verbose
-            # name/value structures the Mandrill API uses
+            # rcpt/values structures the Mandrill API uses
             "customer@example.com": { 'cust_id': "67890", 'order_id': "54321" },
             "guest@example.com": { 'cust_id': "94107", 'order_id': "43215" }
         }

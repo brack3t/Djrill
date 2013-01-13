@@ -173,12 +173,12 @@ class DjrillBackend(BaseEmailBackend):
 
 
     def _expand_merge_vars(self, vars):
-        """Convert a Python dict to an array of name-value used by Mandrill.
+        """Convert a Python dict to an array of name-content used by Mandrill.
 
-        { name: value, ... } --> [ {'name': name, 'value': value }, ... ]
+        { name: value, ... } --> [ {'name': name, 'content': value }, ... ]
         """
         # For testing reproducibility, we sort the keys
-        return [ { 'name': name, 'value': vars[name] }
+        return [ { 'name': name, 'content': vars[name] }
                  for name in sorted(vars.keys()) ]
 
     def _add_alternatives(self, message, msg_dict):
