@@ -207,29 +207,46 @@ class DjrillBackend(BaseEmailBackend):
         """Extend msg_dict to include any attachments in message"""
         if message.attachments:
             str_encoding = message.encoding or settings.DEFAULT_CHARSET
-            attachments = [
-                self._make_mandrill_attachment(attachment, str_encoding)
-                for attachment in message.attachments
-            ]
-            if len(attachments) > 0:
-                msg_dict['attachments'] = attachments
+            mandrill_attachments = []
+            mandrill_embedded_images = []
+            for attachment in message.attachments:
+                att_dict, is_embedded = self._make_mandrill_attachment(attachment, str_encoding)
+                if is_embedded:
+                    mandrill_embedded_images.append(att_dict)
+                else:
+                    mandrill_attachments.append(att_dict)
+            if len(mandrill_attachments) > 0:
+                msg_dict['attachments'] = mandrill_attachments
+            if len(mandrill_embedded_images) > 0:
+                msg_dict['images'] = mandrill_embedded_images
 
     def _make_mandrill_attachment(self, attachment, str_encoding=None):
-        """Return a Mandrill dict for an EmailMessage.attachments item"""
+        """Returns EmailMessage.attachments item formatted for sending with Mandrill.
+
+        Returns mandrill_dict, is_embedded_image:
+        mandrill_dict: {"type":..., "name":..., "content":...}
+        is_embedded_image: True if the attachment should instead be handled as an inline image.
+
+        """
         # Note that an attachment can be either a tuple of (filename, content,
         # mimetype) or a MIMEBase object. (Also, both filename and mimetype may
         # be missing.)
+        is_embedded_image = False
         if isinstance(attachment, MIMEBase):
-            filename = attachment.get_filename()
+            name = attachment.get_filename()
             content = attachment.get_payload(decode=True)
             mimetype = attachment.get_content_type()
+            # Treat image attachments that have content ids as embedded:
+            if attachment.get_content_maintype() == "image" and attachment["Content-ID"] is not None:
+                is_embedded_image = True
+                name = attachment["Content-ID"]
         else:
-            (filename, content, mimetype) = attachment
+            (name, content, mimetype) = attachment
 
-        # Guess missing mimetype, borrowed from
+        # Guess missing mimetype from filename, borrowed from
         # django.core.mail.EmailMessage._create_attachment()
-        if mimetype is None and filename is not None:
-            mimetype, _ = mimetypes.guess_type(filename)
+        if mimetype is None and name is not None:
+            mimetype, _ = mimetypes.guess_type(name)
         if mimetype is None:
             mimetype = DEFAULT_ATTACHMENT_MIME_TYPE
 
@@ -243,9 +260,10 @@ class DjrillBackend(BaseEmailBackend):
             else:
                 raise
 
-        return {
+        mandrill_attachment = {
             'type': mimetype,
-            'name': filename or "",
+            'name': name or "",
             'content': content_b64.decode('ascii'),
         }
+        return mandrill_attachment, is_embedded_image
 

@@ -1,16 +1,38 @@
 from base64 import b64decode
 from email.mime.base import MIMEBase
+from email.mime.image import MIMEImage
+import os
 
 from django.conf import settings
 from django.core import mail
 from django.core.exceptions import ImproperlyConfigured
+from django.core.mail import make_msgid
 
 from djrill import MandrillAPIError, NotSupportedByMandrillError
 from djrill.tests.mock_backend import DjrillBackendMockAPITestCase
 
 
+def decode_att(att):
+    """Returns the original data from base64-encoded attachment content"""
+    return b64decode(att.encode('ascii'))
+
+
 class DjrillBackendTests(DjrillBackendMockAPITestCase):
     """Test Djrill backend support for Django mail wrappers"""
+
+    sample_image_filename = "sample_image.png"
+
+    def sample_image_pathname(self):
+        """Returns path to an actual image file in the tests directory"""
+        test_dir = os.path.dirname(os.path.abspath(__file__))
+        path = os.path.join(test_dir, self.sample_image_filename)
+        return path
+
+    def sample_image_content(self):
+        """Returns contents of an actual image file from the tests directory"""
+        filename = self.sample_image_pathname()
+        with open(filename, "rb") as f:
+            return f.read()
 
     def test_send_mail(self):
         mail.send_mail('Subject here', 'Here is the message.',
@@ -97,12 +119,10 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
         self.assertFalse('attachments' in data['message'])
 
     def test_attachments(self):
-        email = mail.EmailMessage('Subject', 'Body goes here',
-            'from@example.com', ['to1@example.com'])
+        email = mail.EmailMessage('Subject', 'Body goes here', 'from@example.com', ['to1@example.com'])
 
         text_content = "* Item one\n* Item two\n* Item three"
-        email.attach(filename="test.txt", content=text_content,
-            mimetype="text/plain")
+        email.attach(filename="test.txt", content=text_content, mimetype="text/plain")
 
         # Should guess mimetype if not provided...
         png_content = b"PNG\xb4 pretend this is the contents of a png file"
@@ -120,27 +140,70 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
                      mimetype="application/vnd.ms-powerpoint")
 
         email.send()
-
-        def decode_att(att):
-            return b64decode(att.encode('ascii'))
-
         data = self.get_api_call_data()
         attachments = data['message']['attachments']
         self.assertEqual(len(attachments), 4)
         self.assertEqual(attachments[0]["type"], "text/plain")
         self.assertEqual(attachments[0]["name"], "test.txt")
-        self.assertEqual(decode_att(attachments[0]["content"]).decode('ascii'),
-            text_content)
-        self.assertEqual(attachments[1]["type"], "image/png") # inferred
+        self.assertEqual(decode_att(attachments[0]["content"]).decode('ascii'), text_content)
+        self.assertEqual(attachments[1]["type"], "image/png")  # inferred from filename
         self.assertEqual(attachments[1]["name"], "test.png")
         self.assertEqual(decode_att(attachments[1]["content"]), png_content)
         self.assertEqual(attachments[2]["type"], "application/pdf")
-        self.assertEqual(attachments[2]["name"], "") # none
+        self.assertEqual(attachments[2]["name"], "")  # none
         self.assertEqual(decode_att(attachments[2]["content"]), pdf_content)
-        self.assertEqual(attachments[3]["type"],
-                         "application/vnd.ms-powerpoint")
+        self.assertEqual(attachments[3]["type"], "application/vnd.ms-powerpoint")
         self.assertEqual(attachments[3]["name"], "presentation.ppt")
         self.assertEqual(decode_att(attachments[3]["content"]), ppt_content)
+        # Make sure the image attachment is not treated as embedded:
+        self.assertFalse('images' in data['message'])
+
+    def test_embedded_images(self):
+        image_data = self.sample_image_content()  # Read from a png file
+        image_cid = make_msgid("img")  # Content ID per RFC 2045 section 7 (with <...>)
+        image_cid_no_brackets = image_cid[1:-1]  # Without <...>, for use as the <img> tag src
+
+        text_content = 'This has an inline image.'
+        html_content = '<p>This has an <img src="cid:%s" alt="inline" /> image.</p>' % image_cid_no_brackets
+        email = mail.EmailMultiAlternatives('Subject', text_content, 'from@example.com', ['to@example.com'])
+        email.attach_alternative(html_content, "text/html")
+
+        image = MIMEImage(image_data)
+        image.add_header('Content-ID', image_cid)
+        email.attach(image)
+
+        email.send()
+        data = self.get_api_call_data()
+        self.assertEqual(data['message']['text'], text_content)
+        self.assertEqual(data['message']['html'], html_content)
+        self.assertEqual(len(data['message']['images']), 1)
+        self.assertEqual(data['message']['images'][0]["type"], "image/png")
+        self.assertEqual(data['message']['images'][0]["name"], image_cid)
+        self.assertEqual(decode_att(data['message']['images'][0]["content"]), image_data)
+        # Make sure neither the html nor the inline image is treated as an attachment:
+        self.assertFalse('attachments' in data['message'])
+
+    def test_attached_images(self):
+        image_data = self.sample_image_content()
+
+        email = mail.EmailMultiAlternatives('Subject', 'Message', 'from@example.com', ['to@example.com'])
+        email.attach_file(self.sample_image_pathname())  # option 1: attach as a file
+
+        image = MIMEImage(image_data)  # option 2: construct the MIMEImage and attach it directly
+        email.attach(image)
+
+        email.send()
+        data = self.get_api_call_data()
+        attachments = data['message']['attachments']
+        self.assertEqual(len(attachments), 2)
+        self.assertEqual(attachments[0]["type"], "image/png")
+        self.assertEqual(attachments[0]["name"], self.sample_image_filename)
+        self.assertEqual(decode_att(attachments[0]["content"]), image_data)
+        self.assertEqual(attachments[1]["type"], "image/png")
+        self.assertEqual(attachments[1]["name"], "")  # unknown -- not attached as file
+        self.assertEqual(decode_att(attachments[1]["content"]), image_data)
+        # Make sure the image attachments are not treated as embedded:
+        self.assertFalse('images' in data['message'])
 
     def test_extra_header_errors(self):
         email = mail.EmailMessage('Subject', 'Body', 'from@example.com',
@@ -321,5 +384,6 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
         self.assertFalse('global_merge_vars' in data['message'])
         self.assertFalse('merge_vars' in data['message'])
         self.assertFalse('recipient_metadata' in data['message'])
+        self.assertFalse('images' in data['message'])
 
 
