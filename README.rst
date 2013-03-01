@@ -144,7 +144,10 @@ Djrill supports most of the functionality of Django's `EmailMessage`_ and
   for logging. To send a single message to multiple recipients without exposing
   their email addresses to each other, simply include them all in the "to" list
   and leave ``preserve_recipients`` set to False.)
-* **Attachments:** Djrill includes a message's attachments.
+* **Attachments:** Djrill includes a message's attachments. Also, if an image
+  attachment has a Content-ID header, Djrill will tell Mandrill to treat that
+  as an embedded image rather than an ordinary attachment. (For an example,
+  see ``test_embedded_images`` in tests/test_mandrill_send.py.)
 * **Headers:** Djrill accepts additional headers, but only ``Reply-To`` and
   ``X-*`` (since that is all that Mandrill accepts). Any other extra headers
   will raise ``djrill.NotSupportedByMandrillError`` when you attempt to send the
