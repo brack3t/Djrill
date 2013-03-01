@@ -114,6 +114,11 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
         mimeattachment.set_payload(pdf_content)
         email.attach(mimeattachment)
 
+        # Attachment type that wasn't supported in early Mandrill releases:
+        ppt_content = b"PPT\xb4 pretend this is a valid ppt file"
+        email.attach(filename="presentation.ppt", content=ppt_content,
+                     mimetype="application/vnd.ms-powerpoint")
+
         email.send()
 
         def decode_att(att):
@@ -121,7 +126,7 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
 
         data = self.get_api_call_data()
         attachments = data['message']['attachments']
-        self.assertEqual(len(attachments), 3)
+        self.assertEqual(len(attachments), 4)
         self.assertEqual(attachments[0]["type"], "text/plain")
         self.assertEqual(attachments[0]["name"], "test.txt")
         self.assertEqual(decode_att(attachments[0]["content"]).decode('ascii'),
@@ -132,6 +137,10 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
         self.assertEqual(attachments[2]["type"], "application/pdf")
         self.assertEqual(attachments[2]["name"], "") # none
         self.assertEqual(decode_att(attachments[2]["content"]), pdf_content)
+        self.assertEqual(attachments[3]["type"],
+                         "application/vnd.ms-powerpoint")
+        self.assertEqual(attachments[3]["name"], "presentation.ppt")
+        self.assertEqual(decode_att(attachments[3]["content"]), ppt_content)
 
     def test_extra_header_errors(self):
         email = mail.EmailMessage('Subject', 'Body', 'from@example.com',
@@ -173,24 +182,6 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
         self.assertFalse(self.mock_post.called,
             msg="Mandrill API should not be called when send fails silently")
         self.assertEqual(sent, 0)
-
-    def test_attachment_errors(self):
-        # Mandrill silently strips attachments that aren't text/*, image/*,
-        # or application/pdf. We want to alert the Djrill user:
-        with self.assertRaises(NotSupportedByMandrillError):
-            msg = mail.EmailMessage('Subject', 'Body',
-                'from@example.com', ['to@example.com'])
-            # This is the default mimetype, but won't work with Mandrill:
-            msg.attach(content="test", mimetype="application/octet-stream")
-            msg.send()
-
-        with self.assertRaises(NotSupportedByMandrillError):
-            msg = mail.EmailMessage('Subject', 'Body',
-                'from@example.com', ['to@example.com'])
-            # Can't send Office docs, either:
-            msg.attach(filename="presentation.ppt", content="test",
-                mimetype="application/vnd.ms-powerpoint")
-            msg.send()
 
     def test_bcc_errors(self):
         # Mandrill only allows a single bcc address
