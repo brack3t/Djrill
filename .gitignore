@@ -3,5 +3,6 @@
 *.pyc
 *.egg-info
 dist/
+docs/_build/
 TODO.txt
 local.py
