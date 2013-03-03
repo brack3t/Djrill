@@ -1,4 +1,5 @@
 from setuptools import setup
+execfile('djrill/_version.py')
 
 with open('LICENSE') as file:
     license_text = file.read()
@@ -7,7 +8,7 @@ with open('README.rst') as file:
 
 setup(
     name="djrill",
-    version="0.3.1",
+    version=__version__,
     description='Django email backend for Mandrill.',
     keywords="django, mailchimp, mandrill, email, email backend",
     author="Kenneth Love <kenneth@brack3t.com>, Chris Jones <chris@brack3t.com>",
