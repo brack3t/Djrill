@@ -23,11 +23,11 @@ execfile('../djrill/_version.py')
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-#needs_sphinx = '1.0'
+needs_sphinx = '1.0'
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = []
+extensions = ['sphinx.ext.intersphinx']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -43,6 +43,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Djrill'
+# noinspection PyShadowingBuiltins
 copyright = u'2013, Djrill contributors (see AUTHORS.txt)'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -69,7 +70,7 @@ release = __version__
 exclude_patterns = ['_build']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
-#default_role = None
+default_role = "py:obj"
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 #add_function_parentheses = True
@@ -242,3 +243,36 @@ texinfo_documents = [
 
 # How to display URL addresses: 'footnote', 'no', or 'inline'.
 #texinfo_show_urls = 'footnote'
+
+
+# -- Options for Intersphinx ------------------------------------------------
+
+intersphinx_mapping = {
+    'python': ('http://docs.python.org/2.7', None),
+    'django': ('http://docs.djangoproject.com/en/dev/', 'http://docs.djangoproject.com/en/dev/_objects/'),
+    'requests': ('http://docs.python-requests.org/en/latest/', None),
+}
+
+
+def setup(app):
+    # Django-specific roles, from https://github.com/django/django/blob/master/docs/_ext/djangodocs.py:
+    app.add_crossref_type(
+        directivename = "setting",
+        rolename      = "setting",
+        indextemplate = "pair: %s; setting",
+    )
+    app.add_crossref_type(
+        directivename = "templatetag",
+        rolename      = "ttag",
+        indextemplate = "pair: %s; template tag"
+    )
+    app.add_crossref_type(
+        directivename = "templatefilter",
+        rolename      = "tfilter",
+        indextemplate = "pair: %s; template filter"
+    )
+    app.add_crossref_type(
+        directivename = "fieldlookup",
+        rolename      = "lookup",
+        indextemplate = "pair: %s; field lookup type",
+    )
