@@ -15,8 +15,6 @@ def long_description_from_readme(rst):
         rst = re.sub(r'/latest', '/v' + __minor_version__, rst)  # ReadTheDocs
     return rst
 
-with open('LICENSE') as f:
-    license_text = f.read()
 with open('README.rst') as f:
     long_description = long_description_from_readme(f.read())
 
@@ -28,7 +26,7 @@ setup(
     author="Kenneth Love <kenneth@brack3t.com>, Chris Jones <chris@brack3t.com>",
     author_email="kenneth@brack3t.com",
     url="https://github.com/brack3t/Djrill/",
-    license=license_text,
+    license="BSD License",
     packages=["djrill"],
     zip_safe=False,
     install_requires=["requests", "django"],
@@ -37,9 +35,16 @@ setup(
     tests_require=["mock"],
     classifiers=[
         "Programming Language :: Python",
+        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.2",
         "License :: OSI Approved :: BSD License",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Framework :: Django",
+        "Framework :: Django :: 1.3",
+        "Framework :: Django :: 1.4",
+        "Framework :: Django :: 1.5",
         "Environment :: Web Environment",
     ],
     long_description=long_description,
