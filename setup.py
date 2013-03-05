@@ -1,15 +1,26 @@
 from setuptools import setup
-execfile('djrill/_version.py')
+import re
+execfile('djrill/_version.py')  # defines __version__, __minor_version__
 
-with open('LICENSE') as file:
-    license_text = file.read()
-with open('README.rst') as file:
-    long_description = file.read()
+
+def long_description_from_readme(rst):
+    # Patch up some rest substitution variables (references only - not definitions):
+    rst = re.sub(r'(?<!\.\. )\|release\|', __version__, rst)
+    rst = re.sub(r'(?<!\.\. )\|version\|', __minor_version__, rst)
+    rst = re.sub(r'(?<!\.\. )\|buildstatus\|', "", rst)  # hide latest-code Travis status indicator
+    rst = re.sub(r'(djrill\.readthedocs\.org/\w+)/latest',
+                 r'\1/' + __version__, rst)  # freeze docs link to this version
+    return rst
+
+with open('LICENSE') as f:
+    license_text = f.read()
+with open('README.rst') as f:
+    long_description = long_description_from_readme(f.read())
 
 setup(
     name="djrill",
     version=__version__,
-    description='Django email backend for Mandrill.',
+    description='Mandrill transactional email for Django',
     keywords="django, mailchimp, mandrill, email, email backend",
     author="Kenneth Love <kenneth@brack3t.com>, Chris Jones <chris@brack3t.com>",
     author_email="kenneth@brack3t.com",
