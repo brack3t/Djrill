@@ -296,10 +296,12 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
 
     def test_message_options(self):
         self.message.auto_text = True
+        self.message.inline_css = True
         self.message.preserve_recipients = True
         self.message.send()
         data = self.get_api_call_data()
         self.assertEqual(data['message']['auto_text'], True)
+        self.assertEqual(data['message']['inline_css'], True)
         self.assertEqual(data['message']['preserve_recipients'], True)
 
     def test_merge(self):
@@ -375,6 +377,7 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
         self.assertFalse('track_opens' in data['message'])
         self.assertFalse('track_clicks' in data['message'])
         self.assertFalse('auto_text' in data['message'])
+        self.assertFalse('inline_css' in data['message'])
         self.assertFalse('url_strip_qs' in data['message'])
         self.assertFalse('tags' in data['message'])
         self.assertFalse('preserve_recipients' in data['message'])
