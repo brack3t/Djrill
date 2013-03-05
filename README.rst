@@ -7,27 +7,14 @@
             (see long_description_from_readme in setup.py)
     You can use docutils 1.0 markup, but *not* any Sphinx additions.
 
-.. These substitution definitions apply in the readme (github) only;
-   they're altered by setup.py for the long_description,
-   and defined differently for the docs includes
-
-.. |release| replace:: (source)
-
-.. |version| replace:: |release|
-
-.. |buildstatus| image:: https://secure.travis-ci.org/brack3t/Djrill.png?branch=master
-                 :target: https://travis-ci.org/brack3t/Djrill
-
 .. default-role:: literal
 
-
-.. _shared-intro:
-   .. This shared-intro section is also included in docs/index.rst
 
 Djrill: Mandrill Transactional Email for Django
 ===============================================
 
-Release |release|
+.. _shared-intro:
+   .. This shared-intro section is also included in docs/index.rst
 
 Djrill integrates the `Mandrill <http://mandrill.com>`_ transactional
 email service into Django.
@@ -41,11 +28,16 @@ package. It includes:
 * An optional Django admin interface
 
 Djrill is released under the BSD license. It is tested against Django 1.3, 1.4, and 1.5
-(including Python 3 support with Django 1.5). |buildstatus|
+(including Python 3 support with Django 1.5).
 
 .. END shared-intro
 
-Resources:
+.. image:: https://secure.travis-ci.org/brack3t/Djrill.png?branch=master
+       :target: https://travis-ci.org/brack3t/Djrill
+       :alt:    build status on Travis-CI
+
+
+**Resources**
 
 * Full documentation: https://djrill.readthedocs.org/en/latest/
 * Package on PyPI: https://pypi.python.org/pypi/djrill

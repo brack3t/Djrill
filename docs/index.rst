@@ -3,20 +3,17 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+Djrill: Mandrill Transactional Email for Django
+===============================================
+
+Version |release|
+
 .. Incorporate the shared-intro section from the root README:
 
 .. include:: ../README.rst
    :start-after: _shared-intro:
    :end-before:  END shared-intro
 
-.. Eliminate the README's Travis build status indicator.
-   (Is there some way we could link to Travis status for the
-   specific |VERSION| of the app being documented here???)
-
-.. |buildstatus| replace:: \
-
-
-.. _toc:
 
 Documentation
 -------------
