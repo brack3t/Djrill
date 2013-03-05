@@ -1,6 +1,11 @@
 from setuptools import setup
 import re
-execfile('djrill/_version.py')  # defines __version__, __minor_version__
+
+# define __version__ and __minor_version__ from djrill/_version.py,
+# but without importing from djrill (which would break setup)
+with open("djrill/_version.py") as f:
+    code = compile(f.read(), "djrill/_version.py", 'exec')
+    exec(code)
 
 
 def long_description_from_readme(rst):

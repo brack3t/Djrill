@@ -18,7 +18,11 @@ import sys, os
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('..'))
 
-execfile('../djrill/_version.py')
+# define __version__ and __minor_version__ from ../djrill/_version.py,
+# but without importing from djrill (which would make docs dependent on Django, etc.)
+with open("../djrill/_version.py") as f:
+    code = compile(f.read(), "../djrill/_version.py", 'exec')
+    exec(code)
 
 # -- General configuration -----------------------------------------------------
 
