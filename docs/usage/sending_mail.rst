@@ -132,6 +132,13 @@ Most of the options from the Mandrill
     ``Boolean``: whether Mandrill should automatically generate a text body from the HTML.
     Default from your Mandrill account settings.
 
+.. attribute:: inline_css
+
+    ``Boolean``: whether Mandrill should inline CSS styles in the HTML.
+    Default from your Mandrill account settings.
+
+    .. versionadded:: 0.4
+
 .. attribute:: url_strip_qs
 
     ``Boolean``: whether Mandrill should ignore any query parameters when aggregating
