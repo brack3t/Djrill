@@ -1,7 +1,17 @@
 Release Notes
 =============
 
-Version 0.3.0:
+Version 0.4:
+
+* Attachments with a Content-ID are now treated as
+  :ref:`embedded images <sending-attachments>`
+* New Mandrill :attr:`inline_css` option is supported
+* Remove limitations on attachment types, to track Mandrill change
+* Documentation is now available on
+  `djrill.readthedocs.org <https://djrill.readthedocs.org>`_
+
+
+Version 0.3:
 
 * :ref:`Attachments <sending-attachments>` are now supported
 * :ref:`Mandrill templates <mandrill-templates>` are now supported
@@ -15,11 +25,11 @@ Version 0.3.0:
   derived from requests.HTTPError.
   (New exceptions are backwards compatible with old ones for existing code.)
 
-Version 0.2.0:
+
+Version 0.2:
 
 * ``MANDRILL_API_URL`` is no longer required in settings.py
 * Earlier versions of Djrill required use of a ``DjrillMessage`` class to
   specify Mandrill-specific options. This is no longer needed -- Mandrill
   options can now be set directly on a Django ``EmailMessage`` object or any
   subclass. (Existing code can continue to use ``DjrillMessage``.)
-
