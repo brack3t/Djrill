@@ -1,3 +1,6 @@
+Djrill: Mandrill Transactional Email for Django
+===============================================
+
 ..  This README is reused in multiple places:
     * Github: project page, exactly as it appears here
     * Docs: shared-intro section gets included in docs/index.rst
@@ -10,11 +13,9 @@
 .. default-role:: literal
 
 
-Djrill: Mandrill Transactional Email for Django
-===============================================
-
 .. _shared-intro:
-   .. This shared-intro section is also included in docs/index.rst
+
+.. This shared-intro section is also included in docs/index.rst
 
 Djrill integrates the `Mandrill <http://mandrill.com>`_ transactional
 email service into Django.
@@ -32,7 +33,7 @@ Djrill is released under the BSD license. It is tested against Django 1.3, 1.4, 
 
 .. END shared-intro
 
-.. image:: https://secure.travis-ci.org/brack3t/Djrill.png?branch=master
+.. image:: https://travis-ci.org/brack3t/Djrill.png?branch=master
        :target: https://travis-ci.org/brack3t/Djrill
        :alt:    build status on Travis-CI
 
@@ -48,7 +49,8 @@ Djrill 1-2-3
 ------------
 
 .. _quickstart:
-   .. This quickstart section is also included in docs/quickstart.rst
+
+.. This quickstart section is also included in docs/quickstart.rst
 
 1. Install Djrill from PyPI:
 
