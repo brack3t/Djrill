@@ -39,7 +39,7 @@ Djrill is released under the BSD license. It is tested against Django 1.3, 1.4, 
 
 **Resources**
 
-* Full documentation: https://djrill.readthedocs.org/en/latest/
+* Full documentation: https://djrill.readthedocs.org/en/master/
 * Package on PyPI: https://pypi.python.org/pypi/djrill
 * Project on Github: https://github.com/brack3t/Djrill
 
@@ -109,5 +109,5 @@ Djrill 1-2-3
 .. END quickstart
 
 
-See the `full documentation <https://djrill.readthedocs.org/en/latest/>`_
+See the `full documentation <https://djrill.readthedocs.org/en/master/>`_
 for more features and options.

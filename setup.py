@@ -12,7 +12,7 @@ def long_description_from_readme(rst):
     # In release branches, freeze some external links to refer to this X.Y version:
     if not "dev" in __version__:
         rst = re.sub(r'branch=master', 'branch=v' + __minor_version__, rst)  # Travis build status
-        rst = re.sub(r'/latest', '/v' + __minor_version__, rst)  # ReadTheDocs
+        rst = re.sub(r'/master', '/v' + __minor_version__, rst)  # ReadTheDocs
     return rst
 
 with open('README.rst') as f:
@@ -42,9 +42,6 @@ setup(
         "License :: OSI Approved :: BSD License",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Framework :: Django",
-        "Framework :: Django :: 1.3",
-        "Framework :: Django :: 1.4",
-        "Framework :: Django :: 1.5",
         "Environment :: Web Environment",
     ],
     long_description=long_description,
