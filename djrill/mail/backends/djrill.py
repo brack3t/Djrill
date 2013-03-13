@@ -2,7 +2,6 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.mail.backends.base import BaseEmailBackend
 from django.core.mail.message import sanitize_address, DEFAULT_ATTACHMENT_MIME_TYPE
-from django.utils import simplejson as json
 
 # Oops: this file has the same name as our app, and cannot be renamed.
 #from djrill import MANDRILL_API_URL, MandrillAPIError, NotSupportedByMandrillError
@@ -11,10 +10,12 @@ from ... import MANDRILL_API_URL, MandrillAPIError, NotSupportedByMandrillError
 from base64 import b64encode
 from email.mime.base import MIMEBase
 from email.utils import parseaddr
+import json
 import mimetypes
 import requests
 
 DjrillBackendHTTPError = MandrillAPIError # Backwards-compat Djrill<=0.2.0
+
 
 class DjrillBackend(BaseEmailBackend):
     """

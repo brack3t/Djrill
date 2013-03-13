@@ -1,8 +1,9 @@
+import json
+
 from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ImproperlyConfigured
-from django.utils import simplejson as json
 from django.views.generic import TemplateView
 
 from djrill import MANDRILL_API_URL

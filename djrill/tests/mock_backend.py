@@ -1,8 +1,9 @@
+import json
 from mock import patch
 
 from django.conf import settings
 from django.test import TestCase
-from django.utils import simplejson as json
+
 
 class DjrillBackendMockAPITestCase(TestCase):
     """TestCase that uses Djrill EmailBackend with a mocked Mandrill API"""
