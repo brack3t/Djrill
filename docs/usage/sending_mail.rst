@@ -109,6 +109,8 @@ Most of the options from the Mandrill
 `message` struct can be set directly on an :class:`~django.core.mail.EmailMessage`
 (or subclass) object:
 
+.. These attributes are in the same order as they appear in the Mandrill API docs...
+
 .. attribute:: track_opens
 
     ``Boolean``: whether Mandrill should enable open-tracking for this message.
@@ -132,6 +134,11 @@ Most of the options from the Mandrill
     ``Boolean``: whether Mandrill should automatically generate a text body from the HTML.
     Default from your Mandrill account settings.
 
+.. attribute:: auto_html
+
+    ``Boolean``: whether Mandrill should automatically generate an HTML body from the plaintext.
+    Default from your Mandrill account settings.
+
 .. attribute:: inline_css
 
     ``Boolean``: whether Mandrill should inline CSS styles in the HTML.
@@ -147,6 +154,18 @@ Most of the options from the Mandrill
 .. attribute:: preserve_recipients
 
     ``Boolean``: whether Mandrill should include all recipients in the "to" message header.
+    Default from your Mandrill account settings.
+
+.. attribute:: tracking_domain
+
+    ``str``: domain Mandrill should use to rewrite tracked links and host tracking pixels
+    for this message. Useful if you send email from multiple domains.
+    Default from your Mandrill account settings.
+
+.. attribute:: signing_domain
+
+    ``str``: domain Mandrill should for DKIM signing and SPF on this message.
+    Useful if you send email from multiple domains.
     Default from your Mandrill account settings.
 
 .. attribute:: global_merge_vars

@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+Version 0.5 (development):
+
+* Support for Mandrill send options :attr:`auto_html`, :attr:`tracking_domain`
+  and :attr:`signing_domain`.
+
+
 Version 0.4:
 
 * Attachments with a Content-ID are now treated as

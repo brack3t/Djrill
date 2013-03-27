@@ -296,13 +296,19 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
 
     def test_message_options(self):
         self.message.auto_text = True
+        self.message.auto_html = True
         self.message.inline_css = True
         self.message.preserve_recipients = True
+        self.message.tracking_domain = "click.example.com"
+        self.message.signing_domain = "example.com"
         self.message.send()
         data = self.get_api_call_data()
         self.assertEqual(data['message']['auto_text'], True)
+        self.assertEqual(data['message']['auto_html'], True)
         self.assertEqual(data['message']['inline_css'], True)
         self.assertEqual(data['message']['preserve_recipients'], True)
+        self.assertEqual(data['message']['tracking_domain'], "click.example.com")
+        self.assertEqual(data['message']['signing_domain'], "example.com")
 
     def test_merge(self):
         # Djrill expands simple python dicts into the more-verbose name/content
@@ -377,10 +383,13 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
         self.assertFalse('track_opens' in data['message'])
         self.assertFalse('track_clicks' in data['message'])
         self.assertFalse('auto_text' in data['message'])
+        self.assertFalse('auto_html' in data['message'])
         self.assertFalse('inline_css' in data['message'])
         self.assertFalse('url_strip_qs' in data['message'])
         self.assertFalse('tags' in data['message'])
         self.assertFalse('preserve_recipients' in data['message'])
+        self.assertFalse('tracking_domain' in data['message'])
+        self.assertFalse('signing_domain' in data['message'])
         self.assertFalse('google_analytics_domains' in data['message'])
         self.assertFalse('google_analytics_campaign' in data['message'])
         self.assertFalse('metadata' in data['message'])

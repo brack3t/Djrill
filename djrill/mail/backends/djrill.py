@@ -145,7 +145,9 @@ class DjrillBackend(BaseEmailBackend):
         # Mandrill attributes that can be copied directly:
         mandrill_attrs = [
             'from_name', # overrides display name parsed from from_email above
-            'track_opens', 'track_clicks', 'auto_text', 'inline_css', 'url_strip_qs',
+            'track_opens', 'track_clicks', 'auto_text', 'auto_html',
+            'inline_css', 'url_strip_qs',
+            'tracking_domain', 'signing_domain',
             'tags', 'preserve_recipients',
             'google_analytics_domains', 'google_analytics_campaign',
             'metadata']
