@@ -172,15 +172,14 @@ class DjrillBackend(BaseEmailBackend):
                 for rcpt in sorted(message.recipient_metadata.keys())
             ]
 
-
-    def _expand_merge_vars(self, vars):
+    def _expand_merge_vars(self, vardict):
         """Convert a Python dict to an array of name-content used by Mandrill.
 
         { name: value, ... } --> [ {'name': name, 'content': value }, ... ]
         """
         # For testing reproducibility, we sort the keys
-        return [ { 'name': name, 'content': vars[name] }
-                 for name in sorted(vars.keys()) ]
+        return [{'name': name, 'content': vardict[name]}
+                for name in sorted(vardict.keys())]
 
     def _add_alternatives(self, message, msg_dict):
         """
