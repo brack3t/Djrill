@@ -90,6 +90,10 @@ class DjrillWebhookSecretMixin(object):
         secret = getattr(settings, 'DJRILL_WEBHOOK_SECRET', None)
         secret_name = getattr(settings, 'DJRILL_WEBHOOK_SECRET_NAME', 'secret')
 
+        if secret is None:
+            raise ImproperlyConfigured(
+                "You have not set DJRILL_WEBHOOK_SECRET in the settings file.")
+
         if request.GET.get(secret_name) != secret:
             return HttpResponse(status=403)
 
