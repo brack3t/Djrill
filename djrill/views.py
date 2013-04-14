@@ -31,8 +31,8 @@ class DjrillApiMixin(object):
         self.api_url = MANDRILL_API_URL
 
         if not self.api_key:
-            raise ImproperlyConfigured("You have not set your mandrill \
-                                       api key in the settings file.")
+            raise ImproperlyConfigured(
+                "You have not set your mandrill api key in the settings file.")
 
     def get_context_data(self, **kwargs):
         kwargs = super(DjrillApiMixin, self).get_context_data(**kwargs)
@@ -55,11 +55,11 @@ class DjrillApiJsonObjectsMixin(object):
 
     def get_api_uri(self):
         if self.api_uri is None:
-            raise NotImplementedError("%(cls)s is missing an api_uri. Define \
-                                      %(cls)s.api_uri or override \
-                                      %(cls)s.get_api_uri()." % {
-                                      "cls": self.__class__.__name__
-                                      })
+            raise NotImplementedError(
+                "%(cls)s is missing an api_uri. "
+                "Define %(cls)s.api_uri or override %(cls)s.get_api_uri()." % {
+                    "cls": self.__class__.__name__
+                })
 
     def get_json_objects(self, extra_dict=None, extra_api_uri=None):
         request_dict = {"key": self.api_key}
@@ -93,7 +93,8 @@ class DjrillWebhookSecretMixin(object):
         if request.GET.get(secret_name) != secret:
             return HttpResponse(status=403)
 
-        return super(DjrillWebhookSecretMixin, self).dispatch(request, *args, **kwargs)
+        return super(DjrillWebhookSecretMixin, self).dispatch(
+            request, *args, **kwargs)
 
 
 class DjrillIndexView(DjrillApiMixin, TemplateView):
