@@ -159,7 +159,6 @@ class DjrillUrlListView(DjrillAdminMedia, DjrillApiMixin,
 
 class DjrillWebhookView(DjrillWebhookSecretMixin, View):
     def head(self, request, *args, **kwargs):
-        signals.webhook_verify.send()
         return HttpResponse()
 
     def post(self, request, *args, **kwargs):
