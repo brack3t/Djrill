@@ -166,7 +166,10 @@ class DjrillWebhookView(DjrillWebhookSecretMixin, View):
         return HttpResponse()
 
     def post(self, request, *args, **kwargs):
-        data = json.loads(request.body)
+        try:
+            data = json.loads(request.POST.get('mandrill_events'))
+        except TypeError:
+            return HttpResponse(status=400)
 
         for event in data:
             signals.webhook_event.send(
