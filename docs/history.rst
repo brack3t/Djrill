@@ -1,7 +1,7 @@
 Release Notes
 =============
 
-Version 0.5 (development):
+Version 0.5:
 
 * Support for incoming mail and other Mandrill webhooks
 * Support for Mandrill send options :attr:`auto_html`, :attr:`tracking_domain`
