@@ -1,6 +1,7 @@
 .DS_Store
 ._*
 *.pyc
+*.egg
 *.egg-info
 dist/
 docs/_build/

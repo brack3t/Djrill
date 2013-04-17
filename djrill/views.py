@@ -4,19 +4,21 @@ from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ImproperlyConfigured
-from django.views.generic import TemplateView
-
-from djrill import MANDRILL_API_URL
+from django.views.generic import TemplateView, View
+from django.http import HttpResponse
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 
 import requests
+
+from djrill import MANDRILL_API_URL, signals
 
 
 class DjrillAdminMedia(object):
     def _media(self):
         js = ["js/core.js", "js/jquery.min.js", "js/jquery.init.js"]
 
-        return forms.Media(js=["%s%s" % (settings.STATIC_URL, url)
-            for url in js])
+        return forms.Media(js=["%s%s" % (settings.STATIC_URL, url) for url in js])
     media = property(_media)
 
 
@@ -29,15 +31,15 @@ class DjrillApiMixin(object):
         self.api_url = MANDRILL_API_URL
 
         if not self.api_key:
-            raise ImproperlyConfigured("You have not set your mandrill api key "
-                "in the settings file.")
+            raise ImproperlyConfigured(
+                "You have not set your mandrill api key in the settings file.")
 
     def get_context_data(self, **kwargs):
         kwargs = super(DjrillApiMixin, self).get_context_data(**kwargs)
 
         status = False
         req = requests.post("%s/%s" % (self.api_url, "users/ping.json"),
-            data={"key": self.api_key})
+                            data={"key": self.api_key})
         if req.status_code == 200:
             status = True
 
@@ -53,8 +55,9 @@ class DjrillApiJsonObjectsMixin(object):
 
     def get_api_uri(self):
         if self.api_uri is None:
-            raise NotImplementedError("%(cls)s is missing an api_uri. Define "
-                "%(cls)s.api_uri or override %(cls)s.get_api_uri()." % {
+            raise NotImplementedError(
+                "%(cls)s is missing an api_uri. "
+                "Define %(cls)s.api_uri or override %(cls)s.get_api_uri()." % {
                     "cls": self.__class__.__name__
                 })
 
@@ -65,7 +68,7 @@ class DjrillApiJsonObjectsMixin(object):
         payload = json.dumps(request_dict)
         api_uri = extra_api_uri or self.api_uri
         req = requests.post("%s/%s" % (self.api_url, api_uri),
-            data=payload)
+                            data=payload)
         if req.status_code == 200:
             return req.content
         messages.error(self.request, self._api_error_handler(req))
@@ -77,7 +80,25 @@ class DjrillApiJsonObjectsMixin(object):
         """
         content = json.loads(req.content)
         return "Mandrill returned a %d response: %s" % (req.status_code,
-            content["message"])
+                                                        content["message"])
+
+
+class DjrillWebhookSecretMixin(object):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        secret = getattr(settings, 'DJRILL_WEBHOOK_SECRET', None)
+        secret_name = getattr(settings, 'DJRILL_WEBHOOK_SECRET_NAME', 'secret')
+
+        if secret is None:
+            raise ImproperlyConfigured(
+                "You have not set DJRILL_WEBHOOK_SECRET in the settings file.")
+
+        if request.GET.get(secret_name) != secret:
+            return HttpResponse(status=403)
+
+        return super(DjrillWebhookSecretMixin, self).dispatch(
+            request, *args, **kwargs)
 
 
 class DjrillIndexView(DjrillApiMixin, TemplateView):
@@ -92,7 +113,7 @@ class DjrillIndexView(DjrillApiMixin, TemplateView):
 
 
 class DjrillSendersListView(DjrillAdminMedia, DjrillApiMixin,
-    DjrillApiJsonObjectsMixin, TemplateView):
+                            DjrillApiJsonObjectsMixin, TemplateView):
 
     api_uri = "users/senders.json"
     template_name = "djrill/senders_list.html"
@@ -109,7 +130,7 @@ class DjrillSendersListView(DjrillAdminMedia, DjrillApiMixin,
 
 
 class DjrillTagListView(DjrillAdminMedia, DjrillApiMixin,
-    DjrillApiJsonObjectsMixin, TemplateView):
+                        DjrillApiJsonObjectsMixin, TemplateView):
 
     api_uri = "tags/list.json"
     template_name = "djrill/tags_list.html"
@@ -125,7 +146,7 @@ class DjrillTagListView(DjrillAdminMedia, DjrillApiMixin,
 
 
 class DjrillUrlListView(DjrillAdminMedia, DjrillApiMixin,
-    DjrillApiJsonObjectsMixin, TemplateView):
+                        DjrillApiJsonObjectsMixin, TemplateView):
 
     api_uri = "urls/list.json"
     template_name = "djrill/urls_list.html"
@@ -138,3 +159,20 @@ class DjrillUrlListView(DjrillAdminMedia, DjrillApiMixin,
             "media": self.media
         })
         return self.render_to_response(context)
+
+
+class DjrillWebhookView(DjrillWebhookSecretMixin, View):
+    def head(self, request, *args, **kwargs):
+        return HttpResponse()
+
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.POST.get('mandrill_events'))
+        except TypeError:
+            return HttpResponse(status=400)
+
+        for event in data:
+            signals.webhook_event.send(
+                sender=None, event_type=event['event'], data=event)
+
+        return HttpResponse()
