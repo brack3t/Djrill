@@ -26,6 +26,8 @@ package. It includes:
 * Support for HTML, attachments, extra headers, and other features of
   `Django's built-in email <https://docs.djangoproject.com/en/dev/topics/email/>`_
 * Mandrill-specific extensions like tags, metadata, tracking, and MailChimp templates
+* Optional support for Mandrill inbound email and other webhook notifications,
+  via Django signals
 * An optional Django admin interface
 
 Djrill is released under the BSD license. It is tested against Django 1.3, 1.4, and 1.5

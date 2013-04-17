@@ -33,6 +33,13 @@ In your project's :file:`settings.py`:
     EMAIL_BACKEND = "djrill.mail.backends.djrill.DjrillBackend"
 
 
+Mandrill Webhooks (Optional)
+----------------------------
+
+Djrill includes optional support for Mandrill webhooks, including inbound email.
+See the Djrill :ref:`webhooks <webhooks>` section for configuration details.
+
+
 Admin (Optional)
 ----------------
 

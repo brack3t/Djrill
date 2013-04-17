@@ -26,6 +26,7 @@ Documentation
    usage/sending_mail
    usage/templates
    usage/multiple_backends
+   usage/webhooks
    contributing
    history
 
