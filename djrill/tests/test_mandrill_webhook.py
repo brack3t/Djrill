@@ -62,13 +62,18 @@ class DjrillWebhookViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_webhook_send_signal(self):
+        self.signal_received_count = 0
+        test_event = {"event": "send", "msg": {}}
 
         def my_callback(sender, event_type, data, **kwargs):
+            self.signal_received_count += 1
             self.assertEqual(event_type, 'send')
+            self.assertEqual(data, test_event)
 
         webhook_event.connect(my_callback)
 
         response = self.client.post('/webhook/?secret=abc123', {
-            'mandrill_events': json.dumps([{"event": "send", "msg": {}}])
+            'mandrill_events': json.dumps([test_event])
         })
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.signal_received_count, 1)
