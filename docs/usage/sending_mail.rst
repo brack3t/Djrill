@@ -174,13 +174,13 @@ Most of the options from the Mandrill
 
         message.global_merge_vars = {'company': "ACME", 'offer': "10% off"}
 
-.. attribute:: recipient_merge_vars
+.. attribute:: merge_vars
 
     ``dict``: per-recipient merge variables (most useful with :ref:`mandrill-templates`). The keys
     in the dict are the recipient email addresses, and the values are dicts of merge vars for
     each recipient::
 
-        message.recipient_merge_vars = {
+        message.merge_vars = {
             'wiley@example.com': {'offer': "15% off anvils"},
             'rr@example.com':    {'offer': "instant tunnel paint"}
         }
@@ -217,7 +217,7 @@ Most of the options from the Mandrill
 
     ``dict``: per-recipient metadata values. Keys are the recipient email addresses,
     and values are dicts of metadata for each recipient (similar to
-    :attr:`recipient_merge_vars`)
+    :attr:`merge_vars`)
 
 
 These Mandrill-specific properties work with *any*
