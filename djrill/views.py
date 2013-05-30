@@ -122,18 +122,18 @@ class DjrillWebhookSignatureMixin(object):
 
             signature = request.META.get("X-Mandrill-Signature", None)
             if not signature:
-                return HttpResponse(status=403, content=u"X-Mandrill-Signature not set")
+                return HttpResponse(status=403, content="X-Mandrill-Signature not set")
 
             # The querydict is a bit special, see https://docs.djangoproject.com/en/dev/ref/request-response/#querydict-objects
             # Mandrill needs it to be sorted and added to the hash
             post_lists = sorted(request.POST.lists())
             for value_list in post_lists:
                 for item in value_list[1]:
-                    post_string += u"%s%s" % (value_list[0],item)
+                    post_string += "%s%s" % (value_list[0],item)
 
             hash_string = b64encode(hmac.new(key=signature_key, msg=post_string, digestmod=hashlib.sha1).digest())
             if signature != hash_string:
-                return HttpResponse(status=403, content=u"Signature doesn't match")
+                return HttpResponse(status=403, content="Signature doesn't match")
 
         return super(DjrillWebhookSignatureMixin, self).dispatch(
             request, *args, **kwargs)
