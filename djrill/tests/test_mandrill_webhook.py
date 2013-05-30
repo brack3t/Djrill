@@ -7,6 +7,7 @@ from django.test import TestCase
 from django.core.exceptions import ImproperlyConfigured
 from django.conf import settings
 
+from ..compat import b
 from ..signals import webhook_event
 
 
@@ -64,7 +65,7 @@ class DjrillWebhookSignatureMixinTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_signature(self):
-        signature = hmac.new(key=settings.DJRILL_WEBHOOK_SIGNATURE_KEY, msg = settings.DJRILL_WEBHOOK_URL+"mandrill_events[]", digestmod=hashlib.sha1)
+        signature = hmac.new(key=b(settings.DJRILL_WEBHOOK_SIGNATURE_KEY), msg = b(settings.DJRILL_WEBHOOK_URL+"mandrill_events[]"), digestmod=hashlib.sha1)
         hash_string = b64encode(signature.digest())
         response = self.client.post('/webhook/?secret=abc123', data={"mandrill_events":"[]"}, **{"X-Mandrill-Signature" : hash_string})
         self.assertEqual(response.status_code, 200)

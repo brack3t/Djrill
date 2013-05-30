@@ -2,12 +2,10 @@ from base64 import b64encode
 import hashlib
 import hmac
 import json
-
 from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ImproperlyConfigured
-from django.core.urlresolvers import reverse
 from django.views.generic import TemplateView, View
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
@@ -16,7 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 import requests
 
 from djrill import MANDRILL_API_URL, signals
-
+from .compat import b
 
 class DjrillAdminMedia(object):
     def _media(self):
@@ -131,7 +129,7 @@ class DjrillWebhookSignatureMixin(object):
                 for item in value_list[1]:
                     post_string += "%s%s" % (value_list[0],item)
 
-            hash_string = b64encode(hmac.new(key=signature_key, msg=post_string, digestmod=hashlib.sha1).digest())
+            hash_string = b64encode(hmac.new(key=b(signature_key), msg=b(post_string), digestmod=hashlib.sha1).digest())
             if signature != hash_string:
                 return HttpResponse(status=403, content="Signature doesn't match")
 
