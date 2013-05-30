@@ -118,7 +118,7 @@ class DjrillWebhookSignatureMixin(object):
                 raise ImproperlyConfigured(
                     "You have set DJRILL_WEBHOOK_SIGNATURE_KEY, but haven't set DJRILL_WEBHOOK_URL in the settings file.")
 
-            signature = request.META.get("X-Mandrill-Signature", None)
+            signature = request.META.get("HTTP_X_MANDRILL_SIGNATURE", None)
             if not signature:
                 return HttpResponse(status=403, content="X-Mandrill-Signature not set")
 
