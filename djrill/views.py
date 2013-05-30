@@ -1,9 +1,13 @@
+from base64 import b64encode
+import hashlib
+import hmac
 import json
 
 from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ImproperlyConfigured
+from django.core.urlresolvers import reverse
 from django.views.generic import TemplateView, View
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
@@ -100,6 +104,39 @@ class DjrillWebhookSecretMixin(object):
         return super(DjrillWebhookSecretMixin, self).dispatch(
             request, *args, **kwargs)
 
+class DjrillWebhookSignatureMixin(object):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+
+        signature_key = getattr(settings, 'DJRILL_WEBHOOK_SIGNATURE_KEY', None)
+
+        if signature_key and request.method == "POST":
+
+            # Make webhook url an explicit setting to make sure that this is the exact same string
+            # that the user entered in Mandrill
+            post_string = getattr(settings, "DJRILL_WEBHOOK_URL", None)
+            if post_string is None:
+                raise ImproperlyConfigured(
+                    "You have set DJRILL_WEBHOOK_SIGNATURE_KEY, but haven't set DJRILL_WEBHOOK_URL in the settings file.")
+
+            signature = request.META.get("X-Mandrill-Signature", None)
+            if not signature:
+                return HttpResponse(status=403, content=u"X-Mandrill-Signature not set")
+
+            # The querydict is a bit special, see https://docs.djangoproject.com/en/dev/ref/request-response/#querydict-objects
+            # Mandrill needs it to be sorted and added to the hash
+            post_lists = sorted(request.POST.lists())
+            for value_list in post_lists:
+                for item in value_list[1]:
+                    post_string += u"%s%s" % (value_list[0],item)
+
+            hash_string = b64encode(hmac.new(key=signature_key, msg=post_string, digestmod=hashlib.sha1).digest())
+            if signature != hash_string:
+                return HttpResponse(status=403, content=u"Signature doesn't match")
+
+        return super(DjrillWebhookSignatureMixin, self).dispatch(
+            request, *args, **kwargs)
 
 class DjrillIndexView(DjrillApiMixin, TemplateView):
     template_name = "djrill/status.html"
@@ -161,7 +198,7 @@ class DjrillUrlListView(DjrillAdminMedia, DjrillApiMixin,
         return self.render_to_response(context)
 
 
-class DjrillWebhookView(DjrillWebhookSecretMixin, View):
+class DjrillWebhookView(DjrillWebhookSecretMixin,DjrillWebhookSignatureMixin, View):
     def head(self, request, *args, **kwargs):
         return HttpResponse()
 

@@ -29,10 +29,13 @@ Your code can connect to this signal for further processing.
       app and Mandrill. Djrill will verify calls to your webhook, and will
       reject calls without the correct key.
 
+    * You can, optionally include the two settings :setting:`DJRILL_WEBHOOK_SIGNATURE_KEY`
+      and :setting:`DJRILL_WEBHOOK_URL` to enforce webhook signature checking
+
 
 .. _Mandrill webhooks: http://help.mandrill.com/entries/21738186-Introduction-to-Webhooks
 .. _securing webhooks: http://apidocs.mailchimp.com/webhooks/#securing-webhooks
-
+.. _webhook signatures: http://help.mandrill.com/entries/23704122-Authenticating-webhook-requests
 
 .. _webhooks-config:
 
@@ -97,6 +100,12 @@ the url config in step 2. And if you'd like to change
 the *name* of the "secret" query string parameter, you can set
 :setting:`DJRILL_WEBHOOK_SECRET_NAME` in your :file:`settings.py`.
 
+For extra security, Mandrill provides a signature in the request header
+X-Mandrill-Signature. If you want to verify this signature, you need to provide
+the settings :setting:`DJRILL_WEBHOOK_SIGNATURE_KEY` with the webhook-specific
+signature key that can be found in the Mandrill admin panel and
+:setting:`DJRILL_WEBHOOK_URL` where you should enter the exact URL, including
+that you entered in Mandrill when creating the webhook.
 
 .. _webhooks control panel: https://mandrillapp.com/settings/webhooks
 .. _inbound settings: https://mandrillapp.com/inbound
