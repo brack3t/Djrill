@@ -6,5 +6,6 @@ if sys.version < '3':
         return x
 else:
     import codecs
+
     def b(x):
         return codecs.latin_1_encode(x)[0]

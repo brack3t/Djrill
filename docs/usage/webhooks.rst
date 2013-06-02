@@ -30,12 +30,12 @@ Your code can connect to this signal for further processing.
       reject calls without the correct key.
 
     * You can, optionally include the two settings :setting:`DJRILL_WEBHOOK_SIGNATURE_KEY`
-      and :setting:`DJRILL_WEBHOOK_URL` to enforce webhook signature checking
+      and :setting:`DJRILL_WEBHOOK_URL` to enforce `webhook signature`_ checking
 
 
 .. _Mandrill webhooks: http://help.mandrill.com/entries/21738186-Introduction-to-Webhooks
 .. _securing webhooks: http://apidocs.mailchimp.com/webhooks/#securing-webhooks
-.. _webhook signatures: http://help.mandrill.com/entries/23704122-Authenticating-webhook-requests
+.. _webhook signature: http://help.mandrill.com/entries/23704122-Authenticating-webhook-requests
 
 .. _webhooks-config:
 

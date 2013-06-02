@@ -16,6 +16,7 @@ import requests
 from djrill import MANDRILL_API_URL, signals
 from .compat import b
 
+
 class DjrillAdminMedia(object):
     def _media(self):
         js = ["js/core.js", "js/jquery.min.js", "js/jquery.init.js"]
@@ -102,6 +103,7 @@ class DjrillWebhookSecretMixin(object):
         return super(DjrillWebhookSecretMixin, self).dispatch(
             request, *args, **kwargs)
 
+
 class DjrillWebhookSignatureMixin(object):
 
     @method_decorator(csrf_exempt)
@@ -127,7 +129,7 @@ class DjrillWebhookSignatureMixin(object):
             post_lists = sorted(request.POST.lists())
             for value_list in post_lists:
                 for item in value_list[1]:
-                    post_string += "%s%s" % (value_list[0],item)
+                    post_string += "%s%s" % (value_list[0], item)
 
             hash_string = b64encode(hmac.new(key=b(signature_key), msg=b(post_string), digestmod=hashlib.sha1).digest())
             if signature != hash_string:
@@ -135,6 +137,7 @@ class DjrillWebhookSignatureMixin(object):
 
         return super(DjrillWebhookSignatureMixin, self).dispatch(
             request, *args, **kwargs)
+
 
 class DjrillIndexView(DjrillApiMixin, TemplateView):
     template_name = "djrill/status.html"
@@ -196,7 +199,7 @@ class DjrillUrlListView(DjrillAdminMedia, DjrillApiMixin,
         return self.render_to_response(context)
 
 
-class DjrillWebhookView(DjrillWebhookSecretMixin,DjrillWebhookSignatureMixin, View):
+class DjrillWebhookView(DjrillWebhookSecretMixin, DjrillWebhookSignatureMixin, View):
     def head(self, request, *args, **kwargs):
         return HttpResponse()
 
