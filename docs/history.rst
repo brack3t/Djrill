@@ -1,9 +1,10 @@
 Release Notes
 =============
 
-Version 0.6 (development):
+Version 0.6:
 
 * Support for signed webhooks
+
 
 Version 0.5:
 
