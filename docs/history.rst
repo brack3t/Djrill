@@ -3,6 +3,7 @@ Release Notes
 
 Version 0.6 (development):
 
+* Support for signed webhooks
 
 Version 0.5:
 
