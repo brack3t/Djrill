@@ -118,6 +118,17 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
         # Don't accidentally send the html part as an attachment:
         self.assertFalse('attachments' in data['message'])
 
+    def test_html_only_message(self):
+        html_content = '<p>This is an <strong>important</strong> message.</p>'
+        email = mail.EmailMessage('Subject', html_content,
+            'from@example.com', ['to@example.com'])
+        email.content_subtype = "html"  # Main content is now text/html
+        email.send()
+        self.assert_mandrill_called("/messages/send.json")
+        data = self.get_api_call_data()
+        self.assertNotIn('text', data['message'])
+        self.assertEqual(data['message']['html'], html_content)
+
     def test_attachments(self):
         email = mail.EmailMessage('Subject', 'Body goes here', 'from@example.com', ['to1@example.com'])
 

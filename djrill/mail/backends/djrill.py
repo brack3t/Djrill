@@ -112,8 +112,9 @@ class DjrillBackend(BaseEmailBackend):
         to_list = [{"email": to_email, "name": to_name}
                    for (to_name, to_email) in parsed_rcpts]
 
+        content = "html" if message.content_subtype == "html" else "text"
         msg_dict = {
-            "text": message.body,
+            content: message.body,
             "subject": message.subject,
             "from_email": from_email,
             "to": to_list
