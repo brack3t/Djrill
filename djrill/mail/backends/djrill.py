@@ -76,9 +76,8 @@ class DjrillBackend(BaseEmailBackend):
         if hasattr(message, 'template_name'):
             api_url = self.api_send_template
             api_params['template_name'] = message.template_name
-            if hasattr(message, 'template_content'):
-                api_params['template_content'] = \
-                    self._expand_merge_vars(message.template_content)
+            api_params['template_content'] = \
+                self._expand_merge_vars(getattr(message, 'template_content', {}))
 
         response = requests.post(api_url, data=json.dumps(api_params))
 

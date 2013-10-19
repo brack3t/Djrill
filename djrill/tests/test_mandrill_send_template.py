@@ -36,7 +36,7 @@ class DjrillMandrillSendTemplateTests(DjrillBackendMockAPITestCase):
         self.assert_mandrill_called("/messages/send-template.json")
         data = self.get_api_call_data()
         self.assertEqual(data['template_name'], "WELCOME_MESSAGE")
-        self.assertFalse('template_content' in data)
+        self.assertEqual(data['template_content'], [])  # Mandrill requires this field
 
     def test_non_template_send(self):
         # Make sure the non-template case still uses /messages/send.json
