@@ -8,6 +8,7 @@ from django.core.mail.message import sanitize_address, DEFAULT_ATTACHMENT_MIME_T
 from ... import MANDRILL_API_URL, MandrillAPIError, NotSupportedByMandrillError
 
 from base64 import b64encode
+from datetime import date, datetime
 from email.mime.base import MIMEBase
 from email.utils import parseaddr
 import json
@@ -15,6 +16,25 @@ import mimetypes
 import requests
 
 DjrillBackendHTTPError = MandrillAPIError # Backwards-compat Djrill<=0.2.0
+
+
+class JSONDateUTCEncoder(json.JSONEncoder):
+    """JSONEncoder that encodes dates in string format used by Mandrill.
+
+    datetime becomes "YYYY-MM-DD HH:MM:SS"
+             converted to UTC, if timezone-aware
+             microseconds removed
+    date     becomes "YYYY-MM-DD 00:00:00"
+    """
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            dt = obj.replace(microsecond=0)
+            if dt.utcoffset() is not None:
+                dt = (dt - dt.utcoffset()).replace(tzinfo=None)
+            return dt.isoformat(' ')
+        elif isinstance(obj, date):
+            return obj.isoformat() + ' 00:00:00'
+        return super(JSONDateUTCEncoder, self).default(obj)
 
 
 class DjrillBackend(BaseEmailBackend):
@@ -54,32 +74,35 @@ class DjrillBackend(BaseEmailBackend):
         if not message.recipients():
             return False
 
+        api_url = self.api_send
+        api_params = {
+            "key": self.api_key,
+        }
+
         try:
             msg_dict = self._build_standard_message_dict(message)
             self._add_mandrill_options(message, msg_dict)
             if getattr(message, 'alternatives', None):
                 self._add_alternatives(message, msg_dict)
             self._add_attachments(message, msg_dict)
+            api_params['message'] = msg_dict
+
+            # check if template is set in message to send it via
+            # api url: /messages/send-template.json
+            if hasattr(message, 'template_name'):
+                api_url = self.api_send_template
+                api_params['template_name'] = message.template_name
+                api_params['template_content'] = \
+                    self._expand_merge_vars(getattr(message, 'template_content', {}))
+
+            self._add_mandrill_toplevel_options(message, api_params)
+
         except NotSupportedByMandrillError:
             if not self.fail_silently:
                 raise
             return False
 
-        api_url = self.api_send
-        api_params = {
-            "key": self.api_key,
-            "message": msg_dict
-        }
-
-        # check if template is set in message to send it via
-        # api url: /messages/send-template.json
-        if hasattr(message, 'template_name'):
-            api_url = self.api_send_template
-            api_params['template_name'] = message.template_name
-            api_params['template_content'] = \
-                self._expand_merge_vars(getattr(message, 'template_content', {}))
-
-        response = requests.post(api_url, data=json.dumps(api_params))
+        response = requests.post(api_url, data=json.dumps(api_params, cls=JSONDateUTCEncoder))
 
         if response.status_code != 200:
             if not self.fail_silently:
@@ -140,8 +163,18 @@ class DjrillBackend(BaseEmailBackend):
 
         return msg_dict
 
+    def _add_mandrill_toplevel_options(self, message, api_params):
+        """Extend api_params to include Mandrill global-send options set on message"""
+        # Mandrill attributes that can be copied directly:
+        mandrill_attrs = [
+            'async', 'ip_pool', 'send_at'
+        ]
+        for attr in mandrill_attrs:
+            if hasattr(message, attr):
+                api_params[attr] = getattr(message, attr)
+
     def _add_mandrill_options(self, message, msg_dict):
-        """Extend msg_dict to include Mandrill options set on message"""
+        """Extend msg_dict to include Mandrill per-message options set on message"""
         # Mandrill attributes that can be copied directly:
         mandrill_attrs = [
             'from_name', # overrides display name parsed from from_email above

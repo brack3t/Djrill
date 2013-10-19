@@ -1,4 +1,5 @@
 from base64 import b64decode
+from datetime import date, datetime, timedelta, tzinfo
 from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
 import os
@@ -312,6 +313,8 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
         self.message.preserve_recipients = True
         self.message.tracking_domain = "click.example.com"
         self.message.signing_domain = "example.com"
+        self.message.async = True
+        self.message.ip_pool = "Bulk Pool"
         self.message.send()
         data = self.get_api_call_data()
         self.assertEqual(data['message']['auto_text'], True)
@@ -320,6 +323,8 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
         self.assertEqual(data['message']['preserve_recipients'], True)
         self.assertEqual(data['message']['tracking_domain'], "click.example.com")
         self.assertEqual(data['message']['signing_domain'], "example.com")
+        self.assertEqual(data['async'], True)
+        self.assertEqual(data['ip_pool'], "Bulk Pool")
 
     def test_merge(self):
         # Djrill expands simple python dicts into the more-verbose name/content
@@ -379,6 +384,35 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
                 'values': { 'cust_id': "94107", 'order_id': "43215" } }
             ])
 
+    def test_send_at(self):
+        # String passed unchanged
+        self.message.send_at = "2013-11-12 01:02:03"
+        self.message.send()
+        data = self.get_api_call_data()
+        self.assertEqual(data['send_at'], "2013-11-12 01:02:03")
+
+        # Timezone-naive datetime assumed to be UTC
+        self.message.send_at = datetime(2022, 10, 11, 12, 13, 14, 567)
+        self.message.send()
+        data = self.get_api_call_data()
+        self.assertEqual(data['send_at'], "2022-10-11 12:13:14")
+
+        # Timezone-aware datetime converted to UTC:
+        class GMTminus8(tzinfo):
+            def utcoffset(self, dt): return timedelta(hours=-8)
+            def dst(self, dt): return timedelta(0)
+
+        self.message.send_at = datetime(2016, 3, 4, 5, 6, 7, tzinfo=GMTminus8())
+        self.message.send()
+        data = self.get_api_call_data()
+        self.assertEqual(data['send_at'], "2016-03-04 13:06:07")
+
+        # Date-only treated as midnight UTC
+        self.message.send_at = date(2022, 10, 22)
+        self.message.send()
+        data = self.get_api_call_data()
+        self.assertEqual(data['send_at'], "2022-10-22 00:00:00")
+
     def test_default_omits_options(self):
         """Make sure by default we don't send any Mandrill-specific options.
 
@@ -408,5 +442,9 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
         self.assertFalse('merge_vars' in data['message'])
         self.assertFalse('recipient_metadata' in data['message'])
         self.assertFalse('images' in data['message'])
+        # Options at top level of api params (not in message dict):
+        self.assertFalse('send_at' in data)
+        self.assertFalse('async' in data)
+        self.assertFalse('ip_pool' in data)
 
 

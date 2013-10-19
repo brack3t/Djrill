@@ -219,6 +219,20 @@ Most of the options from the Mandrill
     and values are dicts of metadata for each recipient (similar to
     :attr:`merge_vars`)
 
+.. attribute:: async
+
+    ``Boolean``: whether Mandrill should use an async mode optimized for bulk sending.
+
+.. attribute:: ip_pool
+
+    ``str``: name of one of your Mandrill dedicated IP pools to use for sending this message.
+
+.. attribute:: send_at
+
+    ``datetime`` or ``date`` or ``str``: instructs Mandrill to delay sending this message
+    until the specified time. (Djrill allows timezone-aware Python datetimes, and converts them
+    to UTC for Mandrill. Timezone-naive datetimes are assumed to be UTC.)
+
 
 These Mandrill-specific properties work with *any*
 :class:`~django.core.mail.EmailMessage`-derived object, so you can use them with
