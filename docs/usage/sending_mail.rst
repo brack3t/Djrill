@@ -115,6 +115,8 @@ Most of the options from the Mandrill
 
     ``Boolean``: whether Mandrill should send this message ahead of non-important ones.
 
+    .. versionadded:: 0.7
+
 .. attribute:: track_opens
 
     ``Boolean``: whether Mandrill should enable open-tracking for this message.
@@ -164,6 +166,8 @@ Most of the options from the Mandrill
 
     ``Boolean``: set False on sensitive messages to instruct Mandrill not to log the content.
 
+    .. versionadded:: 0.7
+
 .. attribute:: tracking_domain
 
     ``str``: domain Mandrill should use to rewrite tracked links and host tracking pixels
@@ -179,6 +183,8 @@ Most of the options from the Mandrill
 .. attribute:: return_path_domain
 
     ``str``: domain Mandrill should use for the message's return-path.
+
+    .. versionadded:: 0.7
 
 .. attribute:: global_merge_vars
 
@@ -208,6 +214,8 @@ Most of the options from the Mandrill
 .. attribute:: subaccount
 
     ``str``: the ID of one of your subaccounts to use for sending this message.
+
+    .. versionadded:: 0.7
 
 .. attribute:: google_analytics_domains
 
@@ -239,15 +247,21 @@ Most of the options from the Mandrill
 
     ``Boolean``: whether Mandrill should use an async mode optimized for bulk sending.
 
+    .. versionadded:: 0.7
+
 .. attribute:: ip_pool
 
     ``str``: name of one of your Mandrill dedicated IP pools to use for sending this message.
+
+    .. versionadded:: 0.7
 
 .. attribute:: send_at
 
     ``datetime`` or ``date`` or ``str``: instructs Mandrill to delay sending this message
     until the specified time. (Djrill allows timezone-aware Python datetimes, and converts them
     to UTC for Mandrill. Timezone-naive datetimes are assumed to be UTC.)
+
+    .. versionadded:: 0.7
 
 
 These Mandrill-specific properties work with *any*
