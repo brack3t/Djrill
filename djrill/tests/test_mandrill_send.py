@@ -307,22 +307,30 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
         self.assertEqual(data['message']['url_strip_qs'], True)
 
     def test_message_options(self):
+        self.message.important = True
         self.message.auto_text = True
         self.message.auto_html = True
         self.message.inline_css = True
         self.message.preserve_recipients = True
+        self.message.view_content_link = False
         self.message.tracking_domain = "click.example.com"
         self.message.signing_domain = "example.com"
+        self.message.return_path_domain = "support.example.com"
+        self.message.subaccount = "marketing-dept"
         self.message.async = True
         self.message.ip_pool = "Bulk Pool"
         self.message.send()
         data = self.get_api_call_data()
+        self.assertEqual(data['message']['important'], True)
         self.assertEqual(data['message']['auto_text'], True)
         self.assertEqual(data['message']['auto_html'], True)
         self.assertEqual(data['message']['inline_css'], True)
         self.assertEqual(data['message']['preserve_recipients'], True)
+        self.assertEqual(data['message']['view_content_link'], False)
         self.assertEqual(data['message']['tracking_domain'], "click.example.com")
         self.assertEqual(data['message']['signing_domain'], "example.com")
+        self.assertEqual(data['message']['return_path_domain'], "support.example.com")
+        self.assertEqual(data['message']['subaccount'], "marketing-dept")
         self.assertEqual(data['async'], True)
         self.assertEqual(data['ip_pool'], "Bulk Pool")
 
@@ -425,6 +433,7 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
         data = self.get_api_call_data()
         self.assertFalse('from_name' in data['message'])
         self.assertFalse('bcc_address' in data['message'])
+        self.assertFalse('important' in data['message'])
         self.assertFalse('track_opens' in data['message'])
         self.assertFalse('track_clicks' in data['message'])
         self.assertFalse('auto_text' in data['message'])
@@ -433,8 +442,11 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
         self.assertFalse('url_strip_qs' in data['message'])
         self.assertFalse('tags' in data['message'])
         self.assertFalse('preserve_recipients' in data['message'])
+        self.assertFalse('view_content_link' in data['message'])
         self.assertFalse('tracking_domain' in data['message'])
         self.assertFalse('signing_domain' in data['message'])
+        self.assertFalse('return_path_domain' in data['message'])
+        self.assertFalse('subaccount' in data['message'])
         self.assertFalse('google_analytics_domains' in data['message'])
         self.assertFalse('google_analytics_campaign' in data['message'])
         self.assertFalse('metadata' in data['message'])

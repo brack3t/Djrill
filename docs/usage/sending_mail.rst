@@ -111,6 +111,10 @@ Most of the options from the Mandrill
 
 .. These attributes are in the same order as they appear in the Mandrill API docs...
 
+.. attribute:: important
+
+    ``Boolean``: whether Mandrill should send this message ahead of non-important ones.
+
 .. attribute:: track_opens
 
     ``Boolean``: whether Mandrill should enable open-tracking for this message.
@@ -156,6 +160,10 @@ Most of the options from the Mandrill
     ``Boolean``: whether Mandrill should include all recipients in the "to" message header.
     Default from your Mandrill account settings.
 
+.. attribute:: view_content_link
+
+    ``Boolean``: set False on sensitive messages to instruct Mandrill not to log the content.
+
 .. attribute:: tracking_domain
 
     ``str``: domain Mandrill should use to rewrite tracked links and host tracking pixels
@@ -164,9 +172,13 @@ Most of the options from the Mandrill
 
 .. attribute:: signing_domain
 
-    ``str``: domain Mandrill should for DKIM signing and SPF on this message.
+    ``str``: domain Mandrill should use for DKIM signing and SPF on this message.
     Useful if you send email from multiple domains.
     Default from your Mandrill account settings.
+
+.. attribute:: return_path_domain
+
+    ``str``: domain Mandrill should use for the message's return-path.
 
 .. attribute:: global_merge_vars
 
@@ -192,6 +204,10 @@ Most of the options from the Mandrill
     underscores.) ::
 
         message.tags = ["Order Confirmation", "Test Variant A"]
+
+.. attribute:: subaccount
+
+    ``str``: the ID of one of your subaccounts to use for sending this message.
 
 .. attribute:: google_analytics_domains
 

@@ -3,7 +3,9 @@ Release Notes
 
 Version 0.7 (development):
 
-* Support for Mandrill send options :attr:`async`, :attr:`ip_pool`, and :attr:`send_at`
+* Support for Mandrill send options :attr:`async`, :attr:`important`,
+  :attr:`ip_pool`, :attr:`return_path_domain`, :attr:`send_at`,
+  :attr:`subaccount`, and :attr:`view_content_link`
 
 
 Version 0.6:
