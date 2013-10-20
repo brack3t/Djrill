@@ -1,7 +1,7 @@
 Release Notes
 =============
 
-Version 0.7 (development):
+Version 0.7:
 
 * Support for Mandrill send options :attr:`async`, :attr:`important`,
   :attr:`ip_pool`, :attr:`return_path_domain`, :attr:`send_at`,
