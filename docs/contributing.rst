@@ -38,6 +38,7 @@ Djrill is `tested on Travis <https://travis-ci.org/brack3t/Djrill>`_ against:
 * Django 1.3 on Python 2.6 and 2.7
 * Django 1.4 on Python 2.6 and 2.7
 * Django 1.5 on Python 2.7 and 3.2
+* Django 1.6 on Python 2.7 and 3.2
 
 The included tests verify that Djrill constructs the expected Mandrill API
 calls, without actually calling Mandrill or sending any email. So the tests
