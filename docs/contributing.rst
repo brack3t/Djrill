@@ -6,7 +6,7 @@ Djrill is maintained by its users. Your contributions are encouraged!
 The `Djrill source code`_ is on github. See `AUTHORS.txt`_ for a list
 of some of the people who have helped improve Djrill.
 
-.. _Djrill source code: https://github.com/brack3t/Djrill:
+.. _Djrill source code: https://github.com/brack3t/Djrill
 .. _AUTHORS.txt: https://github.com/brack3t/Djrill/blob/master/AUTHORS.txt
 
 
