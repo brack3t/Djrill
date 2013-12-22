@@ -10,8 +10,8 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.mail import make_msgid
 
 from djrill import MandrillAPIError, NotSupportedByMandrillError
+from djrill.mail.backends.djrill import DjrillBackend
 from djrill.tests.mock_backend import DjrillBackendMockAPITestCase
-
 
 def decode_att(att):
     """Returns the original data from base64-encoded attachment content"""
@@ -459,4 +459,20 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
         self.assertFalse('async' in data)
         self.assertFalse('ip_pool' in data)
 
+    def test_send_attaches_mandrill_response(self):
+        """ The mandrill_response should be attached to the message when it is sent """
+        response = [{u'status': u'sent', u'_id': u'd2dc8a04fedb463398d2c124fd0f1774',
+                          u'email': u'someone@example.com', u'reject_reason': None}]
+        self.mock_post.return_value = self.MockResponse(json=response)
+        msg = mail.EmailMessage('Subject', 'Message', 'from@example.com', ['to1@example.com'],)
+        sent = msg.send()
+        self.assertEqual(sent, 1)
+        self.assertEqual(msg.mandrill_response, response)
 
+    def test_send_failed_mandrill_response(self):
+        """ If the send fails, mandrill_response should be set to None """
+        self.mock_post.return_value = self.MockResponse(status_code=500)
+        msg = mail.EmailMessage('Subject', 'Message', 'from@example.com', ['to1@example.com'],)
+        sent = msg.send(fail_silently=True)
+        self.assertEqual(sent, 0)
+        self.assertIsNone(msg.mandrill_response)
