@@ -461,8 +461,7 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
 
     def test_send_attaches_mandrill_response(self):
         """ The mandrill_response should be attached to the message when it is sent """
-        response = [{u'status': u'sent', u'_id': u'd2dc8a04fedb463398d2c124fd0f1774',
-                          u'email': u'someone@example.com', u'reject_reason': None}]
+        response = [{'mandrill_response': 'would_be_here'}]
         self.mock_post.return_value = self.MockResponse(json=response)
         msg = mail.EmailMessage('Subject', 'Message', 'from@example.com', ['to1@example.com'],)
         sent = msg.send()
