@@ -1,7 +1,10 @@
 Release Notes
 =============
 
-Version 0.8 (development):
+Version 0.9 (development):
+
+
+Version 0.8:
 
 * Expose :ref:`mandrill_response` on sent messages
 
