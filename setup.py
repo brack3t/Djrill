@@ -29,7 +29,7 @@ setup(
     license="BSD License",
     packages=["djrill"],
     zip_safe=False,
-    install_requires=["requests", "django"],
+    install_requires=["requests", "django>=1.3"],
     include_package_data=True,
     test_suite="runtests.runtests",
     tests_require=["mock"],
