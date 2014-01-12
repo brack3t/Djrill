@@ -3,6 +3,8 @@ Release Notes
 
 Version 0.8 (development):
 
+* Expose :ref:`mandrill_response` on sent messages
+
 
 Version 0.7:
 
