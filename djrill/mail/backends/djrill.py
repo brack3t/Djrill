@@ -105,6 +105,10 @@ class DjrillBackend(BaseEmailBackend):
         response = requests.post(api_url, data=json.dumps(api_params, cls=JSONDateUTCEncoder))
 
         if response.status_code != 200:
+
+            # add a mandrill_response for the sake of being explicit
+            message.mandrill_response = None
+
             if not self.fail_silently:
                 raise MandrillAPIError(
                     status_code=response.status_code,
@@ -112,6 +116,10 @@ class DjrillBackend(BaseEmailBackend):
                     log_message="Failed to send a message to %s, from %s" %
                                 (msg_dict['to'], msg_dict['from_email']))
             return False
+
+        # add the response from mandrill to the EmailMessage so callers can inspect it
+        message.mandrill_response = response.json()
+
         return True
 
     def _build_standard_message_dict(self, message):
@@ -302,4 +310,3 @@ class DjrillBackend(BaseEmailBackend):
             'content': content_b64.decode('ascii'),
         }
         return mandrill_attachment, is_embedded_image
-

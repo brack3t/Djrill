@@ -10,9 +10,13 @@ class DjrillBackendMockAPITestCase(TestCase):
 
     class MockResponse:
         """requests.post return value mock sufficient for DjrillBackend"""
-        def __init__(self, status_code=200, content="{}"):
+        def __init__(self, status_code=200, content="{}", json=['']):
             self.status_code = status_code
             self.content = content
+            self._json = json
+
+        def json(self):
+            return self._json
 
     def setUp(self):
         self.patch = patch('requests.post', autospec=True)

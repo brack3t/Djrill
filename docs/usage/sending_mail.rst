@@ -272,6 +272,38 @@ If you have questions about the python syntax for any of these properties,
 see :class:`DjrillMandrillFeatureTests` in :file:`tests/test_mandrill_send.py` for examples.
 
 
+
+.. _mandrill-response:
+
+Mandrill Response
+---------------------------------
+A ``mandrill_response`` property is added to each :class:`~django.core.mail.EmailMessage` that you
+send. This allows you to retrieve message ids, initial status information and more.
+
+For an EmailMessage that is successfully sent to one or more email addresses, ``mandrill_response`` will
+be set to a ``list`` of ``dict``, where each entry has info for one email address. See the Mandrill docs for the
+/messages/send api for full details.
+
+For example, to get the Mandrill message id for a sent email you might do this::
+
+        msg = EmailMultiAlternatives(subject="subject", body="body",
+                                     from_email="sender@example.com",to=["someone@example.com"])
+        msg.send()
+        response = msg.mandrill_response[0]
+        mandrill_id = response['_id']
+
+For this example, msg.mandrill_response might look like this::
+
+        msg.mandrill_response = [
+            {
+                "email": "someone@example.com",
+                "status": "sent",
+                "_id": "abc123abc123abc123abc123abc123"
+            }
+        ]
+
+If an error is returned by Mandrill while sending the message then ``mandrill_response`` will be set to None.
+
 .. _djrill-exceptions:
 
 Exceptions
