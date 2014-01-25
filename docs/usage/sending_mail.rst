@@ -21,32 +21,20 @@ and :class:`~django.core.mail.EmailMultiAlternatives` classes.
 Some notes and limitations:
 
 **Display Names**
-    All email addresses (from, to, cc) can be simple
+    All email addresses (from, to, cc, bcc) can be simple
     ("email\@example.com") or can include a display name
     ("Real Name <email\@example.com>").
 
-**CC Recipients**
-    Djrill treats all "cc" recipients as if they were
-    additional "to" addresses. (Mandrill does not distinguish "cc" from "to".)
+**CC and BCC Recipients**
+    Djrill properly identifies "cc" and "bcc" recipients to Mandrill.
 
-    .. note::
+    Note that you may need to set the Mandrill option :attr:`preserve_recipients`
+    to `!True` if you want recipients to be able to see who else was included
+    in the "to" list.
 
-        By default, Mandrill hides all recipients from each other. If you want the
-        headers to list everyone who was sent the message, you'll also need to set the
-        Mandrill option :attr:`preserve_recipients` to `!True`
-
-**BCC Recipients**
-    Mandrill does not permit more than one "bcc" address.
-    Djrill raises :exc:`~djrill.NotSupportedByMandrillError` if you attempt to send a
-    message with multiple bcc's.
-
-    (Mandrill's bcc option seems intended primarily
-    for logging. To send a single message to multiple recipients without exposing
-    their email addresses to each other, simply include them all in the "to" list
-    and leave Mandrill's :attr:`preserve_recipients` set to `!False`.)
-
-    .. versionadded:: 0.3
-       Previously "bcc" was treated as "cc"
+    .. versionchanged:: 0.9
+       Previously, Djrill (and Mandrill) didn't distinguish "cc" from "to",
+       and allowed only a single "bcc" recipient.
 
 
 .. _sending-html:

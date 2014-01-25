@@ -3,6 +3,7 @@ Release Notes
 
 Version 0.9 (development):
 
+* Better handling for "cc" and "bcc" recipients.
 * Allow all extra message headers in send.
   (Mandrill has relaxed previous API restrictions on headers.)
 

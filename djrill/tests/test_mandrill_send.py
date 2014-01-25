@@ -10,7 +10,6 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.mail import make_msgid
 
 from djrill import MandrillAPIError, NotSupportedByMandrillError
-from djrill.mail.backends.djrill import DjrillBackend
 from djrill.tests.mock_backend import DjrillBackendMockAPITestCase
 
 def decode_att(att):
@@ -62,12 +61,12 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
             'From Name <from@example.com>',
             ['Recipient #1 <to1@example.com>', 'to2@example.com'],
             cc=['Carbon Copy <cc1@example.com>', 'cc2@example.com'],
-            bcc=['Blind Copy <bcc@example.com>'])
+            bcc=['Blind Copy <bcc1@example.com>', 'bcc2@example.com'])
         msg.send()
         data = self.get_api_call_data()
         self.assertEqual(data['message']['from_name'], "From Name")
         self.assertEqual(data['message']['from_email'], "from@example.com")
-        self.assertEqual(len(data['message']['to']), 4)
+        self.assertEqual(len(data['message']['to']), 6)
         self.assertEqual(data['message']['to'][0]['name'], "Recipient #1")
         self.assertEqual(data['message']['to'][0]['email'], "to1@example.com")
         self.assertEqual(data['message']['to'][1]['name'], "")
@@ -76,14 +75,16 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
         self.assertEqual(data['message']['to'][2]['email'], "cc1@example.com")
         self.assertEqual(data['message']['to'][3]['name'], "")
         self.assertEqual(data['message']['to'][3]['email'], "cc2@example.com")
-        # Mandrill only supports email, not name, for bcc:
-        self.assertEqual(data['message']['bcc_address'], "bcc@example.com")
+        self.assertEqual(data['message']['to'][4]['name'], "Blind Copy")
+        self.assertEqual(data['message']['to'][4]['email'], "bcc1@example.com")
+        self.assertEqual(data['message']['to'][5]['name'], "")
+        self.assertEqual(data['message']['to'][5]['email'], "bcc2@example.com")
 
     def test_email_message(self):
         email = mail.EmailMessage('Subject', 'Body goes here',
             'from@example.com',
             ['to1@example.com', 'Also To <to2@example.com>'],
-            bcc=['bcc@example.com'],
+            bcc=['bcc1@example.com', 'Also BCC <bcc2@example.com>'],
             cc=['cc1@example.com', 'Also CC <cc2@example.com>'],
             headers={'Reply-To': 'another@example.com',
                      'X-MyHeader': 'my value',
@@ -98,15 +99,22 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
                          {'Reply-To': 'another@example.com',
                           'X-MyHeader': 'my value',
                           'Message-ID': 'mycustommsgid@example.com'})
-        # Mandrill doesn't have a notion of cc.
-        # Djrill just treats cc as additional "to" addresses,
-        # which may or may not be what you want.
-        self.assertEqual(len(data['message']['to']), 4)
+        # Verify recipients correctly identified as "to", "cc", or "bcc"
+        self.assertEqual(len(data['message']['to']), 6)
         self.assertEqual(data['message']['to'][0]['email'], "to1@example.com")
+        self.assertEqual(data['message']['to'][0]['type'], "to")
         self.assertEqual(data['message']['to'][1]['email'], "to2@example.com")
+        self.assertEqual(data['message']['to'][1]['type'], "to")
         self.assertEqual(data['message']['to'][2]['email'], "cc1@example.com")
+        self.assertEqual(data['message']['to'][2]['type'], "cc")
         self.assertEqual(data['message']['to'][3]['email'], "cc2@example.com")
-        self.assertEqual(data['message']['bcc_address'], "bcc@example.com")
+        self.assertEqual(data['message']['to'][3]['type'], "cc")
+        self.assertEqual(data['message']['to'][4]['email'], "bcc1@example.com")
+        self.assertEqual(data['message']['to'][4]['type'], "bcc")
+        self.assertEqual(data['message']['to'][5]['email'], "bcc2@example.com")
+        self.assertEqual(data['message']['to'][5]['type'], "bcc")
+        # Don't use Mandrill's bcc_address "logging" feature for bcc's:
+        self.assertNotIn('bcc_address', data['message'])
 
     def test_html_message(self):
         text_content = 'This is an important message.'
@@ -244,14 +252,6 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
         self.assertFalse(self.mock_post.called,
             msg="Mandrill API should not be called when send fails silently")
         self.assertEqual(sent, 0)
-
-    def test_bcc_errors(self):
-        # Mandrill only allows a single bcc address
-        with self.assertRaises(NotSupportedByMandrillError):
-            msg = mail.EmailMessage('Subject', 'Body',
-                'from@example.com', ['to@example.com'],
-                bcc=['bcc1@example.com>', 'bcc2@example.com'])
-            msg.send()
 
     def test_mandrill_api_failure(self):
         self.mock_post.return_value = self.MockResponse(status_code=400)

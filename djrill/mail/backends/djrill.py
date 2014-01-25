@@ -135,11 +135,9 @@ class DjrillBackend(BaseEmailBackend):
         sender = sanitize_address(message.from_email, message.encoding)
         from_name, from_email = parseaddr(sender)
 
-        recipients = message.to + message.cc # message.recipients() w/o bcc
-        parsed_rcpts = [parseaddr(sanitize_address(addr, message.encoding))
-                        for addr in recipients]
-        to_list = [{"email": to_email, "name": to_name}
-                   for (to_name, to_email) in parsed_rcpts]
+        to_list = self._make_mandrill_to_list(message, message.to, "to")
+        to_list += self._make_mandrill_to_list(message, message.cc, "cc")
+        to_list += self._make_mandrill_to_list(message, message.bcc, "bcc")
 
         content = "html" if message.content_subtype == "html" else "text"
         msg_dict = {
@@ -150,15 +148,6 @@ class DjrillBackend(BaseEmailBackend):
         }
         if from_name:
             msg_dict["from_name"] = from_name
-
-        if len(message.bcc) == 1:
-            bcc = message.bcc[0]
-            _, bcc_addr = parseaddr(sanitize_address(bcc, message.encoding))
-            msg_dict['bcc_address'] = bcc_addr
-        elif len(message.bcc) > 1:
-            raise NotSupportedByMandrillError(
-                "Too many bcc addresses (%d) - Mandrill only allows one"
-                % len(message.bcc))
 
         if message.extra_headers:
             msg_dict["headers"] = message.extra_headers
@@ -174,6 +163,17 @@ class DjrillBackend(BaseEmailBackend):
         for attr in mandrill_attrs:
             if hasattr(message, attr):
                 api_params[attr] = getattr(message, attr)
+
+    def _make_mandrill_to_list(self, message, recipients, recipient_type="to"):
+        """Create a Mandrill 'to' field from a list of emails.
+
+        Parses "Real Name <address@example.com>" format emails.
+        Sanitizes all email addresses.
+        """
+        parsed_rcpts = [parseaddr(sanitize_address(addr, message.encoding))
+                        for addr in recipients]
+        return [{"email": to_email, "name": to_name, "type": recipient_type}
+                for (to_name, to_email) in parsed_rcpts]
 
     def _add_mandrill_options(self, message, msg_dict):
         """Extend msg_dict to include Mandrill per-message options set on message"""
