@@ -1,7 +1,7 @@
 Release Notes
 =============
 
-Version 0.9 (development):
+Version 0.9:
 
 * Better handling for "cc" and "bcc" recipients.
 * Allow all extra message headers in send.
