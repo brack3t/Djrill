@@ -3,6 +3,9 @@ Release Notes
 
 Version 0.9 (development):
 
+* Allow all extra message headers in send.
+  (Mandrill has relaxed previous API restrictions on headers.)
+
 
 Version 0.8:
 

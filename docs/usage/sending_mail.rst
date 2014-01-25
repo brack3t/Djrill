@@ -89,10 +89,11 @@ Some notes and limitations:
        Special handling for embedded images
 
 **Headers**
-    Djrill accepts additional headers, but only ``Reply-To`` and
-    ``X-*`` (since that is all that Mandrill accepts). Any other extra headers
-    will raise :exc:`~djrill.NotSupportedByMandrillError` when you attempt to send the
-    message.
+    Djrill accepts additional headers and passes them along to Mandrill.
+
+    .. versionchanged:: 0.9
+       In earlier versions, Djrill only allowed ``Reply-To`` and ``X-*`` headers,
+       matching previous Mandrill API restrictions.
 
 
 .. _mandrill-send-support:

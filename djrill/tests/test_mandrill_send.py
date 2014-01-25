@@ -86,7 +86,8 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
             bcc=['bcc@example.com'],
             cc=['cc1@example.com', 'Also CC <cc2@example.com>'],
             headers={'Reply-To': 'another@example.com',
-                     'X-MyHeader': 'my value'})
+                     'X-MyHeader': 'my value',
+                     'Message-ID': 'mycustommsgid@example.com'})
         email.send()
         self.assert_mandrill_called("/messages/send.json")
         data = self.get_api_call_data()
@@ -94,7 +95,9 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
         self.assertEqual(data['message']['text'], "Body goes here")
         self.assertEqual(data['message']['from_email'], "from@example.com")
         self.assertEqual(data['message']['headers'],
-            { 'Reply-To': 'another@example.com', 'X-MyHeader': 'my value' })
+                         {'Reply-To': 'another@example.com',
+                          'X-MyHeader': 'my value',
+                          'Message-ID': 'mycustommsgid@example.com'})
         # Mandrill doesn't have a notion of cc.
         # Djrill just treats cc as additional "to" addresses,
         # which may or may not be what you want.
@@ -216,22 +219,6 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
         self.assertEqual(decode_att(attachments[1]["content"]), image_data)
         # Make sure the image attachments are not treated as embedded:
         self.assertFalse('images' in data['message'])
-
-    def test_extra_header_errors(self):
-        email = mail.EmailMessage('Subject', 'Body', 'from@example.com',
-            ['to@example.com'],
-            headers={'Non-X-Non-Reply-To-Header': 'not permitted'})
-        with self.assertRaises(NotSupportedByMandrillError):
-            email.send()
-
-        # Make sure fail_silently is respected
-        email = mail.EmailMessage('Subject', 'Body', 'from@example.com',
-            ['to@example.com'],
-            headers={'Non-X-Non-Reply-To-Header': 'not permitted'})
-        sent = email.send(fail_silently=True)
-        self.assertFalse(self.mock_post.called,
-            msg="Mandrill API should not be called when send fails silently")
-        self.assertEqual(sent, 0)
 
     def test_alternative_errors(self):
         # Multiple alternatives not allowed

@@ -130,8 +130,7 @@ class DjrillBackend(BaseEmailBackend):
         still work through Mandrill.
 
         Raises NotSupportedByMandrillError for any standard EmailMessage
-        features that cannot be accurately communicated to Mandrill
-        (e.g., prohibited headers).
+        features that cannot be accurately communicated to Mandrill.
         """
         sender = sanitize_address(message.from_email, message.encoding)
         from_name, from_email = parseaddr(sender)
@@ -162,11 +161,6 @@ class DjrillBackend(BaseEmailBackend):
                 % len(message.bcc))
 
         if message.extra_headers:
-            for k in message.extra_headers.keys():
-                if k != "Reply-To" and not k.startswith("X-"):
-                    raise NotSupportedByMandrillError(
-                        "Invalid message header '%s' - Mandrill "
-                        "only allows Reply-To and X-* headers" % k)
             msg_dict["headers"] = message.extra_headers
 
         return msg_dict
