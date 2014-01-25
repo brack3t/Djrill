@@ -25,10 +25,6 @@ Some notes and limitations:
     ("email\@example.com") or can include a display name
     ("Real Name <email\@example.com>").
 
-**From Address**
-    The ``from_email`` must be in one of the approved sending
-    domains in your Mandrill account, or Mandrill will refuse to send the message.
-
 **CC Recipients**
     Djrill treats all "cc" recipients as if they were
     additional "to" addresses. (Mandrill does not distinguish "cc" from "to".)

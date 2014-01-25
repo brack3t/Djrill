@@ -107,9 +107,6 @@ Djrill 1-2-3
         # Send it:
         msg.send()
 
-   (Be sure to use a ``from_email`` that's in one of your Mandrill approved sending
-   domains, or the message won't get sent.)
-
 .. END quickstart
 
 
