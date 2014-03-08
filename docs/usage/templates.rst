@@ -63,8 +63,8 @@ Example that builds an email from the templates ``message_subject.txt``,
     text_body = render_to_string("message_body.txt", template_data, plaintext_context)
     html_body = render_to_string("message_body.html", template_data)
 
-    msg = EmailMessage(subject=subject, from_email="store@example.com",
-                       to=["customer@example.com"], body=text_body)
+    msg = EmailMultiAlternatives(subject=subject, from_email="store@example.com",
+                                 to=["customer@example.com"], body=text_body)
     msg.attach_alternative(html_body, "text/html")
     msg.send()
 
