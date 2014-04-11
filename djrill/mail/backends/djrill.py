@@ -49,8 +49,8 @@ class DjrillBackend(BaseEmailBackend):
         super(DjrillBackend, self).__init__(**kwargs)
         self.api_key = getattr(settings, "MANDRILL_API_KEY", None)
         self.api_url = MANDRILL_API_URL
-        
-        self.subaccount = getattr(settings, "MANDRILL_SUB_ACCOUNT", None)
+
+        self.subaccount = getattr(settings, "MANDRILL_SUBACCOUNT", None)
 
         if not self.api_key:
             raise ImproperlyConfigured("You have not set your mandrill api key "
