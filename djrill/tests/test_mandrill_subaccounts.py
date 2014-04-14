@@ -18,10 +18,10 @@ class DjrillMandrillSubaccountTests(DjrillBackendMockAPITestCase):
         self.assertEqual(data['message']['from_email'], "from@example.com")
         self.assertEqual(len(data['message']['to']), 1)
         self.assertEqual(data['message']['to'][0]['email'], "to@example.com")
-
+        self.assertFalse('subaccount' in data['message'])
 
     def test_send_from_subaccount(self):
-        settings.MANDRILL_SUB_ACCOUNT = "test_subaccount"
+        settings.MANDRILL_SUBACCOUNT = "test_subaccount"
         
         mail.send_mail('Subject here', 'Here is the message.',
             'from@example.com', ['to@example.com'], fail_silently=False)
@@ -33,6 +33,4 @@ class DjrillMandrillSubaccountTests(DjrillBackendMockAPITestCase):
         self.assertEqual(data['message']['from_email'], "from@example.com")
         self.assertEqual(len(data['message']['to']), 1)
         self.assertEqual(data['message']['to'][0]['email'], "to@example.com")
-
-
-        self.assertEqual(data['message']['subaccount'], settings.MANDRILL_SUB_ACCOUNT)
+        self.assertEqual(data['message']['subaccount'], settings.MANDRILL_SUBACCOUNT)
