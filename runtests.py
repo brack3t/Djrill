@@ -24,6 +24,12 @@ settings.configure(
     )
 )
 
+try:
+    # Django 1.7+ initialize app registry
+    from django import setup
+    setup()
+except ImportError:
+    pass
 
 try:
     from django.test.runner import DiscoverRunner as TestRunner  # Django 1.6+
