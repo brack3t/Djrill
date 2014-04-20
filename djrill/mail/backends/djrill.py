@@ -50,6 +50,8 @@ class DjrillBackend(BaseEmailBackend):
         self.api_key = getattr(settings, "MANDRILL_API_KEY", None)
         self.api_url = MANDRILL_API_URL
 
+        self.subaccount = getattr(settings, "MANDRILL_SUBACCOUNT", None)
+
         if not self.api_key:
             raise ImproperlyConfigured("You have not set your mandrill api key "
                 "in the settings.py file.")
@@ -187,6 +189,10 @@ class DjrillBackend(BaseEmailBackend):
             'tags', 'preserve_recipients', 'view_content_link', 'subaccount',
             'google_analytics_domains', 'google_analytics_campaign',
             'metadata']
+
+        if self.subaccount:
+            msg_dict['subaccount'] = self.subaccount
+
         for attr in mandrill_attrs:
             if hasattr(message, attr):
                 msg_dict[attr] = getattr(message, attr)
