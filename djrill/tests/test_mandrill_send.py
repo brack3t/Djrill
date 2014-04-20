@@ -4,13 +4,15 @@ from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
 import os
 
-from django.conf import settings
 from django.core import mail
 from django.core.exceptions import ImproperlyConfigured
 from django.core.mail import make_msgid
+from django.test import TestCase
 
 from djrill import MandrillAPIError, NotSupportedByMandrillError
-from djrill.tests.mock_backend import DjrillBackendMockAPITestCase
+from .mock_backend import DjrillBackendMockAPITestCase
+from .utils import override_settings
+
 
 def decode_att(att):
     """Returns the original data from base64-encoded attachment content"""
@@ -45,12 +47,6 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
         self.assertEqual(data['message']['from_email'], "from@example.com")
         self.assertEqual(len(data['message']['to']), 1)
         self.assertEqual(data['message']['to'][0]['email'], "to@example.com")
-
-    def test_missing_api_key(self):
-        del settings.MANDRILL_API_KEY
-        with self.assertRaises(ImproperlyConfigured):
-            mail.send_mail('Subject', 'Message', 'from@example.com',
-                ['to@example.com'])
 
     def test_name_addr(self):
         """Make sure RFC2822 name-addr format (with display-name) is allowed
@@ -462,3 +458,13 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
         sent = msg.send(fail_silently=True)
         self.assertEqual(sent, 0)
         self.assertIsNone(msg.mandrill_response)
+
+
+@override_settings(EMAIL_BACKEND="djrill.mail.backends.djrill.DjrillBackend")
+class DjrillImproperlyConfiguredTests(TestCase):
+    """Test Djrill backend without Djrill-specific settings in place"""
+
+    def test_missing_api_key(self):
+        with self.assertRaises(ImproperlyConfigured):
+            mail.send_mail('Subject', 'Message', 'from@example.com',
+                ['to@example.com'])

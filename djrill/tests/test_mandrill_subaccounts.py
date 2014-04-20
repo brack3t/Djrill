@@ -1,19 +1,13 @@
 from django.core import mail
 
-from djrill.tests.mock_backend import DjrillBackendMockAPITestCase
+from .mock_backend import DjrillBackendMockAPITestCase
+from .utils import override_settings
 
-from django.conf import settings
 
 class DjrillMandrillSubaccountTests(DjrillBackendMockAPITestCase):
     """Test Djrill backend support for Mandrill subaccounts"""
 
     def test_send_basic(self):
-        # Make sure we don't have a MANDRILL_SUBACCOUNT from a previous test
-        try:
-            del settings.MANDRILL_SUBACCOUNT
-        except AttributeError:
-            pass
-
         mail.send_mail('Subject here', 'Here is the message.',
             'from@example.com', ['to@example.com'], fail_silently=False)
         self.assert_mandrill_called("/messages/send.json")
@@ -26,9 +20,8 @@ class DjrillMandrillSubaccountTests(DjrillBackendMockAPITestCase):
         self.assertEqual(data['message']['to'][0]['email'], "to@example.com")
         self.assertFalse('subaccount' in data['message'])
 
+    @override_settings(MANDRILL_SUBACCOUNT="test_subaccount")
     def test_send_from_subaccount(self):
-        settings.MANDRILL_SUBACCOUNT = "test_subaccount"
-        
         mail.send_mail('Subject here', 'Here is the message.',
             'from@example.com', ['to@example.com'], fail_silently=False)
         self.assert_mandrill_called("/messages/send.json")
@@ -39,10 +32,10 @@ class DjrillMandrillSubaccountTests(DjrillBackendMockAPITestCase):
         self.assertEqual(data['message']['from_email'], "from@example.com")
         self.assertEqual(len(data['message']['to']), 1)
         self.assertEqual(data['message']['to'][0]['email'], "to@example.com")
-        self.assertEqual(data['message']['subaccount'], settings.MANDRILL_SUBACCOUNT)
+        self.assertEqual(data['message']['subaccount'], "test_subaccount")
 
+    @override_settings(MANDRILL_SUBACCOUNT="global_setting_subaccount")
     def test_subaccount_message_overrides_setting(self):
-        settings.MANDRILL_SUBACCOUNT = "global_setting_subaccount"
         message = mail.EmailMessage(
             'Subject here', 'Here is the message',
             'from@example.com', ['to@example.com'])

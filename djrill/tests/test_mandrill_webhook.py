@@ -3,12 +3,13 @@ import hashlib
 import hmac
 import json
 
-from django.test import TestCase
-from django.core.exceptions import ImproperlyConfigured
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
+from django.test import TestCase
 
 from ..compat import b
 from ..signals import webhook_event
+from .utils import override_settings
 
 
 class DjrillWebhookSecretMixinTests(TestCase):
@@ -17,70 +18,58 @@ class DjrillWebhookSecretMixinTests(TestCase):
     """
 
     def test_missing_secret(self):
-        del settings.DJRILL_WEBHOOK_SECRET
-
         with self.assertRaises(ImproperlyConfigured):
             self.client.get('/webhook/')
 
+    @override_settings(DJRILL_WEBHOOK_SECRET='abc123')
     def test_incorrect_secret(self):
-        settings.DJRILL_WEBHOOK_SECRET = 'abc123'
-
         response = self.client.head('/webhook/?secret=wrong')
         self.assertEqual(response.status_code, 403)
 
+    @override_settings(DJRILL_WEBHOOK_SECRET='abc123')
     def test_default_secret_name(self):
-        del settings.DJRILL_WEBHOOK_SECRET_NAME
-        settings.DJRILL_WEBHOOK_SECRET = 'abc123'
-
         response = self.client.head('/webhook/?secret=abc123')
         self.assertEqual(response.status_code, 200)
 
+    @override_settings(DJRILL_WEBHOOK_SECRET='abc123', DJRILL_WEBHOOK_SECRET_NAME='verysecret')
     def test_custom_secret_name(self):
-        settings.DJRILL_WEBHOOK_SECRET = 'abc123'
-        settings.DJRILL_WEBHOOK_SECRET_NAME = 'verysecret'
-
         response = self.client.head('/webhook/?verysecret=abc123')
         self.assertEqual(response.status_code, 200)
 
 
+@override_settings(DJRILL_WEBHOOK_SECRET='abc123',
+                   DJRILL_WEBHOOK_SIGNATURE_KEY="signature")
 class DjrillWebhookSignatureMixinTests(TestCase):
     """
     Test mixin used in optional Mandrill webhook signature support
     """
 
-    def setUp(self):
-        settings.DJRILL_WEBHOOK_SECRET = 'abc123'
-        settings.DJRILL_WEBHOOK_SIGNATURE_KEY = "signature"
-        settings.DJRILL_WEBHOOK_URL = "/webhook/?secret=abc123"
-
     def test_incorrect_settings(self):
-        del settings.DJRILL_WEBHOOK_URL
         with self.assertRaises(ImproperlyConfigured):
             self.client.post('/webhook/?secret=abc123')
-        settings.DJRILL_WEBHOOK_URL = "/webhook/?secret=abc123"
 
+    @override_settings(DJRILL_WEBHOOK_URL="/webhook/?secret=abc123",
+                       DJRILL_WEBHOOK_SIGNATURE_KEY = "anothersignature")
     def test_unauthorized(self):
-        settings.DJRILL_WEBHOOK_SIGNATURE_KEY = "anothersignature"
         response = self.client.post(settings.DJRILL_WEBHOOK_URL)
         self.assertEqual(response.status_code, 403)
 
+    @override_settings(DJRILL_WEBHOOK_URL="/webhook/?secret=abc123")
     def test_signature(self):
-        signature = hmac.new(key=b(settings.DJRILL_WEBHOOK_SIGNATURE_KEY), msg = b(settings.DJRILL_WEBHOOK_URL+"mandrill_events[]"), digestmod=hashlib.sha1)
+        signature = hmac.new(key=b(settings.DJRILL_WEBHOOK_SIGNATURE_KEY),
+                             msg=b(settings.DJRILL_WEBHOOK_URL+"mandrill_events[]"),
+                             digestmod=hashlib.sha1)
         hash_string = b64encode(signature.digest())
-        response = self.client.post('/webhook/?secret=abc123', data={"mandrill_events":"[]"}, **{"HTTP_X_MANDRILL_SIGNATURE" : hash_string})
+        response = self.client.post('/webhook/?secret=abc123', data={"mandrill_events":"[]"},
+                                    **{"HTTP_X_MANDRILL_SIGNATURE": hash_string})
         self.assertEqual(response.status_code, 200)
 
-    def tearDown(self):
-        del settings.DJRILL_WEBHOOK_SIGNATURE_KEY
-        del settings.DJRILL_WEBHOOK_URL
 
+@override_settings(DJRILL_WEBHOOK_SECRET='abc123')
 class DjrillWebhookViewTests(TestCase):
     """
     Test optional Mandrill webhook view
     """
-
-    def setUp(self):
-        settings.DJRILL_WEBHOOK_SECRET = 'abc123'
 
     def test_head_request(self):
         response = self.client.head('/webhook/?secret=abc123')
