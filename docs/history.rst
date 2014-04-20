@@ -1,9 +1,13 @@
 Release Notes
 =============
 
-Version 1.0 (development):
+Version 1.1 (development):
+
+
+Version 1.0:
 
 * Global :setting:`MANDRILL_SUBACCOUNT` setting
+
 
 Version 0.9:
 
