@@ -8,6 +8,12 @@ class DjrillMandrillSubaccountTests(DjrillBackendMockAPITestCase):
     """Test Djrill backend support for Mandrill subaccounts"""
 
     def test_send_basic(self):
+        # Make sure we don't have a MANDRILL_SUBACCOUNT from a previous test
+        try:
+            del settings.MANDRILL_SUBACCOUNT
+        except AttributeError:
+            pass
+
         mail.send_mail('Subject here', 'Here is the message.',
             'from@example.com', ['to@example.com'], fail_silently=False)
         self.assert_mandrill_called("/messages/send.json")
