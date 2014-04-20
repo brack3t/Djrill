@@ -3,6 +3,7 @@ Release Notes
 
 Version 1.0 (development):
 
+* Global :setting:`MANDRILL_SUBACCOUNT` setting
 
 Version 0.9:
 
