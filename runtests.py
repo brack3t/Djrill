@@ -5,7 +5,7 @@
 import sys
 from django.conf import settings
 
-APP='djrill'
+APP = 'djrill'
 
 settings.configure(
     DEBUG=True,
@@ -24,11 +24,16 @@ settings.configure(
     )
 )
 
-from django.test.simple import DjangoTestSuiteRunner
+
+try:
+    from django.test.runner import DiscoverRunner as TestRunner  # Django 1.6+
+except ImportError:
+    from django.test.simple import DjangoTestSuiteRunner as TestRunner  # Django -1.5
+
 
 def runtests():
-    test_runner = DjangoTestSuiteRunner(verbosity=1)
-    failures = test_runner.run_tests([APP, ])
+    test_runner = TestRunner(verbosity=1)
+    failures = test_runner.run_tests([APP])
     sys.exit(failures)
 
 if __name__ == '__main__':
