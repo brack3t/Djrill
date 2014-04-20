@@ -34,3 +34,14 @@ class DjrillMandrillSubaccountTests(DjrillBackendMockAPITestCase):
         self.assertEqual(len(data['message']['to']), 1)
         self.assertEqual(data['message']['to'][0]['email'], "to@example.com")
         self.assertEqual(data['message']['subaccount'], settings.MANDRILL_SUBACCOUNT)
+
+    def test_subaccount_message_overrides_setting(self):
+        settings.MANDRILL_SUBACCOUNT = "global_setting_subaccount"
+        message = mail.EmailMessage(
+            'Subject here', 'Here is the message',
+            'from@example.com', ['to@example.com'])
+        message.subaccount = "individual_message_subaccount"  # should override global setting
+        message.send()
+        self.assert_mandrill_called("/messages/send.json")
+        data = self.get_api_call_data()
+        self.assertEqual(data['message']['subaccount'], "individual_message_subaccount")

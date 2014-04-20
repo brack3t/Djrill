@@ -12,3 +12,5 @@ peillis
 José Padilla
 Jens Alm
 Eric Hennings
+Michael Hobbs
+Sameer Al-Sakran

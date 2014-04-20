@@ -199,6 +199,8 @@ Most of the options from the Mandrill
 .. attribute:: subaccount
 
     ``str``: the ID of one of your subaccounts to use for sending this message.
+    (The subaccount on an individual message will override any global
+    :setting:`MANDRILL_SUBACCOUNT` setting.)
 
     .. versionadded:: 0.7
 
