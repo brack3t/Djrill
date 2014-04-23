@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import unicode_literals
+
 from base64 import b64decode
 from datetime import date, datetime, timedelta, tzinfo
 from email.mime.base import MIMEBase
@@ -188,7 +190,7 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
         )
         # Slight modification from the Django unicode docs:
         # http://django.readthedocs.org/en/latest/ref/unicode.html#email
-        msg.attach("Une pièce jointe.html", u'<p>\u2019</p>', mimetype='text/html')
+        msg.attach("Une pièce jointe.html", '<p>\u2019</p>', mimetype='text/html')
 
         msg.send()
         data = self.get_api_call_data()
