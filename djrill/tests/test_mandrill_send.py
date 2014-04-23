@@ -180,18 +180,17 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
         self.assertFalse('images' in data['message'])
 
     def test_unicode_attachment_correctly_decoded(self):
-        unicode_attachment = [
-            ('before_html.html', u'<p>\u2019</p>', 'text/html'),
-        ]
-        email = mail.EmailMessage(
+        msg = mail.EmailMessage(
             subject='Subject',
             body='Body goes here',
             from_email='from@example.com',
             to=['to1@example.com'],
-            attachments=unicode_attachment,
         )
+        # Slight modification from the Django unicode docs:
+        # http://django.readthedocs.org/en/latest/ref/unicode.html#email
+        msg.attach("Une pièce jointe.html", u'<p>\u2019</p>', mimetype='text/html')
 
-        email.send()
+        msg.send()
         data = self.get_api_call_data()
 
         attachments = data['message']['attachments']
