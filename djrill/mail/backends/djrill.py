@@ -313,6 +313,7 @@ class DjrillBackend(BaseEmailBackend):
         return mandrill_attachment, is_embedded_image
 
     def _filter_msg_dict(self, message, msg_dict):
+        """Filter message data (e.g. clear subject field, or from field)"""
         if hasattr(message, 'clear_from') and message.clear_from:
             msg_dict['from_name'] = ''
             msg_dict['from_email'] = ''

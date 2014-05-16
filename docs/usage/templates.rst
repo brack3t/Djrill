@@ -39,8 +39,6 @@ can be used with templates.
 
 How To Use Default Mandrill Subject and From fields
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. versionadded:: dev
-   Mandrill default fields support
 
 To use default *Mandril* subject or default from field you need send message
 to *Mandril* with empty subject or empty from field. This can be done using
