@@ -36,7 +36,6 @@ class DjrillMandrillSendTemplateTests(DjrillBackendMockAPITestCase):
         msg.send()
         self.assert_mandrill_called("/messages/send-template.json")
         data = self.get_api_call_data()
-        print data
         self.assertEqual(data['template_name'], "PERSONALIZED_SPECIALS")
         self.assertEqual(data['message']['subject'], "")
         self.assertEqual(data['message']['from_email'], "")
