@@ -87,6 +87,7 @@ class DjrillBackend(BaseEmailBackend):
             if getattr(message, 'alternatives', None):
                 self._add_alternatives(message, msg_dict)
             self._add_attachments(message, msg_dict)
+            self._filter_msg_dict(message, msg_dict)
             api_params['message'] = msg_dict
 
             # check if template is set in message to send it via
@@ -310,3 +311,10 @@ class DjrillBackend(BaseEmailBackend):
             'content': content_b64.decode('ascii'),
         }
         return mandrill_attachment, is_embedded_image
+
+    def _filter_msg_dict(self, message, msg_dict):
+        if hasattr(message, 'clear_from') and message.clear_from:
+            msg_dict['from_name'] = ''
+            msg_dict['from_email'] = ''
+        if hasattr(message, 'clear_subject') and message.clear_subject:
+            msg_dict['subject'] = ''
