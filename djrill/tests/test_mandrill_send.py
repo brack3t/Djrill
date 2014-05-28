@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+
+from __future__ import unicode_literals
+
 from base64 import b64decode
 from datetime import date, datetime, timedelta, tzinfo
 from email.mime.base import MIMEBase
@@ -176,6 +180,23 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
         self.assertEqual(decode_att(attachments[3]["content"]), ppt_content)
         # Make sure the image attachment is not treated as embedded:
         self.assertFalse('images' in data['message'])
+
+    def test_unicode_attachment_correctly_decoded(self):
+        msg = mail.EmailMessage(
+            subject='Subject',
+            body='Body goes here',
+            from_email='from@example.com',
+            to=['to1@example.com'],
+        )
+        # Slight modification from the Django unicode docs:
+        # http://django.readthedocs.org/en/latest/ref/unicode.html#email
+        msg.attach("Une pièce jointe.html", '<p>\u2019</p>', mimetype='text/html')
+
+        msg.send()
+        data = self.get_api_call_data()
+
+        attachments = data['message']['attachments']
+        self.assertEqual(len(attachments), 1)
 
     def test_embedded_images(self):
         image_data = self.sample_image_content()  # Read from a png file

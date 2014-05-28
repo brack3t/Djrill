@@ -294,15 +294,18 @@ class DjrillBackend(BaseEmailBackend):
         if mimetype is None:
             mimetype = DEFAULT_ATTACHMENT_MIME_TYPE
 
+        # b64encode requires bytes, so let's convert our content.
         try:
-            content_b64 = b64encode(content)
-        except TypeError:
-            # Python 3 b64encode requires bytes. Convert str attachment:
+            if isinstance(content, unicode):
+                # Python 2.X unicode string
+                content = content.encode(str_encoding)
+        except NameError:
+            # Python 3 doesn't differentiate between strings and unicode
+            # Convert python3 unicode str to bytes attachment:
             if isinstance(content, str):
-                content_bytes = content.encode(str_encoding)
-                content_b64 = b64encode(content_bytes)
-            else:
-                raise
+                content = content.encode(str_encoding)
+
+        content_b64 = b64encode(content)
 
         mandrill_attachment = {
             'type': mimetype,
