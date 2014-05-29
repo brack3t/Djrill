@@ -40,20 +40,29 @@ can be used with templates.
 How To Use Default Mandrill Subject and From fields
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To use default *Mandril* subject or default from field you need send message
-to *Mandril* with empty subject or empty from field. This can be done using
-the following attrs: :attr:`clear_subject` and :attr:`clear_from` on
+To use default Mandrill "subject" or "from" field from your template definition
+(overriding your EmailMessage and Django defaults), set the following attrs:
+:attr:`use_template_subject` and/or :attr:`use_template_from` on
 your :class:`~django.core.mail.EmailMessage` object::
     # ...
-    msg.clear_subject = True
-    msg.clear_from = True
+    msg.use_template_subject = True
+    msg.use_template_from = True
     msg.send()
 
-If :attr:`clear_subject` is set, Djrill will send message without subject and
-Mandrill will use default subject.
+.. attribute:: use_template_subject
 
-If :attr:`clear_from` is set, Djrill will send message without from field and
-Mandrill will use default from field.
+    If `True`, Djrill will omit the subject, and Mandrill will
+    use the default subject from the template.
+
+    .. versionadded:: 1.1
+
+.. attribute:: use_template_from
+
+    If `True`, Djrill will omit the "from" field, and Mandrill will
+    use the default "from" from the template.
+
+    .. versionadded:: 1.1
+
 
 
 .. _django-templates:
