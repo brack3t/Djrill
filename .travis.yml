@@ -24,6 +24,6 @@ matrix:
     - python: "2.6"
       env: DJANGO=https://www.djangoproject.com/download/1.7b1/tarball/
 install:
-  - pip install -q $DJANGO --use-mirrors
-  - pip install . --use-mirrors
+  - pip install -q $DJANGO
+  - pip install .
 script: python -Wall setup.py test
