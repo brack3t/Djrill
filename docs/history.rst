@@ -1,11 +1,15 @@
 Release Notes
 =============
 
-Version 1.1 (development):
+Version 1.2 (development):
+
+
+Version 1.1:
 
 * Allow use of Mandrill template default "from" and "subject" fields,
   via :attr:`use_template_from` and :attr:`use_template_subject`.
 * Fix `UnicodeEncodeError` with unicode attachments
+
 
 Version 1.0:
 
