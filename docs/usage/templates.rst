@@ -37,6 +37,24 @@ and will ignore any `body` text set on the `EmailMessage`.
 All of Djrill's other :ref:`Mandrill-specific options <mandrill-send-support>`
 can be used with templates.
 
+How To Use Default Mandrill Subject and From fields
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To use default *Mandril* subject or default from field you need send message
+to *Mandril* with empty subject or empty from field. This can be done using
+the following attrs: :attr:`clear_subject` and :attr:`clear_from` on
+your :class:`~django.core.mail.EmailMessage` object::
+    # ...
+    msg.clear_subject = True
+    msg.clear_from = True
+    msg.send()
+
+If :attr:`clear_subject` is set, Djrill will send message without subject and
+Mandrill will use default subject.
+
+If :attr:`clear_from` is set, Djrill will send message without from field and
+Mandrill will use default from field.
+
 
 .. _django-templates:
 
