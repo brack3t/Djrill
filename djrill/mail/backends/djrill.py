@@ -144,12 +144,16 @@ class DjrillBackend(BaseEmailBackend):
         content = "html" if message.content_subtype == "html" else "text"
         msg_dict = {
             content: message.body,
-            "subject": message.subject,
-            "from_email": from_email,
             "to": to_list
         }
-        if from_name:
-            msg_dict["from_name"] = from_name
+
+        if not getattr(message, 'use_template_from', False):
+            msg_dict["from_email"] = from_email
+            if from_name:
+                msg_dict["from_name"] = from_name
+
+        if not getattr(message, 'use_template_subject', False):
+            msg_dict["subject"] = message.subject
 
         if message.extra_headers:
             msg_dict["headers"] = message.extra_headers
