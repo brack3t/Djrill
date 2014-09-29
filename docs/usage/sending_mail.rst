@@ -316,4 +316,6 @@ Exceptions
     If the Mandrill API fails or returns an error response, the send call will
     raise a :exc:`~!djrill.MandrillAPIError` exception (a subclass of :exc:`requests.HTTPError`).
     The exception's :attr:`status_code` and :attr:`response` attributes may
-    help explain what went wrong.
+    help explain what went wrong. (Tip: you can also check Mandrill's
+    `API error log <https://mandrillapp.com/settings/api>`_ to view the full API
+    request and error response.)
