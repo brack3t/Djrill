@@ -88,3 +88,19 @@ If you want to enable the Djrill admin interface, edit your base :file:`urls.py`
             ...
             url(r'^admin/', include(admin.site.urls)),
         )
+
+If you are on **Django 1.7 or later,** you will also need to change the config used
+by the django.contrib.admin app in your :file:`settings.py`:
+
+    .. code-block:: python
+        :emphasize-lines: 4
+
+        ...
+        INSTALLED_APPS = (
+            # For Django 1.7+, use SimpleAdminConfig because we'll call autodiscover...
+            'django.contrib.admin.apps.SimpleAdminConfig',  # instead of 'django.contrib.admin'
+            ...
+            'djrill',
+            ...
+        )
+        ...

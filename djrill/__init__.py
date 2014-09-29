@@ -11,7 +11,12 @@ from ._version import *
 MANDRILL_API_URL = getattr(settings, "MANDRILL_API_URL",
     "http://mandrillapp.com/api/1.0")
 
+
 class DjrillAdminSite(AdminSite):
+    # This was originally adapted from https://github.com/jsocol/django-adminplus.
+    # If new versions of Django break DjrillAdminSite, it's worth checking to see
+    # whether django-adminplus has dealt with something similar.
+
     index_template = "djrill/index.html"
     custom_views = []
     custom_urls = []
