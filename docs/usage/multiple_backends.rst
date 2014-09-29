@@ -30,3 +30,8 @@ You can supply a different connection to Django's
 :func:`~django.core.mail.send_mail` and :func:`~django.core.mail.send_mass_mail` helpers,
 and in the constructor for an
 :class:`~django.core.mail.EmailMessage` or :class:`~django.core.mail.EmailMultiAlternatives`.
+
+
+(See the `django.utils.log.AdminEmailHandler`_ docs for more information on Django's admin error logging.)
+
+.. _django.utils.log.AdminEmailHandler: https://docs.djangoproject.com/en/dev/topics/logging/#django.utils.log.AdminEmailHandler
