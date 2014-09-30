@@ -1,6 +1,9 @@
 Release Notes
 =============
 
+Version 1.3 (development):
+
+
 Version 1.2:
 
 * Support Django 1.7; add testing on Python 3.3, 3.4, and PyPy
