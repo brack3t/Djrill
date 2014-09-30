@@ -44,7 +44,7 @@ To use default Mandrill "subject" or "from" field from your template definition
 (overriding your EmailMessage and Django defaults), set the following attrs:
 :attr:`use_template_subject` and/or :attr:`use_template_from` on
 your :class:`~django.core.mail.EmailMessage` object::
-    # ...
+
     msg.use_template_subject = True
     msg.use_template_from = True
     msg.send()

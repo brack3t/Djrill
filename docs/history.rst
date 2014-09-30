@@ -31,7 +31,7 @@ Version 0.9:
 
 Version 0.8:
 
-* Expose :ref:`mandrill_response` on sent messages
+* Expose :ref:`mandrill-response` on sent messages
 
 
 Version 0.7:
