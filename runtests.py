@@ -3,9 +3,13 @@
 # python runtests.py
 
 import sys
+from django import VERSION as django_version
 from django.conf import settings
 
 APP = 'djrill'
+ADMIN = 'django.contrib.admin'
+if django_version >= (1, 7):
+    ADMIN = 'django.contrib.admin.apps.SimpleAdminConfig'
 
 settings.configure(
     DEBUG=True,
@@ -19,7 +23,7 @@ settings.configure(
         'django.contrib.auth',
         'django.contrib.contenttypes',
         'django.contrib.sessions',
-        'django.contrib.admin',
+        ADMIN,
         APP,
     ),
     MIDDLEWARE_CLASSES=(
