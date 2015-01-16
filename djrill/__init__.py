@@ -9,7 +9,7 @@ from ._version import *
 # This backend was developed against this API endpoint.
 # You can override in settings.py, if desired.
 MANDRILL_API_URL = getattr(settings, "MANDRILL_API_URL",
-    "http://mandrillapp.com/api/1.0")
+    "https://mandrillapp.com/api/1.0")
 
 
 class DjrillAdminSite(AdminSite):
