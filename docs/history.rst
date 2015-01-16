@@ -1,7 +1,11 @@
 Release Notes
 =============
 
-Version 1.3 (development):
+Version 1.4 (development):
+
+
+
+Version 1.3:
 
 * Use Mandrill secure https API endpoint (rather than http).
 * Support :attr:`merge_language` option (for choosing between
