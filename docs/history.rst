@@ -3,6 +3,10 @@ Release Notes
 
 Version 1.3 (development):
 
+* Use Mandrill secure https API endpoint (rather than http).
+* Support :attr:`merge_language` option (for choosing between
+  Handlebars and Mailchimp templates).
+
 
 Version 1.2:
 
