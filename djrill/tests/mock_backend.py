@@ -1,5 +1,7 @@
 import json
 from mock import patch
+import requests
+import six
 
 from django.test import TestCase
 
@@ -11,15 +13,13 @@ from .utils import override_settings
 class DjrillBackendMockAPITestCase(TestCase):
     """TestCase that uses Djrill EmailBackend with a mocked Mandrill API"""
 
-    class MockResponse:
+    class MockResponse(requests.Response):
         """requests.post return value mock sufficient for DjrillBackend"""
-        def __init__(self, status_code=200, content="{}", json=None):
+        def __init__(self, status_code=200, raw=six.b("{}"), encoding='utf-8'):
+            super(DjrillBackendMockAPITestCase.MockResponse, self).__init__()
             self.status_code = status_code
-            self.content = content
-            self._json = json if json is not None else ['']
-
-        def json(self):
-            return self._json
+            self.encoding = encoding
+            self.raw = six.BytesIO(raw)
 
     def setUp(self):
         self.patch = patch('requests.post', autospec=True)

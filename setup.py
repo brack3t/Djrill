@@ -32,7 +32,7 @@ setup(
     install_requires=["requests>=1.0.0", "django>=1.3"],
     include_package_data=True,
     test_suite="runtests.runtests",
-    tests_require=["mock"],
+    tests_require=["mock", "six"],
     classifiers=[
         "Programming Language :: Python",
         "Programming Language :: Python :: Implementation :: PyPy",

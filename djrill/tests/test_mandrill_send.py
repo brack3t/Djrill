@@ -6,7 +6,9 @@ from base64 import b64decode
 from datetime import date, datetime, timedelta, tzinfo
 from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
+import json
 import os
+import six
 
 from django.core import mail
 from django.core.exceptions import ImproperlyConfigured
@@ -466,7 +468,7 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
     def test_send_attaches_mandrill_response(self):
         """ The mandrill_response should be attached to the message when it is sent """
         response = [{'mandrill_response': 'would_be_here'}]
-        self.mock_post.return_value = self.MockResponse(json=response)
+        self.mock_post.return_value = self.MockResponse(raw=six.b(json.dumps(response)))
         msg = mail.EmailMessage('Subject', 'Message', 'from@example.com', ['to1@example.com'],)
         sent = msg.send()
         self.assertEqual(sent, 1)
