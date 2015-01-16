@@ -194,6 +194,7 @@ class DjrillBackend(BaseEmailBackend):
             'track_opens', 'track_clicks', 'auto_text', 'auto_html',
             'inline_css', 'url_strip_qs',
             'tracking_domain', 'signing_domain', 'return_path_domain',
+            'merge_language',
             'tags', 'preserve_recipients', 'view_content_link', 'subaccount',
             'google_analytics_domains', 'google_analytics_campaign',
             'metadata']

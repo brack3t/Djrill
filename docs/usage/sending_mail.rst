@@ -171,6 +171,13 @@ Most of the options from the Mandrill
 
     .. versionadded:: 0.7
 
+.. attribute:: merge_language
+
+    ``str``: the merge tag language if using merge tags -- e.g., "mailchimp" or "handlebars".
+    Default from your Mandrill account settings.
+
+    .. versionadded:: 1.3
+
 .. attribute:: global_merge_vars
 
     ``dict``: merge variables to use for all recipients (most useful with :ref:`mandrill-templates`). ::

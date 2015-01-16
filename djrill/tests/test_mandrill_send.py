@@ -343,6 +343,7 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
     def test_merge(self):
         # Djrill expands simple python dicts into the more-verbose name/content
         # structures the Mandrill API uses
+        self.message.merge_language = "mailchimp"
         self.message.global_merge_vars = { 'GREETING': "Hello",
                                            'ACCOUNT_TYPE': "Basic" }
         self.message.merge_vars = {
@@ -352,6 +353,7 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
             }
         self.message.send()
         data = self.get_api_call_data()
+        self.assertEqual(data['message']['merge_language'], "mailchimp")
         self.assertEqual(data['message']['global_merge_vars'],
             [ {'name': 'ACCOUNT_TYPE', 'content': "Basic"},
               {'name': "GREETING", 'content': "Hello"} ])
@@ -456,6 +458,7 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
         self.assertFalse('google_analytics_domains' in data['message'])
         self.assertFalse('google_analytics_campaign' in data['message'])
         self.assertFalse('metadata' in data['message'])
+        self.assertFalse('merge_language' in data['message'])
         self.assertFalse('global_merge_vars' in data['message'])
         self.assertFalse('merge_vars' in data['message'])
         self.assertFalse('recipient_metadata' in data['message'])

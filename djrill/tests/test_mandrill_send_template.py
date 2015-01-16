@@ -48,7 +48,6 @@ class DjrillMandrillSendTemplateTests(DjrillBackendMockAPITestCase):
         msg.use_template_from = True
         with self.assertRaises(MandrillAPIError):
             msg.send()
-            self.assertEqual(sent, 0)
 
     def test_send_template_without_subject_field(self):
         msg = mail.EmailMessage('Subject', 'Text Body',
