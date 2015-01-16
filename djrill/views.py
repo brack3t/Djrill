@@ -73,7 +73,7 @@ class DjrillApiJsonObjectsMixin(object):
         req = requests.post("%s/%s" % (self.api_url, api_uri),
                             data=payload)
         if req.status_code == 200:
-            return req.content
+            return req.text
         messages.error(self.request, self._api_error_handler(req))
         return json.dumps("error")
 
@@ -81,7 +81,7 @@ class DjrillApiJsonObjectsMixin(object):
         """
         If the API returns an error, display it to the user.
         """
-        content = json.loads(req.content)
+        content = json.loads(req.text)
         return "Mandrill returned a %d response: %s" % (req.status_code,
                                                         content["message"])
 
@@ -147,7 +147,7 @@ class DjrillIndexView(DjrillApiMixin, TemplateView):
         payload = json.dumps({"key": self.api_key})
         req = requests.post("%s/users/info.json" % self.api_url, data=payload)
 
-        return self.render_to_response({"status": json.loads(req.content)})
+        return self.render_to_response({"status": json.loads(req.text)})
 
 
 class DjrillSendersListView(DjrillAdminMedia, DjrillApiMixin,
