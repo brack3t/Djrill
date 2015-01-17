@@ -3,6 +3,7 @@ Release Notes
 
 Version 1.4 (development):
 
+* Django 1.8 alpha support
 
 
 Version 1.3:

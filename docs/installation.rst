@@ -84,10 +84,10 @@ If you want to enable the Djrill admin interface, edit your base :file:`urls.py`
         admin.autodiscover()
         ...
 
-        urlpatterns = patterns('',
+        urlpatterns = [
             ...
             url(r'^admin/', include(admin.site.urls)),
-        )
+        ]
 
 If you are on **Django 1.7 or later,** you will also need to change the config used
 by the django.contrib.admin app in your :file:`settings.py`:

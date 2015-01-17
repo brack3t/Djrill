@@ -30,8 +30,8 @@ package. It includes:
   via Django signals
 * An optional Django admin interface
 
-Djrill is released under the BSD license. It is tested against Django 1.3---1.7
-(including Python 3 and PyPy support with Django 1.5+).
+Djrill is released under the BSD license. It is tested against Django 1.3--1.8
+(including Python 3 with Django 1.6+, and PyPy support with Django 1.5+).
 
 .. END shared-intro
 

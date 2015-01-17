@@ -38,9 +38,13 @@ matrix:
       env: DJANGO=django==1.7
     - python: "pypy"
       env: DJANGO=django==1.7
-    # Django 1.8beta: tbd...
-    # - python: "2.7"
-    #   env: DJANGO=https://www.djangoproject.com/download/1.8b1/tarball/
+    # Django 1.8alpha: "Python 2.7 or above"
+    - python: "2.7"
+      env: DJANGO=https://www.djangoproject.com/download/1.8a1/tarball/
+    - python: "3.4"
+      env: DJANGO=https://www.djangoproject.com/download/1.8a1/tarball/
+    - python: "pypy"
+      env: DJANGO=https://www.djangoproject.com/download/1.8a1/tarball/
 install:
   - pip install -q $DJANGO
   - pip install .

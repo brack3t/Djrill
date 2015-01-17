@@ -7,6 +7,8 @@ import six
 
 from djrill.tests.mock_backend import DjrillBackendMockAPITestCase
 
+from .utils import override_settings
+
 
 def reset_admin_site():
     """Return the Django admin globals to their original state"""
@@ -15,14 +17,13 @@ def reset_admin_site():
         del sys.modules['djrill.admin'] # force autodiscover to re-import
 
 
+@override_settings(ROOT_URLCONF='djrill.tests.admin_urls')
 class DjrillAdminTests(DjrillBackendMockAPITestCase):
     """Test the Djrill admin site"""
 
-    # These urls set up the DjrillAdminSite as suggested in the readme
-    urls = 'djrill.tests.admin_urls'
-
     @classmethod
     def setUpClass(cls):
+        super(DjrillAdminTests, cls).setUpClass()
         # Other test cases may muck with the Django admin site globals,
         # so return it to the default state before loading test_admin_urls
         reset_admin_site()
