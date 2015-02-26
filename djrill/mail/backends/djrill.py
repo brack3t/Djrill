@@ -159,8 +159,15 @@ class DjrillBackend(BaseEmailBackend):
         if not getattr(message, 'use_template_subject', False):
             msg_dict["subject"] = message.subject
 
+        if hasattr(message, 'reply_to'):
+            reply_to = [sanitize_address(addr, message.encoding) for addr in message.reply_to]
+            msg_dict["headers"] = {'Reply-To': ', '.join(reply_to)}
+            # Note: An explicit Reply-To header will override the reply_to attr below
+            # (matching Django's own behavior)
+
         if message.extra_headers:
-            msg_dict["headers"] = message.extra_headers
+            msg_dict["headers"] = msg_dict.get("headers", {})
+            msg_dict["headers"].update(message.extra_headers)
 
         return msg_dict
 

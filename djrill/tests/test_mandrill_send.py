@@ -9,6 +9,7 @@ from email.mime.image import MIMEImage
 import json
 import os
 import six
+from unittest import SkipTest
 
 from django.core import mail
 from django.core.exceptions import ImproperlyConfigured
@@ -142,6 +143,23 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
         data = self.get_api_call_data()
         self.assertNotIn('text', data['message'])
         self.assertEqual(data['message']['html'], html_content)
+
+    def test_reply_to(self):
+        # reply_to is new in Django 1.8 -- before that, you can simply include it in headers
+        try:
+            # noinspection PyArgumentList
+            email = mail.EmailMessage('Subject', 'Body goes here', 'from@example.com', ['to1@example.com'],
+                                      reply_to=['reply@example.com', 'Other <reply2@example.com>'],
+                                      headers={'X-Other': 'Keep'})
+        except TypeError:
+            # Pre-Django 1.8
+            raise SkipTest("Django version doesn't support EmailMessage(reply_to)")
+        email.send()
+        self.assert_mandrill_called("/messages/send.json")
+        data = self.get_api_call_data()
+        self.assertEqual(data['message']['headers']['Reply-To'],
+                         'reply@example.com, Other <reply2@example.com>')
+        self.assertEqual(data['message']['headers']['X-Other'], 'Keep')  # don't lose other headers
 
     def test_attachments(self):
         email = mail.EmailMessage('Subject', 'Body goes here', 'from@example.com', ['to1@example.com'])

@@ -76,12 +76,26 @@ Some notes and limitations:
     .. versionchanged:: 0.4
        Special handling for embedded images
 
+.. _message-headers:
+
 **Headers**
-    Djrill accepts additional headers and passes them along to Mandrill.
+    Djrill accepts additional headers and passes them along to Mandrill:
+
+    .. code-block:: python
+
+        msg = EmailMessage( ...
+            headers={'Reply-To': "reply@example.com", 'List-Unsubscribe': "..."}
+        )
 
     .. versionchanged:: 0.9
        In earlier versions, Djrill only allowed ``Reply-To`` and ``X-*`` headers,
        matching previous Mandrill API restrictions.
+
+    .. versionchanged:: 1.4
+       Djrill also supports the `reply_to` param added to
+       :class:`~django.core.mail.EmailMessage` in Django 1.8.
+       (If you provide *both* a 'Reply-To' header and the `reply_to` param,
+       the header will take precedence.)
 
 
 .. _mandrill-send-support:
