@@ -9,7 +9,11 @@ from email.mime.image import MIMEImage
 import json
 import os
 import six
-from unittest import SkipTest
+
+try:
+    from unittest import SkipTest
+except ImportError:
+    from django.utils.unittest import SkipTest
 
 from django.core import mail
 from django.core.exceptions import ImproperlyConfigured
