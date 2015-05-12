@@ -5,12 +5,12 @@ import six
 
 from django.test import TestCase
 
-from .utils import override_settings
+from .utils import BackportedAssertions, override_settings
 
 
 @override_settings(MANDRILL_API_KEY="FAKE_API_KEY_FOR_TESTING",
                    EMAIL_BACKEND="djrill.mail.backends.djrill.DjrillBackend")
-class DjrillBackendMockAPITestCase(TestCase):
+class DjrillBackendMockAPITestCase(TestCase, BackportedAssertions):
     """TestCase that uses Djrill EmailBackend with a mocked Mandrill API"""
 
     class MockResponse(requests.Response):

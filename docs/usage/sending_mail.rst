@@ -198,6 +198,9 @@ Most of the options from the Mandrill
 
         message.global_merge_vars = {'company': "ACME", 'offer': "10% off"}
 
+    Merge data must be strings or other JSON-serializable types.
+    (See :ref:`formatting-merge-data` for details.)
+
 .. attribute:: merge_vars
 
     ``dict``: per-recipient merge variables (most useful with :ref:`mandrill-templates`). The keys
@@ -208,6 +211,9 @@ Most of the options from the Mandrill
             'wiley@example.com': {'offer': "15% off anvils"},
             'rr@example.com':    {'offer': "instant tunnel paint"}
         }
+
+    Merge data must be strings or other JSON-serializable types.
+    (See :ref:`formatting-merge-data` for details.)
 
 .. attribute:: tags
 
@@ -245,11 +251,17 @@ Most of the options from the Mandrill
 
         message.metadata = {'customer': customer.id, 'order': order.reference_number}
 
+    Mandrill restricts metadata keys to alphanumeric characters and underscore, and
+    metadata values to numbers, strings, boolean values, and None (null).
+
 .. attribute:: recipient_metadata
 
     ``dict``: per-recipient metadata values. Keys are the recipient email addresses,
     and values are dicts of metadata for each recipient (similar to
     :attr:`merge_vars`)
+
+    Mandrill restricts metadata keys to alphanumeric characters and underscore, and
+    metadata values to numbers, strings, boolean values, and None (null).
 
 .. attribute:: async
 

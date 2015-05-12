@@ -1,4 +1,8 @@
+import re
+import six
+
 __all__ = (
+    'BackportedAssertions',
     'override_settings',
 )
 
@@ -66,3 +70,19 @@ except ImportError:
             #     new_value = getattr(settings, key, None)
             #     setting_changed.send(sender=settings._wrapped.__class__,
             #                          setting=key, value=new_value)
+
+
+class BackportedAssertions(object):
+    """Handful of useful TestCase assertions backported to Python 2.6/Django 1.3"""
+
+    # Backport from Python 2.7/3.1
+    def assertIn(self, member, container, msg=None):
+        """Just like self.assertTrue(a in b), but with a nicer default message."""
+        if member not in container:
+            self.fail(msg or '%r not found in %r' % (member, container))
+
+    # Backport from Django 1.4
+    def assertRaisesMessage(self, expected_exception, expected_message,
+                            callable_obj=None, *args, **kwargs):
+        return six.assertRaisesRegex(self, expected_exception, re.escape(expected_message),
+                                     callable_obj, *args, **kwargs)

@@ -7,6 +7,35 @@ Among other things, this means that minor updates
 and breaking changes will always increment the
 major version number (1.x to 2.0).
 
+Upcoming Changes in Djrill 2.0
+------------------------------
+
+Djrill 2.0 is under development and will include some breaking changes.
+Although the changes won't impact most Djrill users, the current
+version of Djrill (1.4) will try to warn you if you use things
+that will change. (Warnings appear in the console when running Django
+in debug mode.)
+
+* **Dates in merge data and other attributes**
+
+  Djrill automatically converts :attr:`send_at` `date` and `datetime`
+  values to the ISO 8601 string format expected by the Mandrill API.
+
+  Unintentionally, it also converts dates used in other Mandrill message
+  attributes (such as :attr:`merge_vars` or :attr:`metadata`) where it
+  might not be expected (or appropriate).
+
+  Djrill 2.0 will remove this automatic date formatting, except
+  for attributes that are inherently dates (currently only `send_at`).
+
+  To assist in detecting code relying on the (undocumented) current
+  behavior, Djrill 1.4 will report a `DeprecationWarning` for `date`
+  or `datetime` values used in any Mandrill message attributes other
+  than `send_at`. See :ref:`formatting-merge-data` for other options.
+
+
+Change Log
+----------
 
 Version 1.4 (development):
 
@@ -15,6 +44,9 @@ Version 1.4 (development):
   (Specifying a :ref:`Reply-To header <message-headers>`
   still works, with any version of Django,
   and will override the reply_to param if you use both.)
+* More-helpful exception when using a non-JSON-serializable
+  type in merge_vars and other Djrill message attributes
+* Deprecation warnings for upcoming 2.0 changes (see above)
 
 
 Version 1.3:

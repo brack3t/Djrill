@@ -6,6 +6,7 @@ from django.core.mail.message import sanitize_address, DEFAULT_ATTACHMENT_MIME_T
 # Oops: this file has the same name as our app, and cannot be renamed.
 #from djrill import MANDRILL_API_URL, MandrillAPIError, NotSupportedByMandrillError
 from ... import MANDRILL_API_URL, MandrillAPIError, NotSupportedByMandrillError
+from ...exceptions import removed_in_djrill_2
 
 from base64 import b64encode
 from datetime import date, datetime
@@ -18,22 +19,36 @@ import requests
 DjrillBackendHTTPError = MandrillAPIError # Backwards-compat Djrill<=0.2.0
 
 
-class JSONDateUTCEncoder(json.JSONEncoder):
-    """JSONEncoder that encodes dates in string format used by Mandrill.
+def encode_date_for_mandrill(dt):
+    """Format a date or datetime for use as a Mandrill API date field
 
     datetime becomes "YYYY-MM-DD HH:MM:SS"
              converted to UTC, if timezone-aware
              microseconds removed
     date     becomes "YYYY-MM-DD 00:00:00"
+    anything else gets returned intact
     """
+    if isinstance(dt, datetime):
+        dt = dt.replace(microsecond=0)
+        if dt.utcoffset() is not None:
+            dt = (dt - dt.utcoffset()).replace(tzinfo=None)
+        return dt.isoformat(' ')
+    elif isinstance(dt, date):
+        return dt.isoformat() + ' 00:00:00'
+    else:
+        return dt
+
+
+class JSONDateUTCEncoder(json.JSONEncoder):
+    """[deprecated] JSONEncoder that encodes dates in string format used by Mandrill."""
     def default(self, obj):
-        if isinstance(obj, datetime):
-            dt = obj.replace(microsecond=0)
-            if dt.utcoffset() is not None:
-                dt = (dt - dt.utcoffset()).replace(tzinfo=None)
-            return dt.isoformat(' ')
-        elif isinstance(obj, date):
-            return obj.isoformat() + ' 00:00:00'
+        if isinstance(obj, date):
+            removed_in_djrill_2(
+                "You've used the date '%r' as a Djrill message attribute "
+                "(perhaps in merge vars or metadata). Djrill 2.0 will require "
+                "you to explicitly convert this date to a string." % obj
+            )
+            return encode_date_for_mandrill(obj)
         return super(JSONDateUTCEncoder, self).default(obj)
 
 
@@ -104,7 +119,19 @@ class DjrillBackend(BaseEmailBackend):
                 raise
             return False
 
-        response = requests.post(api_url, data=json.dumps(api_params, cls=JSONDateUTCEncoder))
+        try:
+            api_data = json.dumps(api_params, cls=JSONDateUTCEncoder)
+        except TypeError as err:
+            # Add some context to the "not JSON serializable" message
+            if not err.args:
+                err.args = ('',)
+            err.args = (
+                err.args[0] + " in a Djrill message (perhaps it's a merge var?)."
+                              " Try converting it to a string or number first.",
+            ) + err.args[1:]
+            raise err
+
+        response = requests.post(api_url, data=api_data)
 
         if response.status_code != 200:
 
@@ -175,11 +202,16 @@ class DjrillBackend(BaseEmailBackend):
         """Extend api_params to include Mandrill global-send options set on message"""
         # Mandrill attributes that can be copied directly:
         mandrill_attrs = [
-            'async', 'ip_pool', 'send_at'
+            'async', 'ip_pool'
         ]
         for attr in mandrill_attrs:
             if hasattr(message, attr):
                 api_params[attr] = getattr(message, attr)
+
+        # Mandrill attributes that require conversion:
+        if hasattr(message, 'send_at'):
+            api_params['send_at'] = encode_date_for_mandrill(message.send_at)
+
 
     def _make_mandrill_to_list(self, message, recipients, recipient_type="to"):
         """Create a Mandrill 'to' field from a list of emails.

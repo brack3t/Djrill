@@ -37,6 +37,45 @@ and will ignore any `body` text set on the `EmailMessage`.
 All of Djrill's other :ref:`Mandrill-specific options <mandrill-send-support>`
 can be used with templates.
 
+
+.. _formatting-merge-data:
+
+Formatting Merge Data
+~~~~~~~~~~~~~~~~~~~~~
+
+If you're using dates, datetimes, Decimals, or anything other than strings and integers,
+you'll need to format them into strings for use as merge data::
+
+    product = Product.objects.get(123)  # A Django model
+    total_cost = Decimal('19.99')
+    ship_date = date(2015, 11, 18)
+
+    # Won't work -- you'll get "not JSON serializable" exceptions:
+    msg.global_merge_vars = {
+        'PRODUCT': product,
+        'TOTAL_COST': total_cost,
+        'SHIP_DATE': ship_date
+    }
+
+    # Do something this instead:
+    msg.global_merge_vars = {
+        'PRODUCT': product.name,  # assuming name is a CharField
+        'TOTAL_COST': "%.2f" % total_cost,
+        'SHIP_DATE': ship_date.strftime('%B %d, %Y')  # US-style "March 15, 2015"
+    }
+
+These are just examples. You'll need to determine the best way to format
+your merge data as strings.
+
+Although floats are allowed in merge vars, you'll generally want to format them
+into strings yourself to avoid surprises with floating-point precision.
+
+Technically, Djrill will accept anything serializable by the Python json package --
+which means advanced template users can include dicts and lists as merge vars
+(for templates designed to handle objects and arrays).
+See the Python :class:`json.JSONEncoder` docs for a list of allowable types.
+
+
 How To Use Default Mandrill Subject and From fields
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

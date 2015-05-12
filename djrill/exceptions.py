@@ -1,4 +1,5 @@
 from requests import HTTPError
+import warnings
 
 
 class MandrillAPIError(HTTPError):
@@ -32,3 +33,11 @@ class NotSupportedByMandrillError(ValueError):
     avoid duplicating Mandrill's validation logic locally.)
 
     """
+
+
+class RemovedInDjrill2(DeprecationWarning):
+    """Functionality due for deprecation in Djrill 2.0"""
+
+
+def removed_in_djrill_2(message, stacklevel=1):
+    warnings.warn(message, category=RemovedInDjrill2, stacklevel=stacklevel + 1)

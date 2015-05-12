@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 from base64 import b64decode
 from datetime import date, datetime, timedelta, tzinfo
+from decimal import Decimal
 from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
 import json
@@ -506,6 +507,16 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
         sent = msg.send(fail_silently=True)
         self.assertEqual(sent, 0)
         self.assertIsNone(msg.mandrill_response)
+
+    def test_json_serialization_warnings(self):
+        """Try to provide more information about non-json-serializable data"""
+        self.message.global_merge_vars = {'PRICE': Decimal('19.99')}
+        with self.assertRaisesMessage(
+                TypeError,
+                "Decimal('19.99') is not JSON serializable in a Djrill message (perhaps "
+                "it's a merge var?). Try converting it to a string or number first."
+        ):
+            self.message.send()
 
 
 @override_settings(EMAIL_BACKEND="djrill.mail.backends.djrill.DjrillBackend")
