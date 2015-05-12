@@ -1,6 +1,13 @@
 Release Notes
 =============
 
+Djrill practices `semantic versioning <semver>`_.
+Among other things, this means that minor updates
+(1.x to 1.y) should always be backwards-compatible,
+and breaking changes will always increment the
+major version number (1.x to 2.0).
+
+
 Version 1.4 (development):
 
 * Django 1.8 beta support
@@ -98,3 +105,5 @@ Version 0.2:
   specify Mandrill-specific options. This is no longer needed -- Mandrill
   options can now be set directly on a Django ``EmailMessage`` object or any
   subclass. (Existing code can continue to use ``DjrillMessage``.)
+
+.. _semver: http://semver.org
