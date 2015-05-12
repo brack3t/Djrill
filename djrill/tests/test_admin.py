@@ -1,4 +1,5 @@
 import sys
+import warnings
 
 from django.test import TestCase
 from django.contrib.auth.models import User
@@ -8,6 +9,11 @@ import six
 from djrill.tests.mock_backend import DjrillBackendMockAPITestCase
 
 from .utils import override_settings
+
+# We don't care that the `cycle` template tag will be removed in Django 2.0,
+# because we're planning to drop the Djrill admin templates before then.
+warnings.filterwarnings('ignore', category=PendingDeprecationWarning,
+                        message="Loading the `cycle` tag from the `future` library")
 
 
 def reset_admin_site():
