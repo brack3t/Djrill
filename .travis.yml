@@ -38,13 +38,13 @@ matrix:
       env: DJANGO=django==1.7
     - python: "pypy"
       env: DJANGO=django==1.7
-    # Django 1.8beta: "Python 2.7 or above"
+    # Django 1.8: "Python 2.7 or above"
     - python: "2.7"
-      env: DJANGO=django==1.8b1
+      env: DJANGO=django==1.8
     - python: "3.4"
-      env: DJANGO=django==1.8b1
+      env: DJANGO=django==1.8
     - python: "pypy"
-      env: DJANGO=django==1.8b1
+      env: DJANGO=django==1.8
 install:
   - pip install -q $DJANGO
   - pip install .

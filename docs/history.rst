@@ -10,7 +10,7 @@ major version number (1.x to 2.0).
 
 Version 1.4 (development):
 
-* Django 1.8 beta support
+* Django 1.8 support
 * Support new Django 1.8 EmailMessage reply_to param.
   (Specifying a :ref:`Reply-To header <message-headers>`
   still works, with any version of Django,
