@@ -7,6 +7,7 @@ from django.core import mail
 from django.test import TestCase
 
 from djrill import MandrillAPIError, NotSupportedByMandrillError, DjrillAdminSite
+from djrill.exceptions import RemovedInDjrill2
 from djrill.mail import DjrillMessage
 from djrill.tests.mock_backend import DjrillBackendMockAPITestCase
 from djrill.tests.utils import reset_warning_registry
@@ -42,6 +43,13 @@ class DjrillBackendDeprecationTests(DjrillBackendMockAPITestCase):
         self.assertEqual(data['message']['global_merge_vars'],
                          [{'name': 'DATE', 'content': "2022-10-11 00:00:00"}])
 
+    def test_deprecated_djrill_message_class(self):
+        """Djrill 0.2 deprecated DjrillMessage; 2.0 will drop it"""
+        self.assertWarnsMessage(DeprecationWarning,
+                                "DjrillMessage will be removed in Djrill 2.0",
+                                DjrillMessage)
+
+
     def assertWarnsMessage(self, warning, message, callable, *args, **kwds):
         """Checks that `callable` issues a warning of category `warning` containing `message`"""
         with warnings.catch_warnings(record=True) as warned:
@@ -68,6 +76,12 @@ class DjrillMessageTests(TestCase):
     Maintained for compatibility with older code.
 
     """
+
+    def run(self, result=None):
+        with warnings.catch_warnings():
+            # DjrillMessage deprecation is tested in test_deprecated_djrill_message_class above
+            warnings.filterwarnings('ignore', category=RemovedInDjrill2,
+                                    message="DjrillMessage will be removed in Djrill 2.0")
 
     def setUp(self):
         self.subject = "Djrill baby djrill."

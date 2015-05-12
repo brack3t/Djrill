@@ -47,6 +47,14 @@ in debug mode.)
   or `datetime` values used in any Mandrill message attributes other
   than `send_at`. See :ref:`formatting-merge-data` for other options.
 
+* **DjrillMessage class**
+
+  The ``DjrillMessage`` class has not been needed since Djrill 0.2.
+  You can simply set Djrill message attributes on any Django
+  :class:`~django.core.mail.EmailMultiAlternatives` object.
+  Djrill 1.4 will report a `DeprecationWarning` if you are still
+  using ``DjrillMessage``.
+
 
 Change Log
 ----------

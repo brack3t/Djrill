@@ -1,5 +1,7 @@
 from django.core.mail import EmailMultiAlternatives
 
+from djrill.exceptions import removed_in_djrill_2
+
 
 # DjrillMessage class is deprecated as of 0.2.0, but retained for
 # compatibility with existing code. (New code can just set Mandrill-specific
@@ -11,6 +13,11 @@ class DjrillMessage(EmailMultiAlternatives):
         connection=None, attachments=None, headers=None, alternatives=None,
         cc=None, from_name=None, tags=None, track_opens=True,
         track_clicks=True, preserve_recipients=None):
+
+        removed_in_djrill_2(
+            "DjrillMessage will be removed in Djrill 2.0. "
+            "Use django.core.mail.EmailMultiAlternatives instead."
+        )
 
         super(DjrillMessage, self).__init__(subject, body, from_email, to, bcc,
             connection, attachments, headers, alternatives, cc)
