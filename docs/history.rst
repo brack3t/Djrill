@@ -16,6 +16,20 @@ version of Djrill (1.4) will try to warn you if you use things
 that will change. (Warnings appear in the console when running Django
 in debug mode.)
 
+* **Djrill Admin site**
+
+  Djrill 2.0 will remove the custom Djrill admin site. It duplicates
+  information from Mandrill's dashboard, most Djrill users are unaware
+  it exists, and it has caused problems tracking Django admin changes.
+
+  Drill 1.4 will report a `DeprecationWarning` when you try to load
+  the `DjrillAdminSite`. You should remove it from your code.
+
+  Also, if you changed :setting:`INSTALLED_APPS` to use
+  `'django.contrib.admin.apps.SimpleAdminConfig'`, you may be able to
+  switch that back to `'django.contrib.admin'` and let Django
+  handle the `admin.autodiscover()` for you.
+
 * **Dates in merge data and other attributes**
 
   Djrill automatically converts :attr:`send_at` `date` and `datetime`

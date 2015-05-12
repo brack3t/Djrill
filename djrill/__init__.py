@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib.admin.sites import AdminSite
 from django.utils.text import capfirst
 
-from djrill.exceptions import MandrillAPIError, NotSupportedByMandrillError
+from djrill.exceptions import MandrillAPIError, NotSupportedByMandrillError, removed_in_djrill_2
 
 from ._version import *
 
@@ -16,6 +16,15 @@ class DjrillAdminSite(AdminSite):
     # This was originally adapted from https://github.com/jsocol/django-adminplus.
     # If new versions of Django break DjrillAdminSite, it's worth checking to see
     # whether django-adminplus has dealt with something similar.
+
+    def __init__(self, *args, **kwargs):
+        removed_in_djrill_2(
+            "DjrillAdminSite will be removed in Djrill 2.0. "
+            "You should remove references to it from your code. "
+            "(All of its data is available in the Mandrill dashboard.)"
+        )
+        super(DjrillAdminSite, self).__init__(*args, **kwargs)
+
 
     index_template = "djrill/index.html"
     custom_views = []

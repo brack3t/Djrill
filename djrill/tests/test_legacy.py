@@ -6,13 +6,23 @@ import warnings
 from django.core import mail
 from django.test import TestCase
 
+from djrill import MandrillAPIError, NotSupportedByMandrillError, DjrillAdminSite
 from djrill.mail import DjrillMessage
-from djrill import MandrillAPIError, NotSupportedByMandrillError
-
-from .mock_backend import DjrillBackendMockAPITestCase
+from djrill.tests.mock_backend import DjrillBackendMockAPITestCase
+from djrill.tests.utils import reset_warning_registry
 
 
 class DjrillBackendDeprecationTests(DjrillBackendMockAPITestCase):
+
+    def setUp(self):
+        reset_warning_registry()
+        super(DjrillBackendDeprecationTests, self).setUp()
+
+    def test_deprecated_admin_site(self):
+        """Djrill 2.0 drops the custom DjrillAdminSite"""
+        self.assertWarnsMessage(DeprecationWarning,
+                                "DjrillAdminSite will be removed in Djrill 2.0",
+                                DjrillAdminSite)
 
     def test_deprecated_json_date_encoding(self):
         """Djrill 2.0+ avoids a blanket JSONDateUTCEncoder"""

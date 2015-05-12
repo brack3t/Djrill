@@ -6,14 +6,9 @@ from django.contrib.auth.models import User
 from django.contrib import admin
 import six
 
+from djrill.exceptions import RemovedInDjrill2
 from djrill.tests.mock_backend import DjrillBackendMockAPITestCase
-
-from .utils import override_settings
-
-# We don't care that the `cycle` template tag will be removed in Django 2.0,
-# because we're planning to drop the Djrill admin templates before then.
-warnings.filterwarnings('ignore', category=PendingDeprecationWarning,
-                        message="Loading the `cycle` tag from the `future` library")
+from djrill.tests.utils import override_settings
 
 
 def reset_admin_site():
@@ -33,6 +28,21 @@ class DjrillAdminTests(DjrillBackendMockAPITestCase):
         # Other test cases may muck with the Django admin site globals,
         # so return it to the default state before loading test_admin_urls
         reset_admin_site()
+
+    def run(self, result=None):
+        with warnings.catch_warnings():
+            # DjrillAdminSite deprecation is tested in test_legacy
+            warnings.filterwarnings('ignore', category=RemovedInDjrill2,
+                                    message="DjrillAdminSite will be removed in Djrill 2.0")
+            # We don't care that the `cycle` template tag will be removed in Django 2.0,
+            # because we're planning to drop the Djrill admin templates before then.
+            warnings.filterwarnings('ignore', category=PendingDeprecationWarning,
+                                    message="Loading the `cycle` tag from the `future` library")
+            # We don't care that user messaging was deprecated in Django 1.3
+            # (testing artifact of our runtests.py minimal Django settings)
+            warnings.filterwarnings('ignore', category=DeprecationWarning,
+                                    message="The user messaging API is deprecated.")
+            super(DjrillAdminTests, self).run(result)
 
     def setUp(self):
         super(DjrillAdminTests, self).setUp()
