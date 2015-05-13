@@ -308,6 +308,31 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
             ['to@example.com'], fail_silently=True)
         self.assertEqual(sent, 0)
 
+    def test_api_error_includes_details(self):
+        """MandrillAPIError should include Mandrill's error message"""
+        msg = mail.EmailMessage('Subject', 'Body', 'from@example.com', ['to@example.com'])
+
+        # JSON error response:
+        error_response = b"""{
+                                 "status": "error",
+                                 "code": 12,
+                                 "name": "Error_Name",
+                                 "message": "Helpful explanation from Mandrill"
+                             }"""
+        self.mock_post.return_value = self.MockResponse(status_code=400, raw=error_response)
+        with self.assertRaisesMessage(MandrillAPIError, "Helpful explanation from Mandrill"):
+            msg.send()
+
+        # Non-JSON error response:
+        self.mock_post.return_value = self.MockResponse(status_code=500, raw=b"Invalid API key")
+        with self.assertRaisesMessage(MandrillAPIError, "Invalid API key"):
+            msg.send()
+
+        # No content in the error response:
+        self.mock_post.return_value = self.MockResponse(status_code=502, raw=None)
+        with self.assertRaises(MandrillAPIError):
+            msg.send()
+
 
 class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
     """Test Djrill backend support for Mandrill-specific features"""

@@ -137,15 +137,16 @@ class DjrillBackend(BaseEmailBackend):
             message.mandrill_response = None
 
             if not self.fail_silently:
-                from_email = msg_dict.get('from_email', None)
-                from_message = ""
-                if from_email:
-                    from_message = ", from %s" % from_email
+                log_message = "Failed to send a message"
+                if 'to' in msg_dict:
+                    log_message += " to " + ','.join(
+                        to['email'] for to in msg_dict.get('to', []) if 'email' in to)
+                if 'from_email' in msg_dict:
+                    log_message += " from %s" % msg_dict['from_email']
                 raise MandrillAPIError(
                     status_code=response.status_code,
                     response=response,
-                    log_message="Failed to send a message to %s%s" %
-                                (msg_dict['to'], from_message))
+                    log_message=log_message)
             return False
 
         # add the response from mandrill to the EmailMessage so callers can inspect it

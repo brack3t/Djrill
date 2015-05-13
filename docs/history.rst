@@ -76,6 +76,8 @@ Version 1.4 (development):
   (Specifying a :ref:`Reply-To header <message-headers>`
   still works, with any version of Django,
   and will override the reply_to param if you use both.)
+* Include Mandrill error response in str(MandrillAPIError),
+  to make errors easier to understand.
 * More-helpful exception when using a non-JSON-serializable
   type in merge_vars and other Djrill message attributes
 * Deprecation warnings for upcoming 2.0 changes (see above)

@@ -1,3 +1,4 @@
+import json
 from requests import HTTPError
 import warnings
 
@@ -14,8 +15,15 @@ class MandrillAPIError(HTTPError):
         message = "Mandrill API response %d" % self.status_code
         if self.log_message:
             message += "\n" + self.log_message
-        if self.response:
-            message += "\nResponse: " + getattr(self.response, 'content', "")
+        # Include the Mandrill response, nicely formatted, if possible
+        try:
+            json_response = self.response.json()
+            message += "\nMandrill response:\n" + json.dumps(json_response, indent=2)
+        except (AttributeError, KeyError, ValueError):  # not JSON = ValueError
+            try:
+                message += "\nMandrill response: " + self.response.text
+            except AttributeError:
+                pass
         return message
 
 
