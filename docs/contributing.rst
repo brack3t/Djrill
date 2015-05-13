@@ -42,8 +42,8 @@ Djrill is `tested on Travis <https://travis-ci.org/brack3t/Djrill>`_ against sev
 combinations of Django and Python versions. (Full list in
 `.travis.yml <https://github.com/brack3t/Djrill/blob/master/.travis.yml>`_.)
 
-The included tests verify that Djrill constructs the expected Mandrill API
-calls, without actually calling Mandrill or sending any email. So the tests
+Most of the included tests verify that Djrill constructs the expected Mandrill API
+calls, without actually calling Mandrill or sending any email. So these tests
 don't require a Mandrill API key, but they *do* require
 `mock <http://www.voidspace.org.uk/python/mock/index.html>`_
 and `six <https://pythonhosted.org/six/>`_ (``pip install mock six``).
@@ -56,3 +56,9 @@ or::
 
     python -Wall runtests.py
 
+
+If you set the environment variable `MANDRILL_TEST_API_KEY` to a valid Mandrill
+`test API key`_, there are also a handful of integration tests which will run against
+the live Mandrill API. (Otherwise these live API tests are skipped.)
+
+.. _test API key: https://mandrill.zendesk.com/hc/en-us/articles/205582447#test_key
