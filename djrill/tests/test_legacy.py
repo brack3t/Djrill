@@ -49,6 +49,14 @@ class DjrillBackendDeprecationTests(DjrillBackendMockAPITestCase):
                                 "DjrillMessage will be removed in Djrill 2.0",
                                 DjrillMessage)
 
+    def test_deprecated_djrill_backend_http_error(self):
+        """Djrill 0.2 deprecated DjrillBackendHTTPError; 2.0 will drop it"""
+        def try_import():
+            # noinspection PyUnresolvedReferences
+            from djrill.mail.backends.djrill import DjrillBackendHTTPError
+        self.assertWarnsMessage(DeprecationWarning,
+                                "DjrillBackendHTTPError will be removed in Djrill 2.0",
+                                try_import)
 
     def assertWarnsMessage(self, warning, message, callable, *args, **kwds):
         """Checks that `callable` issues a warning of category `warning` containing `message`"""
@@ -149,9 +157,13 @@ class DjrillLegacyExceptionTests(TestCase):
     def test_DjrillBackendHTTPError(self):
         """MandrillApiError was DjrillBackendHTTPError in 0.2.0"""
         # ... and had to be imported from deep in the package:
-        from djrill.mail.backends.djrill import DjrillBackendHTTPError
-        ex = MandrillAPIError("testing")
-        self.assertIsInstance(ex, DjrillBackendHTTPError)
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=RemovedInDjrill2,
+                                    message="DjrillBackendHTTPError will be removed in Djrill 2.0")
+            # noinspection PyUnresolvedReferences
+            from djrill.mail.backends.djrill import DjrillBackendHTTPError
+            ex = MandrillAPIError("testing")
+            self.assertIsInstance(ex, DjrillBackendHTTPError)
 
     def test_NotSupportedByMandrillError(self):
         """Unsupported features used to just raise ValueError in 0.2.0"""

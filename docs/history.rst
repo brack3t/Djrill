@@ -55,6 +55,12 @@ in debug mode.)
   Djrill 1.4 will report a `DeprecationWarning` if you are still
   using ``DjrillMessage``.
 
+* **DjrillBackendHTTPError**
+
+  The ``DjrillBackendHTTPError`` exception was replaced in Djrill 0.3
+  with :exc:`djrill.MandrillAPIError`.   Djrill 1.4 will report a
+  `DeprecationWarning` if you are still importing ``DjrillBackendHTTPError``.
+
 
 Change Log
 ----------
