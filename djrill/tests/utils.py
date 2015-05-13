@@ -91,6 +91,7 @@ class BackportedAssertions(object):
 
 
 # Backport from Django 1.8 (django.test.utils)
+# with fix suggested by https://code.djangoproject.com/ticket/21049
 def reset_warning_registry():
     """
     Clear warning registry for all modules. This is required in some tests
@@ -100,6 +101,6 @@ def reset_warning_registry():
     The bug was fixed in Python 3.4.2.
     """
     key = "__warningregistry__"
-    for mod in sys.modules.values():
+    for mod in list(sys.modules.values()):
         if hasattr(mod, key):
             getattr(mod, key).clear()
