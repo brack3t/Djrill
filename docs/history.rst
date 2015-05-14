@@ -69,7 +69,7 @@ DeprecationWarning if you are still importing DjrillBackendHTTPError.
 Change Log
 ----------
 
-Version 1.4 (development):
+Version 1.4:
 
 * Django 1.8 support
 * Support new Django 1.8 EmailMessage reply_to param.
