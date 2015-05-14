@@ -48,7 +48,7 @@ master_doc = 'index'
 # General information about the project.
 project = u'Djrill'
 # noinspection PyShadowingBuiltins
-copyright = u'2013, Djrill contributors (see AUTHORS.txt)'
+copyright = u'2015, Djrill contributors (see AUTHORS.txt)'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
