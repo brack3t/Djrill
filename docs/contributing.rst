@@ -16,10 +16,7 @@ Bugs
 You can report problems or request features in
 `Djrill's github issue tracker <https://github.com/brack3t/Djrill/issues>`_.
 
-(If you're seeing a :exc:`djrill.MandrillAPIError`, chances are good you're asking
-Djrill to tell Mandrill to do something it doesn't want to. Mandrill keeps a
-really-helpful `API error log <https://mandrillapp.com/settings/api>`_ which will
-often help you figure out what went wrong.)
+We also have some :ref:`troubleshooting` information that may be helpful.
 
 
 Pull Requests

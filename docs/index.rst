@@ -27,6 +27,7 @@ Documentation
    usage/templates
    usage/multiple_backends
    usage/webhooks
+   troubleshooting
    contributing
    history
 
