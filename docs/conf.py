@@ -253,7 +253,7 @@ texinfo_documents = [
 
 intersphinx_mapping = {
     'python': ('http://docs.python.org/2.7', None),
-    'django': ('http://docs.djangoproject.com/en/dev/', 'http://docs.djangoproject.com/en/dev/_objects/'),
+    'django': ('http://docs.djangoproject.com/en/stable/', 'http://docs.djangoproject.com/en/stable/_objects/'),
     'requests': ('http://docs.python-requests.org/en/latest/', None),
 }
 

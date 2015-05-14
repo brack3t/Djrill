@@ -31,7 +31,9 @@ Pull requests are always welcome to fix bugs and improve support for Mandrill an
 * By submitting a pull request, you're agreeing to release your changes under under
   the same BSD license as the rest of this project.
 
-.. _Django coding style: https://docs.djangoproject.com/en/dev/internals/contributing/writing-code/coding-style/
+.. Intentionally point to Django dev branch for coding docs (rather than Django stable):
+.. _Django coding style:
+    https://docs.djangoproject.com/en/dev/internals/contributing/writing-code/coding-style/
 
 
 Testing

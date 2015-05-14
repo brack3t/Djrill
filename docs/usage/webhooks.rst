@@ -153,7 +153,7 @@ Djrill will invoke your signal handler once for each event in the batch.
 The available fields in the `data` param are described in Mandrill's documentation:
 `sent-message webhooks`_ and `inbound webhooks`_.
 
-.. _Django signal: https://docs.djangoproject.com/en/dev/topics/signals/
+.. _Django signal: https://docs.djangoproject.com/en/stable/topics/signals/
 .. _inbound webhooks:
     http://help.mandrill.com/entries/22092308-What-is-the-format-of-inbound-email-webhooks-
 .. _sent-message webhooks: http://help.mandrill.com/entries/21738186-Introduction-to-Webhooks

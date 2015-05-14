@@ -34,4 +34,5 @@ and in the constructor for an
 
 (See the `django.utils.log.AdminEmailHandler`_ docs for more information on Django's admin error logging.)
 
-.. _django.utils.log.AdminEmailHandler: https://docs.djangoproject.com/en/dev/topics/logging/#django.utils.log.AdminEmailHandler
+.. _django.utils.log.AdminEmailHandler:
+    https://docs.djangoproject.com/en/stable/topics/logging/#django.utils.log.AdminEmailHandler
