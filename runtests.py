@@ -3,13 +3,9 @@
 # python runtests.py
 
 import sys
-from django import VERSION as django_version
 from django.conf import settings
 
 APP = 'djrill'
-ADMIN = 'django.contrib.admin'
-if django_version >= (1, 7):
-    ADMIN = 'django.contrib.admin.apps.SimpleAdminConfig'
 
 settings.configure(
     DEBUG=True,
@@ -23,7 +19,7 @@ settings.configure(
         'django.contrib.auth',
         'django.contrib.contenttypes',
         'django.contrib.sessions',
-        ADMIN,
+        'django.contrib.admin',
         APP,
     ),
     MIDDLEWARE_CLASSES=(
@@ -33,25 +29,10 @@ settings.configure(
         'django.contrib.auth.middleware.AuthenticationMiddleware',
     ),
     TEMPLATES=[
-        # Django 1.8 starter-project template settings
-        # (needed for test_admin)
+        # Djrill doesn't have any templates, but tests need a TEMPLATES
+        # setting to avoid warnings from the Django 1.8+ test client.
         {
             'BACKEND': 'django.template.backends.django.DjangoTemplates',
-            'DIRS': [
-                # insert your TEMPLATE_DIRS here
-            ],
-            'APP_DIRS': True,
-            'OPTIONS': {
-                'context_processors': [
-                    'django.contrib.auth.context_processors.auth',
-                    'django.template.context_processors.debug',
-                    'django.template.context_processors.i18n',
-                    'django.template.context_processors.media',
-                    'django.template.context_processors.static',
-                    'django.template.context_processors.tz',
-                    'django.contrib.messages.context_processors.messages',
-                ],
-            },
         },
     ],
 )

@@ -1,4 +1,3 @@
 include README.rst AUTHORS.txt LICENSE
-recursive-include djrill/templates *.html
 recursive-include djrill *.py
 prune djrill/tests

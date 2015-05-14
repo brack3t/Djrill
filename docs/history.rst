@@ -18,19 +18,28 @@ that will change. (Warnings appear in the console when running Django
 in debug mode.)
 
 
-**Djrill Admin site**
+Breaking Changes in Djrill 2.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Djrill 2.0 will remove the custom Djrill admin site. It duplicates
-information from Mandrill's dashboard, most Djrill users are unaware
-it exists, and it has caused problems tracking Django admin changes.
+Removed DjrillAdminSite
+  Earlier versions of Djrill included a custom Django admin site.
+  The equivalent functionality is available in Mandrill's dashboard.
 
-Drill 1.4 will report a DeprecationWarning when you try to load
-the `DjrillAdminSite`. You should remove it from your code.
+  You should remove any references to DjrillAdminSite from your
+  :file:`urls.py`. E.g.::
 
-Also, if you changed Django's :setting:`INSTALLED_APPS` setting to use
-`'django.contrib.admin.apps.SimpleAdminConfig'`, you may be able to
-switch that back to `'django.contrib.admin'` and let Django
-handle the admin.autodiscover() for you.
+    .. code-block:: python
+
+        # Remove these:
+        from djrill import DjrillAdminSite
+        admin.site = DjrillAdminSite()
+
+  Also, on Django 1.7 or later if you had switched your :setting:`INSTALLED_APPS`
+  (in :file:`settings.py`) to use ``'django.contrib.admin.apps.SimpleAdminConfig'``
+  you *may* want to switch back to the default ``'django.contrib.admin'``
+  and remove the call to ``admin.autodiscover()`` in your :file:`urls.py`.
+  (Do this only if you changed to SimpleAdminConfig for Djrill, and aren't
+  creating custom admin sites for any other Django apps you use.)
 
 
 **Dates in merge data and other attributes**
