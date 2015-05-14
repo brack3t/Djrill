@@ -21,6 +21,13 @@ in debug mode.)
 Breaking Changes in Djrill 2.0
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Dropped support for Django 1.3, Python 2.6, and Python 3.2
+  Although Djrill may still work with these older configurations,
+  we no longer test against them. Djrill now requires Django 1.4
+  or later and Python 2.7, 3.3, or 3.4.
+
+  If you require earlier support, Djrill 1.4 remains available.
+
 Removed DjrillAdminSite
   Earlier versions of Djrill included a custom Django admin site.
   The equivalent functionality is available in Mandrill's dashboard.

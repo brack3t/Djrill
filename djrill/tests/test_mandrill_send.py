@@ -10,20 +10,16 @@ from email.mime.image import MIMEImage
 import json
 import os
 import six
-
-try:
-    from unittest import SkipTest
-except ImportError:
-    from django.utils.unittest import SkipTest
+import unittest
 
 from django.core import mail
 from django.core.exceptions import ImproperlyConfigured
 from django.core.mail import make_msgid
 from django.test import TestCase
+from django.test.utils import override_settings
 
 from djrill import MandrillAPIError, NotSupportedByMandrillError
-from .mock_backend import DjrillBackendMockAPITestCase
-from .utils import override_settings
+from djrill.tests.mock_backend import DjrillBackendMockAPITestCase
 
 
 def decode_att(att):
@@ -158,7 +154,7 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
                                       headers={'X-Other': 'Keep'})
         except TypeError:
             # Pre-Django 1.8
-            raise SkipTest("Django version doesn't support EmailMessage(reply_to)")
+            raise unittest.SkipTest("Django version doesn't support EmailMessage(reply_to)")
         email.send()
         self.assert_mandrill_called("/messages/send.json")
         data = self.get_api_call_data()

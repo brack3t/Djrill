@@ -29,7 +29,7 @@ package. It includes:
 * Optional support for Mandrill inbound email and other webhook notifications,
   via Django signals
 
-Djrill is released under the BSD license. It is tested against Django 1.3--1.8
+Djrill is released under the BSD license. It is tested against Django 1.4--1.8
 (including Python 3 with Django 1.6+, and PyPy support with Django 1.5+).
 Djrill uses `semantic versioning <http://semver.org/>`_.
 

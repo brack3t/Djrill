@@ -1,26 +1,22 @@
 from __future__ import unicode_literals
 import os
+import unittest
 
 from django.core import mail
 from django.test import TestCase
+from django.test.utils import override_settings
 
 from djrill import MandrillAPIError
-from djrill.tests.utils import BackportedAssertions, override_settings
-
-try:
-    from unittest import skipUnless
-except ImportError:
-    from django.utils.unittest import skipUnless
 
 
 MANDRILL_TEST_API_KEY = os.getenv('MANDRILL_TEST_API_KEY')
 
 
-@skipUnless(MANDRILL_TEST_API_KEY,
+@unittest.skipUnless(MANDRILL_TEST_API_KEY,
             "Set MANDRILL_TEST_API_KEY environment variable to run integration tests")
 @override_settings(MANDRILL_API_KEY=MANDRILL_TEST_API_KEY,
                    EMAIL_BACKEND="djrill.mail.backends.djrill.DjrillBackend")
-class DjrillIntegrationTests(TestCase, BackportedAssertions):
+class DjrillIntegrationTests(TestCase):
     """Mandrill API integration tests
 
     These tests run against the **live** Mandrill API, using the

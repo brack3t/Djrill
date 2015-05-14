@@ -6,10 +6,10 @@ import json
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
+from django.test.utils import override_settings
 
-from ..compat import b
-from ..signals import webhook_event
-from .utils import override_settings
+from djrill.compat import b
+from djrill.signals import webhook_event
 
 
 class DjrillWebhookSecretMixinTests(TestCase):
