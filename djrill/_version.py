@@ -1,4 +1,4 @@
-VERSION = (1, 4, 0, 'dev')  # Remove the 'dev' component in release branches
+VERSION = (1, 5, 0, 'dev')  # Remove the 'dev' component in release branches
 __version__ = '.'.join([str(x) for x in VERSION[:3]])  # major.minor.patch
 if len(VERSION) > 3:  # x.y.z-pre.release (note the hyphen)
     __version__ += '-' + '.'.join([str(x) for x in VERSION[3:]])
