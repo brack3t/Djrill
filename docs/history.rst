@@ -7,12 +7,13 @@ Among other things, this means that minor updates
 and breaking changes will always increment the
 major version number (1.x to 2.0).
 
-Upcoming Changes in Djrill 2.0
-------------------------------
 
-Djrill 2.0 is under development and will include some breaking changes.
-Although the changes won't impact most Djrill users, the current
-version of Djrill (1.4) will try to warn you if you use things
+Djrill 2.0 (in development)
+---------------------------
+
+Djrill 2.0 is under development and includes some breaking changes.
+Although the changes won't impact most Djrill users, the previous
+version of Djrill (1.4) tries to warn you if you use things
 that will change. (Warnings appear in the console when running Django
 in debug mode.)
 
@@ -66,8 +67,8 @@ with :exc:`djrill.MandrillAPIError`.   Djrill 1.4 will report a
 DeprecationWarning if you are still importing DjrillBackendHTTPError.
 
 
-Change Log
-----------
+Older Releases
+--------------
 
 Version 1.4:
 
