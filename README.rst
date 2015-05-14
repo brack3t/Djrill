@@ -24,7 +24,7 @@ In general, Djrill "just works" with Django's built-in `django.core.mail`
 package. It includes:
 
 * Support for HTML, attachments, extra headers, and other features of
-  `Django's built-in email <https://docs.djangoproject.com/en/dev/topics/email/>`_
+  `Django's built-in email <https://docs.djangoproject.com/en/stable/topics/email/>`_
 * Mandrill-specific extensions like tags, metadata, tracking, and MailChimp templates
 * Optional support for Mandrill inbound email and other webhook notifications,
   via Django signals
@@ -73,9 +73,10 @@ Djrill 1-2-3
 
         MANDRILL_API_KEY = "<your Mandrill key>"
         EMAIL_BACKEND = "djrill.mail.backends.djrill.DjrillBackend"
+        DEFAULT_FROM_EMAIL = "you@example.com"  # if you don't already have this in settings
 
 
-3. Now the regular `Django email functions <https://docs.djangoproject.com/en/dev/topics/email/>`_
+3. Now the regular `Django email functions <https://docs.djangoproject.com/en/stable/topics/email/>`_
    will send through Mandrill:
 
    .. code-block:: python

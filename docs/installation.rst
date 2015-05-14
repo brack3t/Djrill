@@ -35,6 +35,11 @@ In your project's :file:`settings.py`:
     EMAIL_BACKEND = "djrill.mail.backends.djrill.DjrillBackend"
 
 
+Also, if you don't already have a :setting:`DEFAULT_FROM_EMAIL` in settings,
+this is a good time to add one. (Django's default is "webmaster@localhost",
+which won't work with Mandrill.)
+
+
 Mandrill Webhooks (Optional)
 ----------------------------
 
