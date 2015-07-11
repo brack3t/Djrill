@@ -21,7 +21,7 @@ class DjrillBackendMockAPITestCase(TestCase):
             self.raw = six.BytesIO(raw)
 
     def setUp(self):
-        self.patch = patch('requests.post', autospec=True)
+        self.patch = patch('requests.Session.post', autospec=True)
         self.mock_post = self.patch.start()
         self.mock_post.return_value = self.MockResponse()
 
@@ -39,7 +39,7 @@ class DjrillBackendMockAPITestCase(TestCase):
             raise AssertionError("Mandrill API was not called")
         (args, kwargs) = self.mock_post.call_args
         try:
-            post_url = kwargs.get('url', None) or args[0]
+            post_url = kwargs.get('url', None) or args[1]
         except IndexError:
             raise AssertionError("requests.post was called without an url (?!)")
         if not post_url.endswith(endpoint):
@@ -56,7 +56,7 @@ class DjrillBackendMockAPITestCase(TestCase):
             raise AssertionError("Mandrill API was not called")
         (args, kwargs) = self.mock_post.call_args
         try:
-            post_data = kwargs.get('data', None) or args[1]
+            post_data = kwargs.get('data', None) or args[2]
         except IndexError:
             raise AssertionError("requests.post was called without data")
         return json.loads(post_data)
