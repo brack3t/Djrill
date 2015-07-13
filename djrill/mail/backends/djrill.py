@@ -62,6 +62,7 @@ class DjrillBackend(BaseEmailBackend):
         super(DjrillBackend, self).__init__(**kwargs)
         self.api_key = getattr(settings, "MANDRILL_API_KEY", None)
         self.api_url = MANDRILL_API_URL
+        self.session = None
 
         self.subaccount = getattr(settings, "MANDRILL_SUBACCOUNT", None)
 
@@ -72,9 +73,32 @@ class DjrillBackend(BaseEmailBackend):
         self.api_send = self.api_url + "/messages/send.json"
         self.api_send_template = self.api_url + "/messages/send-template.json"
 
+    def open(self):
+        if not self.session:
+            try:
+                self.session = requests.Session()
+            except:
+                if not self.fail_silently:
+                    raise
+                return False
+        return True
+
+
+    def close(self, error=False):
+        if self.session:
+            try:
+                self.session.close()
+            except:
+                if not self.fail_silently and not error:
+                    raise
+            self.session = None
+
     def send_messages(self, email_messages):
         if not email_messages:
             return 0
+
+        if not self.open():
+            return
 
         num_sent = 0
         for message in email_messages:
@@ -82,6 +106,8 @@ class DjrillBackend(BaseEmailBackend):
 
             if sent:
                 num_sent += 1
+
+        self.close()
 
         return num_sent
 
@@ -114,6 +140,7 @@ class DjrillBackend(BaseEmailBackend):
 
         except NotSupportedByMandrillError:
             if not self.fail_silently:
+                self.close(True)
                 raise
             return False
 
@@ -127,9 +154,10 @@ class DjrillBackend(BaseEmailBackend):
                 err.args[0] + " in a Djrill message (perhaps it's a merge var?)."
                               " Try converting it to a string or number first.",
             ) + err.args[1:]
+            self.close(True)
             raise err
 
-        response = requests.post(api_url, data=api_data)
+        response = self.session.post(api_url, data=api_data)
 
         if response.status_code != 200:
 
@@ -143,6 +171,7 @@ class DjrillBackend(BaseEmailBackend):
                         to['email'] for to in msg_dict.get('to', []) if 'email' in to)
                 if 'from_email' in msg_dict:
                     log_message += " from %s" % msg_dict['from_email']
+                self.close(True)
                 raise MandrillAPIError(
                     status_code=response.status_code,
                     response=response,
