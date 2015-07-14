@@ -650,11 +650,21 @@ class DjrillMandrillGlobalFeatureTests(DjrillBackendMockAPITestCase):
         self.assertEqual(data['message']['url_strip_qs'], False)
 
     def test_global_merge(self):
+        # Test that global settings merge in
         self.message.global_merge_vars = {'GREETING': "Hello"}
         self.message.send()
         data = self.get_api_call_data()
         self.assertEqual(data['message']['global_merge_vars'],
-                         [{'name': "GREETING", 'content': "Hello"}])
+                         [{'name': "GREETING", 'content': "Hello"},
+                          {'name': 'TEST', 'content': 'djrill'}])
+
+    def test_global_merge_overwrite(self):
+        # Test that global merge settings are overwritten
+        self.message.global_merge_vars = {'TEST': "Hello"}
+        self.message.send()
+        data = self.get_api_call_data()
+        self.assertEqual(data['message']['global_merge_vars'],
+                         [{'name': 'TEST', 'content': 'Hello'}])
 
 
 @override_settings(EMAIL_BACKEND="djrill.mail.backends.djrill.DjrillBackend")

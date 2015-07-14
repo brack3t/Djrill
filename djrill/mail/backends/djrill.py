@@ -285,12 +285,17 @@ class DjrillBackend(BaseEmailBackend):
 
         # Allow simple python dicts in place of Mandrill
         # [{name:name, value:value},...] arrays...
+
+        # Allow merge of global and per message global_merge_var, the former taking precedent
+        global_merge_vars = {}
         if 'global_merge_vars' in self.global_settings:
-            msg_dict['global_merge_vars'] = self._expand_merge_vars(
-                self.global_settings['global_merge_vars'])
+            global_merge_vars.update(self.global_settings['global_merge_vars'])
         if hasattr(message, 'global_merge_vars'):
+            global_merge_vars.update(message.global_merge_vars)
+        if global_merge_vars:
             msg_dict['global_merge_vars'] = \
-                self._expand_merge_vars(message.global_merge_vars)
+                self._expand_merge_vars(global_merge_vars)
+
         if hasattr(message, 'merge_vars'):
             # For testing reproducibility, we sort the recipients
             msg_dict['merge_vars'] = [

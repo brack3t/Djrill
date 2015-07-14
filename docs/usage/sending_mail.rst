@@ -118,6 +118,10 @@ using :setting:`MANDRILL_SETTINGS`. For Example::
         'track_opens': True,
     }
 
+.. note::
+    ``merge_vars`` and ``recipient_metadata`` cannot be set globally. ``global_merge_vars`` is merged
+    (see :attribute:`global_merge_vars`)
+
 .. These attributes are in the same order as they appear in the Mandrill API docs...
 
 .. attribute:: important
@@ -210,6 +214,10 @@ using :setting:`MANDRILL_SETTINGS`. For Example::
 
     Merge data must be strings or other JSON-serializable types.
     (See :ref:`formatting-merge-data` for details.)
+
+        .. note::
+
+        If using :setting:`MANDRILL_SETTINGS` then the message ``dict`` will be merged and overwrite any duplicates.
 
 .. attribute:: merge_vars
 
