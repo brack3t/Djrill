@@ -103,10 +103,24 @@ Some notes and limitations:
 Mandrill-Specific Options
 -------------------------
 
+.. setting:: MANDRILL_SETTINGS
+
 Most of the options from the Mandrill
 `messages/send API <https://mandrillapp.com/api/docs/messages.html#method=send>`_
 `message` struct can be set directly on an :class:`~django.core.mail.EmailMessage`
 (or subclass) object:
+
+Most of these options can be globally set in your project's :file:`settings.py`
+using :setting:`MANDRILL_SETTINGS`. For Example::
+
+    MANDRILL_SETTINGS = {
+        'tracking_domain': 'example.com',
+        'track_opens': True,
+    }
+
+.. note::
+    ``merge_vars`` and ``recipient_metadata`` cannot be set globally. ``global_merge_vars`` is merged
+    (see :attribute:`global_merge_vars`)
 
 .. These attributes are in the same order as they appear in the Mandrill API docs...
 
@@ -200,6 +214,10 @@ Most of the options from the Mandrill
 
     Merge data must be strings or other JSON-serializable types.
     (See :ref:`formatting-merge-data` for details.)
+
+        .. note::
+
+        If using :setting:`MANDRILL_SETTINGS` then the message ``dict`` will be merged and overwrite any duplicates.
 
 .. attribute:: merge_vars
 

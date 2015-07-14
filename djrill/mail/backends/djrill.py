@@ -63,6 +63,12 @@ class DjrillBackend(BaseEmailBackend):
         self.api_key = getattr(settings, "MANDRILL_API_KEY", None)
         self.api_url = MANDRILL_API_URL
         self.session = None
+        self.global_settings = {}
+        for setting_key in getattr(settings, "MANDRILL_SETTINGS", {}):
+            if not isinstance(settings.MANDRILL_SETTINGS, dict):
+                raise ImproperlyConfigured("MANDRILL_SETTINGS must be a dict "
+                                           "in the settings.py file.")
+            self.global_settings[setting_key] = settings.MANDRILL_SETTINGS[setting_key]
 
         self.subaccount = getattr(settings, "MANDRILL_SUBACCOUNT", None)
 
@@ -233,6 +239,8 @@ class DjrillBackend(BaseEmailBackend):
             'async', 'ip_pool'
         ]
         for attr in mandrill_attrs:
+            if attr in self.global_settings:
+                api_params[attr] = self.global_settings[attr]
             if hasattr(message, attr):
                 api_params[attr] = getattr(message, attr)
 
@@ -270,14 +278,24 @@ class DjrillBackend(BaseEmailBackend):
             msg_dict['subaccount'] = self.subaccount
 
         for attr in mandrill_attrs:
+            if attr in self.global_settings:
+                msg_dict[attr] = self.global_settings[attr]
             if hasattr(message, attr):
                 msg_dict[attr] = getattr(message, attr)
 
         # Allow simple python dicts in place of Mandrill
         # [{name:name, value:value},...] arrays...
+
+        # Allow merge of global and per message global_merge_var, the former taking precedent
+        global_merge_vars = {}
+        if 'global_merge_vars' in self.global_settings:
+            global_merge_vars.update(self.global_settings['global_merge_vars'])
         if hasattr(message, 'global_merge_vars'):
+            global_merge_vars.update(message.global_merge_vars)
+        if global_merge_vars:
             msg_dict['global_merge_vars'] = \
-                self._expand_merge_vars(message.global_merge_vars)
+                self._expand_merge_vars(global_merge_vars)
+
         if hasattr(message, 'merge_vars'):
             # For testing reproducibility, we sort the recipients
             msg_dict['merge_vars'] = [

@@ -540,6 +540,133 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
             self.message.send()
 
 
+@override_settings(MANDRILL_SETTINGS={
+    'from_name': 'Djrill Test',
+    'important': True,
+    'track_opens': True,
+    'track_clicks': True,
+    'auto_text': True,
+    'auto_html': True,
+    'inline_css': True,
+    'url_strip_qs': True,
+    'tags': ['djrill'],
+    'preserve_recipients': True,
+    'view_content_link': True,
+    'tracking_domain': 'example.com',
+    'signing_domain': 'example.com',
+    'return_path_domain': 'example.com',
+    'google_analytics_domains': ['example.com/test'],
+    'google_analytics_campaign': ['UA-00000000-1'],
+    'metadata': ['djrill'],
+    'merge_language': 'mailchimp',
+    'global_merge_vars': {'TEST': 'djrill'},
+    'async': False,
+    'ip_pool': 'Pool1',
+    'invalid': 'invalid',
+})
+class DjrillMandrillGlobalFeatureTests(DjrillBackendMockAPITestCase):
+    """Test Djrill backend support for global ovveride Mandrill-specific features"""
+
+    def setUp(self):
+        super(DjrillMandrillGlobalFeatureTests, self).setUp()
+        self.message = mail.EmailMessage('Subject', 'Text Body',
+                                         'from@example.com', ['to@example.com'])
+
+    def test_global_options(self):
+        """Test that any global settings get passed through
+        """
+        self.message.send()
+        self.assert_mandrill_called("/messages/send.json")
+        data = self.get_api_call_data()
+        self.assertEqual(data['message']['from_name'], 'Djrill Test')
+        self.assertTrue(data['message']['important'], True)
+        self.assertTrue(data['message']['track_opens'], True)
+        self.assertTrue(data['message']['track_clicks'], True)
+        self.assertTrue(data['message']['auto_text'], True)
+        self.assertTrue(data['message']['auto_html'], True)
+        self.assertTrue(data['message']['inline_css'], True)
+        self.assertTrue(data['message']['url_strip_qs'], True)
+        self.assertEqual(data['message']['tags'], ['djrill'])
+        self.assertTrue(data['message']['preserve_recipients'], True)
+        self.assertTrue(data['message']['view_content_link'], True)
+        self.assertEqual(data['message']['tracking_domain'], 'example.com')
+        self.assertEqual(data['message']['signing_domain'], 'example.com')
+        self.assertEqual(data['message']['return_path_domain'], 'example.com')
+        self.assertEqual(data['message']['google_analytics_domains'], ['example.com/test'])
+        self.assertEqual(data['message']['google_analytics_campaign'], ['UA-00000000-1'])
+        self.assertEqual(data['message']['metadata'], ['djrill'])
+        self.assertEqual(data['message']['merge_language'], 'mailchimp')
+        self.assertEqual(data['message']['global_merge_vars'],
+                         [{'name': 'TEST', 'content': 'djrill'}])
+        self.assertFalse('merge_vars' in data['message'])
+        self.assertFalse('recipient_metadata' in data['message'])
+        # Options at top level of api params (not in message dict):
+        self.assertFalse('send_at' in data)
+        self.assertEqual(data['async'], False)
+        self.assertEqual(data['ip_pool'], 'Pool1')
+        # Option that shouldn't be added
+        self.assertFalse('invalid' in data['message'])
+
+    def test_global_options_override(self):
+        """Test that manually settings options overrides global settings
+        """
+        self.message.important = True
+        self.message.auto_text = True
+        self.message.auto_html = True
+        self.message.inline_css = True
+        self.message.preserve_recipients = True
+        self.message.view_content_link = False
+        self.message.tracking_domain = "click.example.com"
+        self.message.signing_domain = "example.com"
+        self.message.return_path_domain = "support.example.com"
+        self.message.subaccount = "marketing-dept"
+        self.message.async = True
+        self.message.ip_pool = "Bulk Pool"
+        self.message.send()
+        data = self.get_api_call_data()
+        self.assertEqual(data['message']['important'], True)
+        self.assertEqual(data['message']['auto_text'], True)
+        self.assertEqual(data['message']['auto_html'], True)
+        self.assertEqual(data['message']['inline_css'], True)
+        self.assertEqual(data['message']['preserve_recipients'], True)
+        self.assertEqual(data['message']['view_content_link'], False)
+        self.assertEqual(data['message']['tracking_domain'], "click.example.com")
+        self.assertEqual(data['message']['signing_domain'], "example.com")
+        self.assertEqual(data['message']['return_path_domain'], "support.example.com")
+        self.assertEqual(data['message']['subaccount'], "marketing-dept")
+        self.assertEqual(data['async'], True)
+        self.assertEqual(data['ip_pool'], "Bulk Pool")
+
+    def test_global_options_override_tracking(self):
+        """Test that manually settings options overrides global settings
+        """
+        self.message.track_opens = False
+        self.message.track_clicks = False
+        self.message.url_strip_qs = False
+        self.message.send()
+        data = self.get_api_call_data()
+        self.assertEqual(data['message']['track_opens'], False)
+        self.assertEqual(data['message']['track_clicks'], False)
+        self.assertEqual(data['message']['url_strip_qs'], False)
+
+    def test_global_merge(self):
+        # Test that global settings merge in
+        self.message.global_merge_vars = {'GREETING': "Hello"}
+        self.message.send()
+        data = self.get_api_call_data()
+        self.assertEqual(data['message']['global_merge_vars'],
+                         [{'name': "GREETING", 'content': "Hello"},
+                          {'name': 'TEST', 'content': 'djrill'}])
+
+    def test_global_merge_overwrite(self):
+        # Test that global merge settings are overwritten
+        self.message.global_merge_vars = {'TEST': "Hello"}
+        self.message.send()
+        data = self.get_api_call_data()
+        self.assertEqual(data['message']['global_merge_vars'],
+                         [{'name': 'TEST', 'content': 'Hello'}])
+
+
 @override_settings(EMAIL_BACKEND="djrill.mail.backends.djrill.DjrillBackend")
 class DjrillImproperlyConfiguredTests(TestCase):
     """Test Djrill backend without Djrill-specific settings in place"""
