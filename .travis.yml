@@ -32,6 +32,15 @@ matrix:
       env: DJANGO=django==1.8
     - python: "pypy"
       env: DJANGO=django==1.8
+    # Django 1.9 (prerelease): "Python 2.7, 3.4, or 3.5"
+    - python: "2.7"
+      env: DJANGO="--pre django"
+    - python: "3.4"
+      env: DJANGO="--pre django"
+    - python: "3.5"
+      env: DJANGO="--pre django"
+    - python: "pypy"
+      env: DJANGO="--pre django"
 install:
   - pip install --upgrade setuptools pip
   - pip install -q $DJANGO
