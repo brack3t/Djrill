@@ -39,7 +39,7 @@ class DjrillIntegrationTests(TestCase):
         self.assertEqual(sent_count, 1)
         # noinspection PyUnresolvedReferences
         response = self.message.mandrill_response
-        self.assertEqual(response[0]['status'], 'sent')  # successful send (could still bounce later)
+        self.assertIn(response[0]['status'], ['sent', 'queued'])  # successful send (could still bounce later)
         self.assertEqual(response[0]['email'], 'to@example.com')
         self.assertGreater(len(response[0]['_id']), 0)
 
@@ -61,6 +61,8 @@ class DjrillIntegrationTests(TestCase):
         self.assertEqual(sent_count, 1)  # The send call is "successful"...
         # noinspection PyUnresolvedReferences
         response = self.message.mandrill_response
+        if response[0]['status'] == 'queued':
+            self.skipTest("Mandrill queued the send -- can't complete this test")
         self.assertEqual(response[0]['status'], 'invalid')  # ... but the mail is not delivered
 
     def test_rejected_to(self):
@@ -70,6 +72,8 @@ class DjrillIntegrationTests(TestCase):
         self.assertEqual(sent_count, 1)  # The send call is "successful"...
         # noinspection PyUnresolvedReferences
         response = self.message.mandrill_response
+        if response[0]['status'] == 'queued':
+            self.skipTest("Mandrill queued the send -- can't complete this test")
         self.assertEqual(response[0]['status'], 'rejected')  # ... but the mail is not delivered
         self.assertEqual(response[0]['reject_reason'], 'test')  # ... and here's why
 
