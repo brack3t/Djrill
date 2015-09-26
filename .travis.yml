@@ -1,3 +1,4 @@
+sudo: false
 language: python
 matrix:
   include:
@@ -24,9 +25,12 @@ matrix:
     - { env: DJANGO="--pre django", python: 3.4 }
     - { env: DJANGO="--pre django", python: 3.5 }
     - { env: DJANGO="--pre django", python: pypy }
+cache:
+  directories:
+    - $HOME/.cache/pip
 install:
   - pip install --upgrade setuptools pip
-  - pip install -q $DJANGO
+  - pip install $DJANGO
   - pip install .
   - pip list
 script: python -Wall setup.py test
