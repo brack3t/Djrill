@@ -45,4 +45,5 @@ install:
   - pip install --upgrade setuptools pip
   - pip install -q $DJANGO
   - pip install .
+  - pip list
 script: python -Wall setup.py test
