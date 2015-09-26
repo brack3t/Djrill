@@ -1,7 +1,7 @@
 from django.conf import settings
 
 from djrill.exceptions import MandrillAPIError, NotSupportedByMandrillError
-from ._version import *
+from ._version import __version__, VERSION
 
 
 # This backend was developed against this API endpoint.

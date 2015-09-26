@@ -1,12 +1,12 @@
+from __future__ import absolute_import
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.mail.backends.base import BaseEmailBackend
 from django.core.mail.message import sanitize_address, DEFAULT_ATTACHMENT_MIME_TYPE
 
-# Oops: this file has the same name as our app, and cannot be renamed.
-#from djrill import MANDRILL_API_URL, MandrillAPIError, NotSupportedByMandrillError
-from ... import MANDRILL_API_URL, MandrillAPIError, NotSupportedByMandrillError
-from ...exceptions import removed_in_djrill_2
+from djrill import MANDRILL_API_URL, MandrillAPIError, NotSupportedByMandrillError, __version__
+from djrill.exceptions import removed_in_djrill_2
 
 from base64 import b64encode
 from datetime import date, datetime
@@ -83,6 +83,8 @@ class DjrillBackend(BaseEmailBackend):
         if not self.session:
             try:
                 self.session = requests.Session()
+                self.session.headers["User-Agent"] = "Djrill/%s %s" % (
+                    __version__, self.session.headers.get("User-Agent", ""))
             except:
                 if not self.fail_silently:
                     raise
