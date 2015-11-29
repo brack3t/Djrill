@@ -48,6 +48,16 @@ Removed DjrillAdminSite
   (Do this only if you changed to SimpleAdminConfig for Djrill, and aren't
   creating custom admin sites for any other Django apps you use.)
 
+Removed unintended date-to-string conversion
+  If your code was relying on Djrill to automatically convert date or datetime
+  values to strings in :attr:`merge_vars`, :attr:`metadata`, or other Mandrill
+  message attributes, you must now explicitly do the string conversion
+  yourself. See :ref:`formatting-merge-data` for an explanation.
+  (Djrill 1.4 reported a DeprecationWarning for this case.)
+
+  (The exception is :attr:`send_at`, which Djrill expects can be a date or
+  datetime.)
+
 Removed DjrillMessage class
   The ``DjrillMessage`` class has not been needed since Djrill 0.2.
   You should replace any uses of it with the standard
@@ -56,24 +66,6 @@ Removed DjrillMessage class
 Removed DjrillBackendHTTPError
   This exception was deprecated in Djrill 0.3. Replace uses of it
   with :exc:`djrill.MandrillAPIError`.
-
-
-**Dates in merge data and other attributes**
-
-Djrill automatically converts :attr:`send_at` date and datetime
-values to the ISO 8601 string format expected by the Mandrill API.
-
-Unintentionally, it also converts dates used in other Mandrill message
-attributes (such as :attr:`merge_vars` or :attr:`metadata`) where it
-might not be expected (or appropriate).
-
-Djrill 2.0 will remove this automatic date formatting, except
-for attributes that are inherently dates (currently only `send_at`).
-
-To assist in detecting code relying on the (undocumented) current
-behavior, Djrill 1.4 will report a DeprecationWarning for date
-or datetime values used in any Mandrill message attributes other
-than `send_at`. See :ref:`formatting-merge-data` for other options.
 
 
 Older Releases

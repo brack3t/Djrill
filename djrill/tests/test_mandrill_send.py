@@ -529,7 +529,7 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
         self.assertEqual(sent, 0)
         self.assertIsNone(msg.mandrill_response)
 
-    def test_json_serialization_warnings(self):
+    def test_json_serialization_errors(self):
         """Try to provide more information about non-json-serializable data"""
         self.message.global_merge_vars = {'PRICE': Decimal('19.99')}
         with self.assertRaisesMessage(
@@ -537,6 +537,12 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
                 "Decimal('19.99') is not JSON serializable in a Djrill message (perhaps "
                 "it's a merge var?). Try converting it to a string or number first."
         ):
+            self.message.send()
+
+    def test_dates_not_serialized(self):
+        """Pre-2.0 Djrill accidentally serialized dates to ISO"""
+        self.message.global_merge_vars = {'SHIP_DATE': date(2015, 12, 2)}
+        with self.assertRaises(TypeError):
             self.message.send()
 
 

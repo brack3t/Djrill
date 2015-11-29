@@ -6,7 +6,6 @@ from django.core.mail.backends.base import BaseEmailBackend
 from django.core.mail.message import sanitize_address, DEFAULT_ATTACHMENT_MIME_TYPE
 
 from djrill import MANDRILL_API_URL, MandrillAPIError, NotSupportedByMandrillError, __version__
-from djrill.exceptions import removed_in_djrill_2
 
 from base64 import b64encode
 from datetime import date, datetime
@@ -35,19 +34,6 @@ def encode_date_for_mandrill(dt):
         return dt.isoformat() + ' 00:00:00'
     else:
         return dt
-
-
-class JSONDateUTCEncoder(json.JSONEncoder):
-    """[deprecated] JSONEncoder that encodes dates in string format used by Mandrill."""
-    def default(self, obj):
-        if isinstance(obj, date):
-            removed_in_djrill_2(
-                "You've used the date '%r' as a Djrill message attribute "
-                "(perhaps in merge vars or metadata). Djrill 2.0 will require "
-                "you to explicitly convert this date to a string." % obj
-            )
-            return encode_date_for_mandrill(obj)
-        return super(JSONDateUTCEncoder, self).default(obj)
 
 
 class DjrillBackend(BaseEmailBackend):
@@ -153,7 +139,7 @@ class DjrillBackend(BaseEmailBackend):
             return False
 
         try:
-            api_data = json.dumps(api_params, cls=JSONDateUTCEncoder)
+            api_data = json.dumps(api_params)
         except TypeError as err:
             # Add some context to the "not JSON serializable" message
             if not err.args:
