@@ -48,6 +48,11 @@ Removed DjrillAdminSite
   (Do this only if you changed to SimpleAdminConfig for Djrill, and aren't
   creating custom admin sites for any other Django apps you use.)
 
+Removed DjrillMessage class
+  The ``DjrillMessage`` class has not been needed since Djrill 0.2.
+  You should replace any uses of it with the standard
+  :class:`~django.core.mail.EmailMessage` class.
+
 
 **Dates in merge data and other attributes**
 
@@ -65,15 +70,6 @@ To assist in detecting code relying on the (undocumented) current
 behavior, Djrill 1.4 will report a DeprecationWarning for date
 or datetime values used in any Mandrill message attributes other
 than `send_at`. See :ref:`formatting-merge-data` for other options.
-
-
-**DjrillMessage class**
-
-The ``DjrillMessage`` class has not been needed since Djrill 0.2.
-You can simply set Djrill message attributes on any Django
-:class:`~django.core.mail.EmailMessage` object.
-Djrill 1.4 will report a DeprecationWarning if you are still
-using DjrillMessage.
 
 
 **DjrillBackendHTTPError**
