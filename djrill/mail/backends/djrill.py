@@ -409,26 +409,3 @@ class DjrillBackend(BaseEmailBackend):
             'content': content_b64.decode('ascii'),
         }
         return mandrill_attachment, is_embedded_image
-
-
-############################################################################################
-# Recreate this module, but with a warning on attempts to import deprecated properties.
-# This is ugly, but (surprisingly) blessed: http://stackoverflow.com/a/7668273/647002
-import sys
-import types
-
-
-class ModuleWithDeprecatedProps(types.ModuleType):
-    def __init__(self, module):
-        self._orig_module = module  # must keep a ref around, or it'll get deallocated
-        super(ModuleWithDeprecatedProps, self).__init__(module.__name__, module.__doc__)
-        self.__dict__.update(module.__dict__)
-
-    @property
-    def DjrillBackendHTTPError(self):
-        removed_in_djrill_2("DjrillBackendHTTPError will be removed in Djrill 2.0. "
-                            "Use djrill.MandrillAPIError instead.")
-        return MandrillAPIError
-
-
-sys.modules[__name__] = ModuleWithDeprecatedProps(sys.modules[__name__])

@@ -53,6 +53,10 @@ Removed DjrillMessage class
   You should replace any uses of it with the standard
   :class:`~django.core.mail.EmailMessage` class.
 
+Removed DjrillBackendHTTPError
+  This exception was deprecated in Djrill 0.3. Replace uses of it
+  with :exc:`djrill.MandrillAPIError`.
+
 
 **Dates in merge data and other attributes**
 
@@ -70,13 +74,6 @@ To assist in detecting code relying on the (undocumented) current
 behavior, Djrill 1.4 will report a DeprecationWarning for date
 or datetime values used in any Mandrill message attributes other
 than `send_at`. See :ref:`formatting-merge-data` for other options.
-
-
-**DjrillBackendHTTPError**
-
-The ``DjrillBackendHTTPError`` exception was replaced in Djrill 0.3
-with :exc:`djrill.MandrillAPIError`.   Djrill 1.4 will report a
-DeprecationWarning if you are still importing DjrillBackendHTTPError.
 
 
 Older Releases
