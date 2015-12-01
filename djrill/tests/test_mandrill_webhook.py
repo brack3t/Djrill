@@ -1,7 +1,7 @@
-from base64 import b64encode
 import hashlib
 import hmac
 import json
+from base64 import b64encode
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured

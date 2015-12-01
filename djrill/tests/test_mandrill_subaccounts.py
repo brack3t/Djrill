@@ -1,7 +1,7 @@
 from django.core import mail
 from django.test.utils import override_settings
 
-from djrill.tests.mock_backend import DjrillBackendMockAPITestCase
+from .mock_backend import DjrillBackendMockAPITestCase
 
 
 class DjrillMandrillSubaccountTests(DjrillBackendMockAPITestCase):

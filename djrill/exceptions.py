@@ -1,6 +1,5 @@
 import json
 from requests import HTTPError
-import warnings
 
 
 class MandrillAPIError(HTTPError):

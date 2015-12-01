@@ -1,16 +1,17 @@
-from base64 import b64encode
 import hashlib
 import hmac
 import json
+from base64 import b64encode
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.views.generic import View
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import View
 
-from djrill import signals
-from djrill.compat import b
+from .compat import b
+from .signals import webhook_event
 
 
 class DjrillWebhookSecretMixin(object):
@@ -77,7 +78,7 @@ class DjrillWebhookView(DjrillWebhookSecretMixin, DjrillWebhookSignatureMixin, V
             return HttpResponse(status=400)
 
         for event in data:
-            signals.webhook_event.send(
+            webhook_event.send(
                 sender=None, event_type=event['event'], data=event)
 
         return HttpResponse()

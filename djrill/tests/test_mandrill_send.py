@@ -2,15 +2,15 @@
 
 from __future__ import unicode_literals
 
+import json
+import os
+import six
+import unittest
 from base64 import b64decode
 from datetime import date, datetime, timedelta, tzinfo
 from decimal import Decimal
 from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
-import json
-import os
-import six
-import unittest
 
 from django.core import mail
 from django.core.exceptions import ImproperlyConfigured
@@ -19,7 +19,8 @@ from django.test import TestCase
 from django.test.utils import override_settings
 
 from djrill import MandrillAPIError, NotSupportedByMandrillError
-from djrill.tests.mock_backend import DjrillBackendMockAPITestCase
+
+from .mock_backend import DjrillBackendMockAPITestCase
 
 
 def decode_att(att):

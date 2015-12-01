@@ -1,19 +1,18 @@
-from __future__ import absolute_import
+import json
+import mimetypes
+import requests
+from base64 import b64encode
+from datetime import date, datetime
+from email.mime.base import MIMEBase
+from email.utils import parseaddr
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.mail.backends.base import BaseEmailBackend
 from django.core.mail.message import sanitize_address, DEFAULT_ATTACHMENT_MIME_TYPE
 
-from djrill import MandrillAPIError, NotSupportedByMandrillError, __version__
-
-from base64 import b64encode
-from datetime import date, datetime
-from email.mime.base import MIMEBase
-from email.utils import parseaddr
-import json
-import mimetypes
-import requests
+from ..._version import __version__
+from ...exceptions import MandrillAPIError, NotSupportedByMandrillError
 
 
 def encode_date_for_mandrill(dt):
