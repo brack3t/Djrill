@@ -66,42 +66,61 @@ class DjrillBackend(BaseEmailBackend):
         self.api_send_template = self.api_url + "/messages/send-template.json"
 
     def open(self):
-        if not self.session:
-            try:
-                self.session = requests.Session()
-                self.session.headers["User-Agent"] = "Djrill/%s %s" % (
-                    __version__, self.session.headers.get("User-Agent", ""))
-            except:
-                if not self.fail_silently:
-                    raise
-                return False
-        return True
-
-
-    def close(self, error=False):
+        """
+        Ensure we have a requests Session to connect to the Mandrill API.
+        Returns True if a new session was created (and the caller must close it).
+        """
         if self.session:
-            try:
-                self.session.close()
-            except:
-                if not self.fail_silently and not error:
-                    raise
+            return False  # already exists
+
+        try:
+            self.session = requests.Session()
+        except requests.RequestException:
+            if not self.fail_silently:
+                raise
+        else:
+            self.session.headers["User-Agent"] = "Djrill/%s %s" % (
+                __version__, self.session.headers.get("User-Agent", ""))
+            return True
+
+    def close(self):
+        """
+        Close the Mandrill API Session unconditionally.
+
+        (You should call this only if you called open and it returned True;
+        else someone else created the session and will clean it up themselves.)
+        """
+        if self.session is None:
+            return
+        try:
+            self.session.close()
+        except requests.RequestException:
+            if not self.fail_silently:
+                raise
+        finally:
             self.session = None
 
     def send_messages(self, email_messages):
+        """
+        Sends one or more EmailMessage objects and returns the number of email
+        messages sent.
+        """
         if not email_messages:
             return 0
 
-        if not self.open():
-            return
+        created_session = self.open()
+        if not self.session:
+            return 0  # exception in self.open with fail_silently
 
         num_sent = 0
-        for message in email_messages:
-            sent = self._send(message)
-
-            if sent:
-                num_sent += 1
-
-        self.close()
+        try:
+            for message in email_messages:
+                sent = self._send(message)
+                if sent:
+                    num_sent += 1
+        finally:
+            if created_session:
+                self.close()
 
         return num_sent
 
@@ -134,13 +153,14 @@ class DjrillBackend(BaseEmailBackend):
 
         except NotSupportedByMandrillError:
             if not self.fail_silently:
-                self.close(True)
                 raise
             return False
 
         try:
             api_data = json.dumps(api_params)
         except TypeError as err:
+            if self.fail_silently:
+                return False
             # Add some context to the "not JSON serializable" message
             if not err.args:
                 err.args = ('',)
@@ -148,7 +168,6 @@ class DjrillBackend(BaseEmailBackend):
                 err.args[0] + " in a Djrill message (perhaps it's a merge var?)."
                               " Try converting it to a string or number first.",
             ) + err.args[1:]
-            self.close(True)
             raise err
 
         response = self.session.post(api_url, data=api_data)
@@ -165,7 +184,6 @@ class DjrillBackend(BaseEmailBackend):
                         to['email'] for to in msg_dict.get('to', []) if 'email' in to)
                 if 'from_email' in msg_dict:
                     log_message += " from %s" % msg_dict['from_email']
-                self.close(True)
                 raise MandrillAPIError(
                     status_code=response.status_code,
                     response=response,
@@ -378,6 +396,7 @@ class DjrillBackend(BaseEmailBackend):
 
         # b64encode requires bytes, so let's convert our content.
         try:
+            # noinspection PyUnresolvedReferences
             if isinstance(content, unicode):
                 # Python 2.X unicode string
                 content = content.encode(str_encoding)

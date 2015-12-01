@@ -68,6 +68,15 @@ Removed DjrillBackendHTTPError
   with :exc:`djrill.MandrillAPIError`.
 
 
+Other Djrill 2.0 Changes
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Use a single HTTP connection to the Mandrill API to improve performance
+  when sending multiple messages at once using :func:`~django.core.mail.send_mass_mail`.
+  (You can also directly manage your own long-lived Djrill connection across multiple sends,
+  by calling open and close on :ref:`Django's email backend <django:topic-email-backends>`.)
+
+
 Older Releases
 --------------
 
