@@ -7,12 +7,12 @@ from django.test import TestCase
 from django.test.utils import override_settings
 
 
-MANDRILL_SUCCESS_RESPONSE = six.b("""[{
+MANDRILL_SUCCESS_RESPONSE = b"""[{
     "email": "to@example.com",
     "status": "sent",
     "_id": "abc123",
     "reject_reason": null
-}]""")
+}]"""
 
 
 @override_settings(MANDRILL_API_KEY="FAKE_API_KEY_FOR_TESTING",
@@ -22,7 +22,7 @@ class DjrillBackendMockAPITestCase(TestCase):
 
     class MockResponse(requests.Response):
         """requests.post return value mock sufficient for DjrillBackend"""
-        def __init__(self, status_code=200, raw=six.b(MANDRILL_SUCCESS_RESPONSE), encoding='utf-8'):
+        def __init__(self, status_code=200, raw=MANDRILL_SUCCESS_RESPONSE, encoding='utf-8'):
             super(DjrillBackendMockAPITestCase.MockResponse, self).__init__()
             self.status_code = status_code
             self.encoding = encoding
