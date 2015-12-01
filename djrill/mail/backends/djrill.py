@@ -5,7 +5,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.mail.backends.base import BaseEmailBackend
 from django.core.mail.message import sanitize_address, DEFAULT_ATTACHMENT_MIME_TYPE
 
-from djrill import MANDRILL_API_URL, MandrillAPIError, NotSupportedByMandrillError, __version__
+from djrill import MandrillAPIError, NotSupportedByMandrillError, __version__
 
 from base64 import b64encode
 from datetime import date, datetime
@@ -47,7 +47,7 @@ class DjrillBackend(BaseEmailBackend):
         """
         super(DjrillBackend, self).__init__(**kwargs)
         self.api_key = getattr(settings, "MANDRILL_API_KEY", None)
-        self.api_url = MANDRILL_API_URL
+        self.api_url = getattr(settings, "MANDRILL_API_URL", "https://mandrillapp.com/api/1.0")
         self.session = None
         self.global_settings = {}
         for setting_key in getattr(settings, "MANDRILL_SETTINGS", {}):
