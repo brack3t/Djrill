@@ -7,7 +7,7 @@ from django.core import mail
 from django.test import TestCase
 from django.test.utils import override_settings
 
-from djrill import MandrillAPIError
+from djrill import MandrillAPIError, MandrillRecipientsRefused
 
 
 MANDRILL_TEST_API_KEY = os.getenv('MANDRILL_TEST_API_KEY')
@@ -58,25 +58,41 @@ class DjrillIntegrationTests(TestCase):
     def test_invalid_to(self):
         # Example of detecting when a recipient is not a valid email address
         self.message.to = ['invalid@localhost']
-        sent_count = self.message.send()
-        self.assertEqual(sent_count, 1)  # The send call is "successful"...
-        # noinspection PyUnresolvedReferences
-        response = self.message.mandrill_response
-        if response[0]['status'] == 'queued':
-            self.skipTest("Mandrill queued the send -- can't complete this test")
-        self.assertEqual(response[0]['status'], 'invalid')  # ... but the mail is not delivered
+        try:
+            self.message.send()
+        except MandrillRecipientsRefused:
+            # Mandrill refused to deliver the mail -- message.mandrill_response will tell you why:
+            # noinspection PyUnresolvedReferences
+            response = self.message.mandrill_response
+            self.assertEqual(response[0]['status'], 'invalid')
+        else:
+            # Sometimes Mandrill queues these test sends
+            # noinspection PyUnresolvedReferences
+            response = self.message.mandrill_response
+            if response[0]['status'] == 'queued':
+                self.skipTest("Mandrill queued the send -- can't complete this test")
+            else:
+                self.fail("Djrill did not raise MandrillRecipientsRefused for invalid recipient")
 
     def test_rejected_to(self):
         # Example of detecting when a recipient is on Mandrill's rejection blacklist
         self.message.to = ['reject@test.mandrillapp.com']
-        sent_count = self.message.send()
-        self.assertEqual(sent_count, 1)  # The send call is "successful"...
-        # noinspection PyUnresolvedReferences
-        response = self.message.mandrill_response
-        if response[0]['status'] == 'queued':
-            self.skipTest("Mandrill queued the send -- can't complete this test")
-        self.assertEqual(response[0]['status'], 'rejected')  # ... but the mail is not delivered
-        self.assertEqual(response[0]['reject_reason'], 'test')  # ... and here's why
+        try:
+            self.message.send()
+        except MandrillRecipientsRefused:
+            # Mandrill refused to deliver the mail -- message.mandrill_response will tell you why:
+            # noinspection PyUnresolvedReferences
+            response = self.message.mandrill_response
+            self.assertEqual(response[0]['status'], 'rejected')
+            self.assertEqual(response[0]['reject_reason'], 'test')
+        else:
+            # Sometimes Mandrill queues these test sends
+            # noinspection PyUnresolvedReferences
+            response = self.message.mandrill_response
+            if response[0]['status'] == 'queued':
+                self.skipTest("Mandrill queued the send -- can't complete this test")
+            else:
+                self.fail("Djrill did not raise MandrillRecipientsRefused for blacklist recipient")
 
     @override_settings(MANDRILL_API_KEY="Hey, that's not an API key!")
     def test_invalid_api_key(self):

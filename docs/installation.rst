@@ -47,10 +47,24 @@ Djrill includes optional support for Mandrill webhooks, including inbound email.
 See the Djrill :ref:`webhooks <webhooks>` section for configuration details.
 
 
-Mandrill Subaccounts (Optional)
--------------------------------
+Other Optional Settings
+-----------------------
+
+.. setting:: MANDRILL_IGNORE_RECIPIENT_STATUS
+
+MANDRILL_IGNORE_RECIPIENT_STATUS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Set to ``True`` to disable :exc:`djrill.MandrillRecipientsRefused` exceptions
+on invalid or rejected recipients. (Default ``False``.)
+
+.. versionadded:: 2.0
+
 
 .. setting:: MANDRILL_SUBACCOUNT
+
+MANDRILL_SUBACCOUNT
+~~~~~~~~~~~~~~~~~~~
 
 If you are using Mandrill's `subaccounts`_ feature, you can globally set the
 subaccount for all messages sent through Djrill::

@@ -2,6 +2,23 @@ import json
 from requests import HTTPError
 
 
+def format_response(response):
+    """Return a string-formatted version of response
+
+    Format json if available, else just return text.
+    Returns "" if neither json nor text available.
+    """
+    try:
+        json_response = response.json()
+        return "\n" + json.dumps(json_response, indent=2)
+    except (AttributeError, KeyError, ValueError):  # not JSON = ValueError
+        try:
+            return response.text
+        except AttributeError:
+            pass
+    return ""
+
+
 class MandrillAPIError(HTTPError):
     """Exception for unsuccessful response from Mandrill API."""
     def __init__(self, status_code, response=None, log_message=None, *args, **kwargs):
@@ -15,14 +32,21 @@ class MandrillAPIError(HTTPError):
         if self.log_message:
             message += "\n" + self.log_message
         # Include the Mandrill response, nicely formatted, if possible
-        try:
-            json_response = self.response.json()
-            message += "\nMandrill response:\n" + json.dumps(json_response, indent=2)
-        except (AttributeError, KeyError, ValueError):  # not JSON = ValueError
-            try:
-                message += "\nMandrill response: " + self.response.text
-            except AttributeError:
-                pass
+        if self.response is not None:
+            message += "\nMandrill response: " + format_response(self.response)
+        return message
+
+
+class MandrillRecipientsRefused(IOError):
+    """Exception for send where all recipients are invalid or rejected."""
+    def __init__(self, message, response=None, *args, **kwargs):
+        super(MandrillRecipientsRefused, self).__init__(message, *args, **kwargs)
+        self.response = response
+
+    def __str__(self):
+        message = self.args[0]
+        if self.response is not None:
+            message += "\nMandrill response: " + format_response(self.response)
         return message
 
 

@@ -48,6 +48,18 @@ Removed DjrillAdminSite
   (Do this only if you changed to SimpleAdminConfig for Djrill, and aren't
   creating custom admin sites for any other Django apps you use.)
 
+Added exception for invalid or rejected recipients
+  Djrill 2.0 raises a new :exc:`djrill.MandrillRecipientsRefused` exception when
+  all recipients of a message invalid or rejected by Mandrill. This parallels
+  the behavior of Django's default :setting:`SMTP email backend <EMAIL_BACKEND>`,
+  which raises :exc:`SMTPRecipientsRefused <smtplib.SMTPRecipientsRefused>` when
+  all recipients are refused.
+
+  Your email-sending code should handle this exception (along with other
+  exceptions that could occur during a send). However, if you want to retain the
+  Djrill 1.x behavior and treat invalid or rejected recipients as successful sends,
+  you can set :setting:`MANDRILL_IGNORE_RECIPIENT_STATUS` to ``True`` in your settings.py.
+
 Removed unintended date-to-string conversion
   If your code was relying on Djrill to automatically convert date or datetime
   values to strings in :attr:`merge_vars`, :attr:`metadata`, or other Mandrill

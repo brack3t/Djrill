@@ -362,6 +362,27 @@ Exceptions
     of :exc:`ValueError`).
 
 
+.. exception:: djrill.MandrillRecipientsRefused
+
+    If *all* recipients (to, cc, bcc) of a message are invalid or rejected by Mandrill
+    (e.g., because they are your Mandrill blacklist), the send call will raise a
+    :exc:`~!djrill.MandrillRecipientsRefused` exception.
+    You can examine the message's :ref:`mandrill_response property <mandrill-response>`
+    to determine the cause of the error.
+
+    If a single message is sent to multiple recipients, and *any* recipient is valid
+    (or the message is queued by Mandrill because of rate limiting or :attr:`send_at`), then
+    this exception will not be raised. You can still examine the mandrill_response
+    property after the send to determine the status of each recipient.
+
+    You can disable this exception by setting :setting:`MANDRILL_IGNORE_RECIPIENT_STATUS`
+    to True in your settings.py, which will cause Djrill to treat any non-API-error response
+    from Mandrill as a successful send.
+
+    .. versionadded:: 2.0
+       Djrill 1.x behaved as if ``MANDRILL_IGNORE_RECIPIENT_STATUS = True``.
+
+
 .. exception:: djrill.MandrillAPIError
 
     If the Mandrill API fails or returns an error response, the send call will
@@ -370,3 +391,4 @@ Exceptions
     help explain what went wrong. (Tip: you can also check Mandrill's
     `API error log <https://mandrillapp.com/settings/api>`_ to view the full API
     request and error response.)
+

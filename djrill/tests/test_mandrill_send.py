@@ -18,7 +18,7 @@ from django.core.mail import make_msgid
 from django.test import TestCase
 from django.test.utils import override_settings
 
-from djrill import MandrillAPIError, NotSupportedByMandrillError
+from djrill import MandrillAPIError, MandrillRecipientsRefused, NotSupportedByMandrillError
 
 from .mock_backend import DjrillBackendMockAPITestCase
 
@@ -515,7 +515,7 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
 
     def test_send_attaches_mandrill_response(self):
         """ The mandrill_response should be attached to the message when it is sent """
-        response = [{'mandrill_response': 'would_be_here'}]
+        response = [{'email': 'to1@example.com', 'status': 'sent'}]
         self.mock_post.return_value = self.MockResponse(raw=six.b(json.dumps(response)))
         msg = mail.EmailMessage('Subject', 'Message', 'from@example.com', ['to1@example.com'],)
         sent = msg.send()
@@ -528,6 +528,14 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
         msg = mail.EmailMessage('Subject', 'Message', 'from@example.com', ['to1@example.com'],)
         sent = msg.send(fail_silently=True)
         self.assertEqual(sent, 0)
+        self.assertIsNone(msg.mandrill_response)
+
+    def test_send_unparsable_mandrill_response(self):
+        """If the send succeeds, but a non-JSON API response, should raise an API exception"""
+        self.mock_post.return_value = self.MockResponse(status_code=500, raw=b"this isn't json")
+        msg = mail.EmailMessage('Subject', 'Message', 'from@example.com', ['to1@example.com'],)
+        with self.assertRaises(MandrillAPIError):
+            msg.send()
         self.assertIsNone(msg.mandrill_response)
 
     def test_json_serialization_errors(self):
@@ -545,6 +553,51 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
         self.message.global_merge_vars = {'SHIP_DATE': date(2015, 12, 2)}
         with self.assertRaises(TypeError):
             self.message.send()
+
+
+class DjrillRecipientsRefusedTests(DjrillBackendMockAPITestCase):
+    """Djrill raises MandrillRecipientsRefused when *all* recipients are rejected or invalid"""
+
+    def test_recipients_refused(self):
+        msg = mail.EmailMessage('Subject', 'Body', 'from@example.com',
+                                ['invalid@localhost', 'reject@test.mandrillapp.com'])
+        self.mock_post.return_value = self.MockResponse(status_code=200, raw=b"""
+            [{ "email": "invalid@localhost", "status": "invalid" },
+             { "email": "reject@test.mandrillapp.com", "status": "rejected" }]""")
+        with self.assertRaises(MandrillRecipientsRefused):
+            msg.send()
+
+    def test_fail_silently(self):
+        self.mock_post.return_value = self.MockResponse(status_code=200, raw=b"""
+            [{ "email": "invalid@localhost", "status": "invalid" },
+             { "email": "reject@test.mandrillapp.com", "status": "rejected" }]""")
+        sent = mail.send_mail('Subject', 'Body', 'from@example.com',
+                              ['invalid@localhost', 'reject@test.mandrillapp.com'],
+                              fail_silently=True)
+        self.assertEqual(sent, 0)
+
+    def test_mixed_response(self):
+        """If *any* recipients are valid or queued, no exception is raised"""
+        msg = mail.EmailMessage('Subject', 'Body', 'from@example.com',
+                                ['invalid@localhost', 'valid@example.com',
+                                 'reject@test.mandrillapp.com', 'also.valid@example.com'])
+        self.mock_post.return_value = self.MockResponse(status_code=200, raw=b"""
+            [{ "email": "invalid@localhost", "status": "invalid" },
+             { "email": "valid@example.com", "status": "sent" },
+             { "email": "reject@test.mandrillapp.com", "status": "rejected" },
+             { "email": "also.valid@example.com", "status": "queued" }]""")
+        sent = msg.send()
+        self.assertEqual(sent, 1)  # one message sent, successfully, to 2 of 4 recipients
+
+    @override_settings(MANDRILL_IGNORE_RECIPIENT_STATUS=True)
+    def test_settings_override(self):
+        """Setting restores Djrill 1.x behavior"""
+        self.mock_post.return_value = self.MockResponse(status_code=200, raw=b"""
+            [{ "email": "invalid@localhost", "status": "invalid" },
+             { "email": "reject@test.mandrillapp.com", "status": "rejected" }]""")
+        sent = mail.send_mail('Subject', 'Body', 'from@example.com',
+                              ['invalid@localhost', 'reject@test.mandrillapp.com'])
+        self.assertEqual(sent, 1)  # refused message is included in sent count
 
 
 @override_settings(MANDRILL_SETTINGS={

@@ -12,7 +12,7 @@ from django.core.mail.backends.base import BaseEmailBackend
 from django.core.mail.message import sanitize_address, DEFAULT_ATTACHMENT_MIME_TYPE
 
 from ..._version import __version__
-from ...exceptions import MandrillAPIError, NotSupportedByMandrillError
+from ...exceptions import MandrillAPIError, MandrillRecipientsRefused, NotSupportedByMandrillError
 
 
 def encode_date_for_mandrill(dt):
@@ -56,6 +56,7 @@ class DjrillBackend(BaseEmailBackend):
             self.global_settings[setting_key] = settings.MANDRILL_SETTINGS[setting_key]
 
         self.subaccount = getattr(settings, "MANDRILL_SUBACCOUNT", None)
+        self.ignore_recipient_status = getattr(settings, "MANDRILL_IGNORE_RECIPIENT_STATUS", False)
 
         if not self.api_key:
             raise ImproperlyConfigured("You have not set your mandrill api key "
@@ -124,6 +125,8 @@ class DjrillBackend(BaseEmailBackend):
         return num_sent
 
     def _send(self, message):
+        message.mandrill_response = None  # until we have a response
+
         if not message.recipients():
             return False
 
@@ -172,10 +175,6 @@ class DjrillBackend(BaseEmailBackend):
         response = self.session.post(api_url, data=api_data)
 
         if response.status_code != 200:
-
-            # add a mandrill_response for the sake of being explicit
-            message.mandrill_response = None
-
             if not self.fail_silently:
                 log_message = "Failed to send a message"
                 if 'to' in msg_dict:
@@ -190,7 +189,27 @@ class DjrillBackend(BaseEmailBackend):
             return False
 
         # add the response from mandrill to the EmailMessage so callers can inspect it
-        message.mandrill_response = response.json()
+        try:
+            message.mandrill_response = response.json()
+            recipient_status = [item["status"] for item in message.mandrill_response]
+        except (ValueError, KeyError):
+            if not self.fail_silently:
+                raise MandrillAPIError(
+                    status_code=response.status_code,
+                    response=response,
+                    log_message="Error parsing Mandrill API response")
+            return False
+
+        # Error if *all* recipients are invalid or refused
+        # (This behavior parallels smtplib.SMTPRecipientsRefused from Django's SMTP EmailBackend)
+        if (not self.ignore_recipient_status and
+                all([status in ('invalid', 'rejected') for status in recipient_status])):
+            if not self.fail_silently:
+                raise MandrillRecipientsRefused(
+                    "All message recipients were rejected or invalid",
+                    response=response
+                )
+            return False
 
         return True
 
