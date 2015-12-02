@@ -617,6 +617,7 @@ class DjrillRecipientsRefusedTests(DjrillBackendMockAPITestCase):
     'tags': ['djrill'],
     'preserve_recipients': True,
     'view_content_link': True,
+    'subaccount': 'example-subaccount',
     'tracking_domain': 'example.com',
     'signing_domain': 'example.com',
     'return_path_domain': 'example.com',
@@ -625,7 +626,7 @@ class DjrillRecipientsRefusedTests(DjrillBackendMockAPITestCase):
     'metadata': ['djrill'],
     'merge_language': 'mailchimp',
     'global_merge_vars': {'TEST': 'djrill'},
-    'async': False,
+    'async': True,
     'ip_pool': 'Pool1',
     'invalid': 'invalid',
 })
@@ -644,16 +645,17 @@ class DjrillMandrillGlobalFeatureTests(DjrillBackendMockAPITestCase):
         self.assert_mandrill_called("/messages/send.json")
         data = self.get_api_call_data()
         self.assertEqual(data['message']['from_name'], 'Djrill Test')
-        self.assertTrue(data['message']['important'], True)
-        self.assertTrue(data['message']['track_opens'], True)
-        self.assertTrue(data['message']['track_clicks'], True)
-        self.assertTrue(data['message']['auto_text'], True)
-        self.assertTrue(data['message']['auto_html'], True)
-        self.assertTrue(data['message']['inline_css'], True)
-        self.assertTrue(data['message']['url_strip_qs'], True)
+        self.assertTrue(data['message']['important'])
+        self.assertTrue(data['message']['track_opens'])
+        self.assertTrue(data['message']['track_clicks'])
+        self.assertTrue(data['message']['auto_text'])
+        self.assertTrue(data['message']['auto_html'])
+        self.assertTrue(data['message']['inline_css'])
+        self.assertTrue(data['message']['url_strip_qs'])
         self.assertEqual(data['message']['tags'], ['djrill'])
-        self.assertTrue(data['message']['preserve_recipients'], True)
-        self.assertTrue(data['message']['view_content_link'], True)
+        self.assertTrue(data['message']['preserve_recipients'])
+        self.assertTrue(data['message']['view_content_link'])
+        self.assertEqual(data['message']['subaccount'], 'example-subaccount')
         self.assertEqual(data['message']['tracking_domain'], 'example.com')
         self.assertEqual(data['message']['signing_domain'], 'example.com')
         self.assertEqual(data['message']['return_path_domain'], 'example.com')
@@ -666,8 +668,7 @@ class DjrillMandrillGlobalFeatureTests(DjrillBackendMockAPITestCase):
         self.assertFalse('merge_vars' in data['message'])
         self.assertFalse('recipient_metadata' in data['message'])
         # Options at top level of api params (not in message dict):
-        self.assertFalse('send_at' in data)
-        self.assertEqual(data['async'], False)
+        self.assertTrue(data['async'])
         self.assertEqual(data['ip_pool'], 'Pool1')
         # Option that shouldn't be added
         self.assertFalse('invalid' in data['message'])
@@ -675,44 +676,53 @@ class DjrillMandrillGlobalFeatureTests(DjrillBackendMockAPITestCase):
     def test_global_options_override(self):
         """Test that manually settings options overrides global settings
         """
-        self.message.important = True
-        self.message.auto_text = True
-        self.message.auto_html = True
-        self.message.inline_css = True
-        self.message.preserve_recipients = True
+        self.message.from_name = "override"
+        self.message.important = False
+        self.message.track_opens = False
+        self.message.track_clicks = False
+        self.message.auto_text = False
+        self.message.auto_html = False
+        self.message.inline_css = False
+        self.message.url_strip_qs = False
+        self.message.tags = ['override']
+        self.message.preserve_recipients = False
         self.message.view_content_link = False
-        self.message.tracking_domain = "click.example.com"
-        self.message.signing_domain = "example.com"
-        self.message.return_path_domain = "support.example.com"
-        self.message.subaccount = "marketing-dept"
-        self.message.async = True
+        self.message.subaccount = "override"
+        self.message.tracking_domain = "override.example.com"
+        self.message.signing_domain = "override.example.com"
+        self.message.return_path_domain = "override.example.com"
+        self.message.google_analytics_domains = ['override.example.com']
+        self.message.google_analytics_campaign = ['UA-99999999-1']
+        self.message.metadata = ['override']
+        self.message.merge_language = 'handlebars'
+        self.message.async = False
         self.message.ip_pool = "Bulk Pool"
         self.message.send()
         data = self.get_api_call_data()
-        self.assertEqual(data['message']['important'], True)
-        self.assertEqual(data['message']['auto_text'], True)
-        self.assertEqual(data['message']['auto_html'], True)
-        self.assertEqual(data['message']['inline_css'], True)
-        self.assertEqual(data['message']['preserve_recipients'], True)
-        self.assertEqual(data['message']['view_content_link'], False)
-        self.assertEqual(data['message']['tracking_domain'], "click.example.com")
-        self.assertEqual(data['message']['signing_domain'], "example.com")
-        self.assertEqual(data['message']['return_path_domain'], "support.example.com")
-        self.assertEqual(data['message']['subaccount'], "marketing-dept")
-        self.assertEqual(data['async'], True)
-        self.assertEqual(data['ip_pool'], "Bulk Pool")
-
-    def test_global_options_override_tracking(self):
-        """Test that manually settings options overrides global settings
-        """
-        self.message.track_opens = False
-        self.message.track_clicks = False
-        self.message.url_strip_qs = False
-        self.message.send()
-        data = self.get_api_call_data()
-        self.assertEqual(data['message']['track_opens'], False)
-        self.assertEqual(data['message']['track_clicks'], False)
-        self.assertEqual(data['message']['url_strip_qs'], False)
+        self.assertEqual(data['message']['from_name'], 'override')
+        self.assertFalse(data['message']['important'])
+        self.assertFalse(data['message']['track_opens'])
+        self.assertFalse(data['message']['track_clicks'])
+        self.assertFalse(data['message']['auto_text'])
+        self.assertFalse(data['message']['auto_html'])
+        self.assertFalse(data['message']['inline_css'])
+        self.assertFalse(data['message']['url_strip_qs'])
+        self.assertEqual(data['message']['tags'], ['override'])
+        self.assertFalse(data['message']['preserve_recipients'])
+        self.assertFalse(data['message']['view_content_link'])
+        self.assertEqual(data['message']['subaccount'], 'override')
+        self.assertEqual(data['message']['tracking_domain'], 'override.example.com')
+        self.assertEqual(data['message']['signing_domain'], 'override.example.com')
+        self.assertEqual(data['message']['return_path_domain'], 'override.example.com')
+        self.assertEqual(data['message']['google_analytics_domains'], ['override.example.com'])
+        self.assertEqual(data['message']['google_analytics_campaign'], ['UA-99999999-1'])
+        self.assertEqual(data['message']['metadata'], ['override'])
+        self.assertEqual(data['message']['merge_language'], 'handlebars')
+        self.assertEqual(data['message']['global_merge_vars'],
+                         [{'name': 'TEST', 'content': 'djrill'}])
+        # Options at top level of api params (not in message dict):
+        self.assertFalse(data['async'])
+        self.assertEqual(data['ip_pool'], 'Bulk Pool')
 
     def test_global_merge(self):
         # Test that global settings merge in

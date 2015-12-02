@@ -61,21 +61,42 @@ on invalid or rejected recipients. (Default ``False``.)
 .. versionadded:: 2.0
 
 
+.. setting:: MANDRILL_SETTINGS
+
+MANDRILL_SETTINGS
+~~~~~~~~~~~~~~~~~
+
+You can supply global default options to apply to all messages sent through Djrill.
+Set :setting:`!MANDRILL_SETTINGS` to a dict of these options. Example::
+
+    MANDRILL_SETTINGS = {
+        'subaccount': 'client-347',
+        'tracking_domain': 'example.com',
+        'track_opens': True,
+    }
+
+See :ref:`mandrill-send-support` for a list of available options. (Everything
+*except* :attr:`merge_vars`, :attr:`recipient_metadata`, and :attr:`send_at`
+can be used with :setting:`!MANDRILL_SETTINGS`.)
+
+Attributes set on individual EmailMessage objects will override the global
+:setting:`!MANDRILL_SETTINGS` for that message. :attr:`global_merge_vars`
+on an EmailMessage will be merged with any ``global_merge_vars`` in
+:setting:`!MANDRILL_SETTINGS` (with the ones on the EmailMessage taking
+precedence if there are conflicting var names).
+
+.. versionadded:: 2.0
+
+
 .. setting:: MANDRILL_SUBACCOUNT
 
 MANDRILL_SUBACCOUNT
 ~~~~~~~~~~~~~~~~~~~
 
-If you are using Mandrill's `subaccounts`_ feature, you can globally set the
-subaccount for all messages sent through Djrill::
-
-    MANDRILL_SUBACCOUNT = "client-347"
-
-(You can also set or override the :attr:`subaccount` on each individual message,
-with :ref:`Mandrill-specific sending options <mandrill-send-support>`.)
-
-.. versionadded:: 1.0
-   MANDRILL_SUBACCOUNT global setting
-
+Prior to Djrill 2.0, the :setting:`!MANDRILL_SUBACCOUNT` setting could
+be used to globally set the `Mandrill subaccount <subaccounts>`_.
+Although this is still supported for compatibility with existing code,
+new code should set a global subaccount in :setting:`MANDRILL_SETTINGS`
+as shown above.
 
 .. _subaccounts: http://help.mandrill.com/entries/25523278-What-are-subaccounts-

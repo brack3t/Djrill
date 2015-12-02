@@ -26,29 +26,33 @@ class DjrillBackend(BaseEmailBackend):
     """
 
     def __init__(self, **kwargs):
-        """
-        Set the API key, API url and set the action url.
-        """
+        """Init options from Django settings"""
         super(DjrillBackend, self).__init__(**kwargs)
-        self.api_key = getattr(settings, "MANDRILL_API_KEY", None)
+
+        try:
+            self.api_key = settings.MANDRILL_API_KEY
+        except AttributeError:
+            raise ImproperlyConfigured("Set MANDRILL_API_KEY in settings.py to use Djrill")
+
         self.api_url = getattr(settings, "MANDRILL_API_URL", "https://mandrillapp.com/api/1.0")
         if not self.api_url.endswith("/"):
             self.api_url += "/"
 
-        self.session = None
         self.global_settings = {}
-        for setting_key in getattr(settings, "MANDRILL_SETTINGS", {}):
-            if not isinstance(settings.MANDRILL_SETTINGS, dict):
-                raise ImproperlyConfigured("MANDRILL_SETTINGS must be a dict "
-                                           "in the settings.py file.")
-            self.global_settings[setting_key] = settings.MANDRILL_SETTINGS[setting_key]
+        try:
+            self.global_settings.update(settings.MANDRILL_SETTINGS)
+        except AttributeError:
+            pass  # no MANDRILL_SETTINGS setting
+        except (TypeError, ValueError):  # e.g., not enumerable
+            raise ImproperlyConfigured("MANDRILL_SETTINGS must be a dict or mapping")
 
-        self.subaccount = getattr(settings, "MANDRILL_SUBACCOUNT", None)
+        try:
+            self.global_settings["subaccount"] = settings.MANDRILL_SUBACCOUNT
+        except AttributeError:
+            pass  # no MANDRILL_SUBACCOUNT setting
+
         self.ignore_recipient_status = getattr(settings, "MANDRILL_IGNORE_RECIPIENT_STATUS", False)
-
-        if not self.api_key:
-            raise ImproperlyConfigured("You have not set your mandrill api key "
-                "in the settings.py file.")
+        self.session = None
 
     def open(self):
         """
@@ -298,6 +302,7 @@ class DjrillBackend(BaseEmailBackend):
         # Mandrill attributes that require conversion:
         if hasattr(message, 'send_at'):
             api_params['send_at'] = self.encode_date_for_mandrill(message.send_at)
+            # setting send_at in global_settings wouldn't make much sense
 
     def _make_mandrill_to_list(self, message, recipients, recipient_type="to"):
         """Create a Mandrill 'to' field from a list of emails.
@@ -324,9 +329,6 @@ class DjrillBackend(BaseEmailBackend):
             'google_analytics_domains', 'google_analytics_campaign',
             'metadata']
 
-        if self.subaccount:
-            msg_dict['subaccount'] = self.subaccount
-
         for attr in mandrill_attrs:
             if attr in self.global_settings:
                 msg_dict[attr] = self.global_settings[attr]
@@ -336,7 +338,8 @@ class DjrillBackend(BaseEmailBackend):
         # Allow simple python dicts in place of Mandrill
         # [{name:name, value:value},...] arrays...
 
-        # Allow merge of global and per message global_merge_var, the former taking precedent
+        # Merge global and per message global_merge_vars
+        # (in conflicts, per-message vars win)
         global_merge_vars = {}
         if 'global_merge_vars' in self.global_settings:
             global_merge_vars.update(self.global_settings['global_merge_vars'])
