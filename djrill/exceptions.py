@@ -12,9 +12,11 @@ class DjrillError(Exception):
     def __init__(self, *args, **kwargs):
         """
         Optional kwargs:
+          email_message: the original EmailMessage being sent
           payload: data arg (*not* json-stringified) for the Mandrill send call
           response: requests.Response from the send call
         """
+        self.email_message = kwargs.pop('email_message', None)
         self.payload = kwargs.pop('payload', None)
         if isinstance(self, HTTPError):
             # must leave response in kwargs for HTTPError
@@ -57,7 +59,7 @@ class DjrillError(Exception):
             description += "\n" + json.dumps(json_response, indent=2)
         except (AttributeError, KeyError, ValueError):  # not JSON = ValueError
             try:
-                description += self.response.text
+                description += " " + self.response.text
             except AttributeError:
                 pass
         return description

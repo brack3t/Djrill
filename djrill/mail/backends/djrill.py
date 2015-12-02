@@ -12,28 +12,8 @@ from django.core.mail.backends.base import BaseEmailBackend
 from django.core.mail.message import sanitize_address, DEFAULT_ATTACHMENT_MIME_TYPE
 
 from ..._version import __version__
-from ...exceptions import (MandrillAPIError, MandrillRecipientsRefused,
+from ...exceptions import (DjrillError, MandrillAPIError, MandrillRecipientsRefused,
                            NotSerializableForMandrillError, NotSupportedByMandrillError)
-
-
-def encode_date_for_mandrill(dt):
-    """Format a date or datetime for use as a Mandrill API date field
-
-    datetime becomes "YYYY-MM-DD HH:MM:SS"
-             converted to UTC, if timezone-aware
-             microseconds removed
-    date     becomes "YYYY-MM-DD 00:00:00"
-    anything else gets returned intact
-    """
-    if isinstance(dt, datetime):
-        dt = dt.replace(microsecond=0)
-        if dt.utcoffset() is not None:
-            dt = (dt - dt.utcoffset()).replace(tzinfo=None)
-        return dt.isoformat(' ')
-    elif isinstance(dt, date):
-        return dt.isoformat() + ' 00:00:00'
-    else:
-        return dt
 
 
 class DjrillBackend(BaseEmailBackend):
@@ -62,9 +42,6 @@ class DjrillBackend(BaseEmailBackend):
         if not self.api_key:
             raise ImproperlyConfigured("You have not set your mandrill api key "
                 "in the settings.py file.")
-
-        self.api_send = self.api_url + "/messages/send.json"
-        self.api_send_template = self.api_url + "/messages/send-template.json"
 
     def open(self):
         """
@@ -127,72 +104,133 @@ class DjrillBackend(BaseEmailBackend):
 
     def _send(self, message):
         message.mandrill_response = None  # until we have a response
-
         if not message.recipients():
             return False
 
-        api_url = self.api_send
-        api_params = {
-            "key": self.api_key,
-        }
-
         try:
-            msg_dict = self._build_standard_message_dict(message)
-            self._add_mandrill_options(message, msg_dict)
-            if getattr(message, 'alternatives', None):
-                self._add_alternatives(message, msg_dict)
-            self._add_attachments(message, msg_dict)
-            api_params['message'] = msg_dict
+            payload = self.get_base_payload()
+            self.build_send_payload(payload, message)
+            response = self.post_to_mandrill(payload, message)
 
-            # check if template is set in message to send it via
-            # api url: /messages/send-template.json
-            if hasattr(message, 'template_name'):
-                api_url = self.api_send_template
-                api_params['template_name'] = message.template_name
-                api_params['template_content'] = \
-                    self._expand_merge_vars(getattr(message, 'template_content', {}))
+            # add the response from mandrill to the EmailMessage so callers can inspect it
+            message.mandrill_response = self.parse_response(response, payload, message)
+            self.validate_response(message.mandrill_response, response, payload, message)
 
-            self._add_mandrill_toplevel_options(message, api_params)
-
-        except NotSupportedByMandrillError:
+        except DjrillError:
+            # every *expected* error is derived from DjrillError;
+            # we deliberately don't silence unexpected errors
             if not self.fail_silently:
                 raise
             return False
 
+        return True
+
+    def get_base_payload(self):
+        """Return non-message-dependent payload for Mandrill send call
+
+        (The return value will be modified for the send, so must be a copy
+        of any shared state.)
+        """
+        payload = {
+            "key": self.api_key,
+        }
+        return payload
+
+    def build_send_payload(self, payload, message):
+        """Modify payload to add all message-specific options for Mandrill send call.
+
+        payload is a dict that will become the Mandrill send data
+        message is an EmailMessage, possibly with additional Mandrill-specific attrs
+
+        Can raise NotSupportedByMandrillError for unsupported options in message.
+        """
+        msg_dict = self._build_standard_message_dict(message)
+        self._add_mandrill_options(message, msg_dict)
+        if getattr(message, 'alternatives', None):
+            self._add_alternatives(message, msg_dict)
+        self._add_attachments(message, msg_dict)
+        payload.setdefault('message', {}).update(msg_dict)
+        if hasattr(message, 'template_name'):
+            payload['template_name'] = message.template_name
+            payload['template_content'] = \
+                self._expand_merge_vars(getattr(message, 'template_content', {}))
+        self._add_mandrill_toplevel_options(message, payload)
+
+    def get_api_url(self, payload, message):
+        """Return the correct Mandrill API url for sending payload
+
+        Override this to substitute your own logic for determining API endpoint.
+        """
+        if 'template_name' in payload:
+            return self.api_url + "/messages/send-template.json"
+        else:
+            return self.api_url + "/messages/send.json"
+
+    def serialize_payload(self, payload, message):
+        """Return payload serialized to a json str.
+
+        Override this to substitute your own JSON serializer (e.g., to handle dates)
+        """
+        return json.dumps(payload)
+
+    def post_to_mandrill(self, payload, message):
+        """Post payload to correct Mandrill send API endpoint, and return the response.
+
+        payload is a dict to use as Mandrill send data
+        message is the original EmailMessage
+        return should be a requests.Response
+
+        Can raise NotSerializableForMandrillError if payload is not serializable
+        Can raise MandrillAPIError for HTTP errors in the post
+        """
+        api_url = self.get_api_url(payload, message)
         try:
-            api_data = json.dumps(api_params)
+            json_payload = self.serialize_payload(payload, message)
         except TypeError as err:
-            if self.fail_silently:
-                return False
             # Add some context to the "not JSON serializable" message
-            raise NotSerializableForMandrillError(orig_err=err)
+            raise NotSerializableForMandrillError(
+                orig_err=err, email_message=message, payload=payload)
 
-        response = self.session.post(api_url, data=api_data)
-
+        response = self.session.post(api_url, data=json_payload)
         if response.status_code != 200:
-            if not self.fail_silently:
-                raise MandrillAPIError(payload=api_params, response=response)
-            return False
+            raise MandrillAPIError(email_message=message, payload=payload, response=response)
+        return response
 
-        # add the response from mandrill to the EmailMessage so callers can inspect it
+    def parse_response(self, response, payload, message):
+        """Return parsed json from Mandrill API response
+
+        Can raise MandrillAPIError if response is not valid JSON
+        """
         try:
-            message.mandrill_response = response.json()
-            recipient_status = [item["status"] for item in message.mandrill_response]
-        except (ValueError, KeyError):
-            if not self.fail_silently:
-                raise MandrillAPIError("Error parsing Mandrill API response",
-                                       payload=api_params, response=response)
-            return False
+            return response.json()
+        except ValueError:
+            raise MandrillAPIError("Invalid JSON in Mandrill API response",
+                                   email_message=message, payload=payload, response=response)
 
+    def validate_response(self, parsed_response, response, payload, message):
+        """Validate parsed_response, raising exceptions for any problems.
+
+        Extend this to provide your own validation checks.
+        Validation exceptions should inherit from djrill.exceptions.DjrillException
+        for proper fail_silently behavior.
+
+        The base version here checks for invalid or refused recipients.
+        """
+        if self.ignore_recipient_status:
+            return
+        try:
+            recipient_status = [item["status"] for item in parsed_response]
+        except (KeyError, TypeError):
+            raise MandrillAPIError("Invalid Mandrill API response format",
+                                   email_message=message, payload=payload, response=response)
         # Error if *all* recipients are invalid or refused
         # (This behavior parallels smtplib.SMTPRecipientsRefused from Django's SMTP EmailBackend)
-        if (not self.ignore_recipient_status and
-                all([status in ('invalid', 'rejected') for status in recipient_status])):
-            if not self.fail_silently:
-                raise MandrillRecipientsRefused(payload=api_params, response=response)
-            return False
+        if all([status in ('invalid', 'rejected') for status in recipient_status]):
+            raise MandrillRecipientsRefused(email_message=message, payload=payload, response=response)
 
-        return True
+    #
+    # Payload construction
+    #
 
     def _build_standard_message_dict(self, message):
         """Create a Mandrill send message struct from a Django EmailMessage.
@@ -251,8 +289,7 @@ class DjrillBackend(BaseEmailBackend):
 
         # Mandrill attributes that require conversion:
         if hasattr(message, 'send_at'):
-            api_params['send_at'] = encode_date_for_mandrill(message.send_at)
-
+            api_params['send_at'] = self.encode_date_for_mandrill(message.send_at)
 
     def _make_mandrill_to_list(self, message, recipients, recipient_type="to"):
         """Create a Mandrill 'to' field from a list of emails.
@@ -335,14 +372,16 @@ class DjrillBackend(BaseEmailBackend):
         if len(message.alternatives) > 1:
             raise NotSupportedByMandrillError(
                 "Too many alternatives attached to the message. "
-                "Mandrill only accepts plain text and html emails.")
+                "Mandrill only accepts plain text and html emails.",
+                email_message=message)
 
         (content, mimetype) = message.alternatives[0]
         if mimetype != 'text/html':
             raise NotSupportedByMandrillError(
                 "Invalid alternative mimetype '%s'. "
                 "Mandrill only accepts plain text and html emails."
-                % mimetype)
+                % mimetype,
+                email_message=message)
 
         msg_dict['html'] = content
 
@@ -413,3 +452,23 @@ class DjrillBackend(BaseEmailBackend):
             'content': content_b64.decode('ascii'),
         }
         return mandrill_attachment, is_embedded_image
+
+    @classmethod
+    def encode_date_for_mandrill(cls, dt):
+        """Format a date or datetime for use as a Mandrill API date field
+
+        datetime becomes "YYYY-MM-DD HH:MM:SS"
+                 converted to UTC, if timezone-aware
+                 microseconds removed
+        date     becomes "YYYY-MM-DD 00:00:00"
+        anything else gets returned intact
+        """
+        if isinstance(dt, datetime):
+            dt = dt.replace(microsecond=0)
+            if dt.utcoffset() is not None:
+                dt = (dt - dt.utcoffset()).replace(tzinfo=None)
+            return dt.isoformat(' ')
+        elif isinstance(dt, date):
+            return dt.isoformat() + ' 00:00:00'
+        else:
+            return dt

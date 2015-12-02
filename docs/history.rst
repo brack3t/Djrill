@@ -79,6 +79,14 @@ Removed DjrillBackendHTTPError
   This exception was deprecated in Djrill 0.3. Replace uses of it
   with :exc:`djrill.MandrillAPIError`.
 
+Refactored Djrill backend and exceptions
+  Several internal details of ``djrill.mail.backends.DjrillBackend``
+  and Djrill's exception classes have been significantly updated for 2.0.
+  The intent is to make it easier to maintain and extend the backend
+  (including creating your own subclasses to override Djrill's default
+  behavior). As a result, though, any existing code that depended on
+  undocumented Djrill internals may need to be updated.
+
 
 Other Djrill 2.0 Changes
 ~~~~~~~~~~~~~~~~~~~~~~~~
