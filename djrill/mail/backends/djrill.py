@@ -5,6 +5,10 @@ from base64 import b64encode
 from datetime import date, datetime
 from email.mime.base import MIMEBase
 from email.utils import parseaddr
+try:
+    from urlparse import urljoin  # python 2
+except ImportError:
+    from urllib.parse import urljoin  # python 3
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -28,6 +32,9 @@ class DjrillBackend(BaseEmailBackend):
         super(DjrillBackend, self).__init__(**kwargs)
         self.api_key = getattr(settings, "MANDRILL_API_KEY", None)
         self.api_url = getattr(settings, "MANDRILL_API_URL", "https://mandrillapp.com/api/1.0")
+        if not self.api_url.endswith("/"):
+            self.api_url += "/"
+
         self.session = None
         self.global_settings = {}
         for setting_key in getattr(settings, "MANDRILL_SETTINGS", {}):
@@ -162,9 +169,10 @@ class DjrillBackend(BaseEmailBackend):
         Override this to substitute your own logic for determining API endpoint.
         """
         if 'template_name' in payload:
-            return self.api_url + "/messages/send-template.json"
+            api_method = "messages/send-template.json"
         else:
-            return self.api_url + "/messages/send.json"
+            api_method = "messages/send.json"
+        return urljoin(self.api_url, api_method)
 
     def serialize_payload(self, payload, message):
         """Return payload serialized to a json str.
