@@ -392,3 +392,15 @@ Exceptions
     `API error log <https://mandrillapp.com/settings/api>`_ to view the full API
     request and error response.)
 
+
+.. exception:: djrill.NotSerializableForMandrillError
+
+    The send call will raise a :exc:`~!djrill.NotSerializableForMandrillError` exception
+    if the message has attached data which cannot be serialized to JSON for the Mandrill API.
+
+    See :ref:`formatting-merge-data` for more information.
+
+    .. versionadded:: 2.0
+       Djrill 1.x raised a generic `TypeError` in this case.
+       :exc:`~!djrill.NotSerializableForMandrillError` is a subclass of `TypeError`
+       for compatibility with existing code.

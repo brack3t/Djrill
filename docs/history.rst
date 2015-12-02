@@ -88,6 +88,8 @@ Other Djrill 2.0 Changes
   (You can also directly manage your own long-lived Djrill connection across multiple sends,
   by calling open and close on :ref:`Django's email backend <django:topic-email-backends>`.)
 
+* Add :exc:`djrill.NotSerializableForMandrillError`
+
 
 Older Releases
 --------------

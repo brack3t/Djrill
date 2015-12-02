@@ -75,6 +75,9 @@ which means advanced template users can include dicts and lists as merge vars
 (for templates designed to handle objects and arrays).
 See the Python :class:`json.JSONEncoder` docs for a list of allowable types.
 
+Djrill will raise :exc:`djrill.NotSerializableForMandrillError` if you attempt
+to send a message with non-json-serializable data.
+
 
 How To Use Default Mandrill Subject and From fields
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -12,7 +12,8 @@ from django.core.mail.backends.base import BaseEmailBackend
 from django.core.mail.message import sanitize_address, DEFAULT_ATTACHMENT_MIME_TYPE
 
 from ..._version import __version__
-from ...exceptions import MandrillAPIError, MandrillRecipientsRefused, NotSupportedByMandrillError
+from ...exceptions import (MandrillAPIError, MandrillRecipientsRefused,
+                           NotSerializableForMandrillError, NotSupportedByMandrillError)
 
 
 def encode_date_for_mandrill(dt):
@@ -164,28 +165,13 @@ class DjrillBackend(BaseEmailBackend):
             if self.fail_silently:
                 return False
             # Add some context to the "not JSON serializable" message
-            if not err.args:
-                err.args = ('',)
-            err.args = (
-                err.args[0] + " in a Djrill message (perhaps it's a merge var?)."
-                              " Try converting it to a string or number first.",
-            ) + err.args[1:]
-            raise err
+            raise NotSerializableForMandrillError(orig_err=err)
 
         response = self.session.post(api_url, data=api_data)
 
         if response.status_code != 200:
             if not self.fail_silently:
-                log_message = "Failed to send a message"
-                if 'to' in msg_dict:
-                    log_message += " to " + ','.join(
-                        to['email'] for to in msg_dict.get('to', []) if 'email' in to)
-                if 'from_email' in msg_dict:
-                    log_message += " from %s" % msg_dict['from_email']
-                raise MandrillAPIError(
-                    status_code=response.status_code,
-                    response=response,
-                    log_message=log_message)
+                raise MandrillAPIError(payload=api_params, response=response)
             return False
 
         # add the response from mandrill to the EmailMessage so callers can inspect it
@@ -194,10 +180,8 @@ class DjrillBackend(BaseEmailBackend):
             recipient_status = [item["status"] for item in message.mandrill_response]
         except (ValueError, KeyError):
             if not self.fail_silently:
-                raise MandrillAPIError(
-                    status_code=response.status_code,
-                    response=response,
-                    log_message="Error parsing Mandrill API response")
+                raise MandrillAPIError("Error parsing Mandrill API response",
+                                       payload=api_params, response=response)
             return False
 
         # Error if *all* recipients are invalid or refused
@@ -205,10 +189,7 @@ class DjrillBackend(BaseEmailBackend):
         if (not self.ignore_recipient_status and
                 all([status in ('invalid', 'rejected') for status in recipient_status])):
             if not self.fail_silently:
-                raise MandrillRecipientsRefused(
-                    "All message recipients were rejected or invalid",
-                    response=response
-                )
+                raise MandrillRecipientsRefused(payload=api_params, response=response)
             return False
 
         return True

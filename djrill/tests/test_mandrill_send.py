@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 import json
 import os
+import re
 import six
 import unittest
 from base64 import b64decode
@@ -18,7 +19,8 @@ from django.core.mail import make_msgid
 from django.test import TestCase
 from django.test.utils import override_settings
 
-from djrill import MandrillAPIError, MandrillRecipientsRefused, NotSupportedByMandrillError
+from djrill import (MandrillAPIError, MandrillRecipientsRefused,
+                    NotSerializableForMandrillError, NotSupportedByMandrillError)
 
 from .mock_backend import DjrillBackendMockAPITestCase
 
@@ -339,6 +341,9 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
         self.message = mail.EmailMessage('Subject', 'Text Body',
             'from@example.com', ['to@example.com'])
 
+    def assertStrContains(self, haystack, needle, msg=None):
+        six.assertRegex(self, haystack, re.escape(needle), msg)
+
     def test_tracking(self):
         # First make sure we're not setting the API param if the track_click
         # attr isn't there. (The Mandrill account option of True for html,
@@ -541,17 +546,17 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
     def test_json_serialization_errors(self):
         """Try to provide more information about non-json-serializable data"""
         self.message.global_merge_vars = {'PRICE': Decimal('19.99')}
-        with self.assertRaisesMessage(
-                TypeError,
-                "Decimal('19.99') is not JSON serializable in a Djrill message (perhaps "
-                "it's a merge var?). Try converting it to a string or number first."
-        ):
+        with self.assertRaises(NotSerializableForMandrillError) as cm:
             self.message.send()
+        err = cm.exception
+        self.assertTrue(isinstance(err, TypeError))  # Djrill 1.x re-raised TypeError from json.dumps
+        self.assertStrContains(str(err), "Don't know how to send this data to Mandrill")  # our added context
+        self.assertStrContains(str(err), "Decimal('19.99') is not JSON serializable")  # original message
 
     def test_dates_not_serialized(self):
         """Pre-2.0 Djrill accidentally serialized dates to ISO"""
         self.message.global_merge_vars = {'SHIP_DATE': date(2015, 12, 2)}
-        with self.assertRaises(TypeError):
+        with self.assertRaises(NotSerializableForMandrillError):
             self.message.send()
 
 
