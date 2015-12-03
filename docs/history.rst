@@ -91,6 +91,8 @@ Refactored Djrill backend and exceptions
 Other Djrill 2.0 Changes
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+* Add Django 1.9 support; drop Django 1.3, Python 2.6, and Python 3.2
+
 * Use a single HTTP connection to the Mandrill API to improve performance
   when sending multiple messages at once using :func:`~django.core.mail.send_mass_mail`.
   (You can also directly manage your own long-lived Djrill connection across multiple sends,
