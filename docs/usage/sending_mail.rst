@@ -282,14 +282,43 @@ Most of the options from the Mandrill
 
 .. attribute:: send_at
 
-    ``datetime`` or ``date`` or ``str``: instructs Mandrill to delay sending this message
-    until the specified time. (Djrill allows timezone-aware Python datetimes, and converts them
-    to UTC for Mandrill. Timezone-naive datetimes are assumed to be UTC.)
+    `datetime` or `date` or ``str``: instructs Mandrill to delay sending this message
+    until the specified time. Example::
+
+        msg.send_at = datetime.utcnow() + timedelta(hours=1)
+
+    Mandrill requires a UTC string in the form ``YYYY-MM-DD HH:MM:SS``.
+    Djrill will convert python dates and datetimes to this form.
+    (Dates will be given a time of 00:00:00.)
+
+    .. note:: Timezones
+
+        Mandrill assumes :attr:`!send_at` is in the UTC timezone,
+        which is likely *not* the same as your local time.
+
+        Djrill will convert timezone-*aware* datetimes to UTC for you.
+        But if you format your own string, supply a date, or a
+        *naive* datetime, you must make sure it is in UTC.
+        See the python `datetime` docs for more information.
+
+        For example, ``msg.send_at = datetime.now() + timedelta(hours=1)``
+        will try to schedule the message for an hour from the current time,
+        but *interpreted in the UTC timezone* (which isn't what you want).
+        If you're more than an hour west of the prime meridian, that will
+        be in the past (and the message will get sent immediately). If
+        you're east of there, the message might get sent quite a bit later
+        than you intended. One solution is to use `utcnow` as shown in
+        the earlier example.
+
+    .. note::
+
+        Scheduled sending is a paid Mandrill feature. If you are using
+        a free Mandrill account, :attr:`!send_at` won't work.
 
     .. versionadded:: 0.7
 
 
-These Mandrill-specific properties work with *any*
+All the Mandrill-specific attributes listed above work with *any*
 :class:`~django.core.mail.EmailMessage`-derived object, so you can use them with
 many other apps that add Django mail functionality.
 
