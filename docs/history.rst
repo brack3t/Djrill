@@ -13,6 +13,9 @@ major version number (1.x to 2.0).
 Djrill 2.x
 ----------
 
+Version 2.1 (in development):
+
+
 Version 2.0:
 
 * **Breaking Changes:** please see the :ref:`upgrade guide <upgrading>`.
