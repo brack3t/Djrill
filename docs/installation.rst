@@ -50,6 +50,9 @@ See the Djrill :ref:`webhooks <webhooks>` section for configuration details.
 Other Optional Settings
 -----------------------
 
+You can optionally add any of these Djrill settings to your :file:`settings.py`.
+
+
 .. setting:: MANDRILL_IGNORE_RECIPIENT_STATUS
 
 MANDRILL_IGNORE_RECIPIENT_STATUS
@@ -86,6 +89,18 @@ on an EmailMessage will be merged with any ``global_merge_vars`` in
 precedence if there are conflicting var names).
 
 .. versionadded:: 2.0
+
+
+.. setting:: MANDRILL_API_URL
+
+MANDRILL_API_URL
+~~~~~~~~~~~~~~~~
+
+The base url for calling the Mandrill API. The default is
+``MANDRILL_API_URL = "https://mandrillapp.com/api/1.0"``,
+which is the secure, production version of Mandrill's 1.0 API.
+
+(It's unlikely you would need to change this.)
 
 
 .. setting:: MANDRILL_SUBACCOUNT
