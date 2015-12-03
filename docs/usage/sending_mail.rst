@@ -32,10 +32,6 @@ Some notes and limitations:
     to `!True` if you want recipients to be able to see who else was included
     in the "to" list.
 
-    .. versionchanged:: 0.9
-       Previously, Djrill (and Mandrill) didn't distinguish "cc" from "to",
-       and allowed only a single "bcc" recipient.
-
 
 .. _sending-html:
 
@@ -70,12 +66,6 @@ Some notes and limitations:
     (For an example, see :meth:`~DjrillBackendTests.test_embedded_images`
     in :file:`tests/test_mandrill_send.py`.)
 
-    .. versionadded:: 0.3
-       Attachments
-
-    .. versionchanged:: 0.4
-       Special handling for embedded images
-
 .. _message-headers:
 
 **Headers**
@@ -87,11 +77,8 @@ Some notes and limitations:
             headers={'Reply-To': "reply@example.com", 'List-Unsubscribe': "..."}
         )
 
-    .. versionchanged:: 0.9
-       In earlier versions, Djrill only allowed ``Reply-To`` and ``X-*`` headers,
-       matching previous Mandrill API restrictions.
+    .. note::
 
-    .. versionchanged:: 1.4
        Djrill also supports the `reply_to` param added to
        :class:`~django.core.mail.EmailMessage` in Django 1.8.
        (If you provide *both* a 'Reply-To' header and the `reply_to` param,
@@ -120,8 +107,6 @@ Most of the options from the Mandrill
 .. attribute:: important
 
     ``Boolean``: whether Mandrill should send this message ahead of non-important ones.
-
-    .. versionadded:: 0.7
 
 .. attribute:: track_opens
 
@@ -156,8 +141,6 @@ Most of the options from the Mandrill
     ``Boolean``: whether Mandrill should inline CSS styles in the HTML.
     Default from your Mandrill account settings.
 
-    .. versionadded:: 0.4
-
 .. attribute:: url_strip_qs
 
     ``Boolean``: whether Mandrill should ignore any query parameters when aggregating
@@ -171,8 +154,6 @@ Most of the options from the Mandrill
 .. attribute:: view_content_link
 
     ``Boolean``: set False on sensitive messages to instruct Mandrill not to log the content.
-
-    .. versionadded:: 0.7
 
 .. attribute:: tracking_domain
 
@@ -190,14 +171,10 @@ Most of the options from the Mandrill
 
     ``str``: domain Mandrill should use for the message's return-path.
 
-    .. versionadded:: 0.7
-
 .. attribute:: merge_language
 
     ``str``: the merge tag language if using merge tags -- e.g., "mailchimp" or "handlebars".
     Default from your Mandrill account settings.
-
-    .. versionadded:: 1.3
 
 .. attribute:: global_merge_vars
 
@@ -233,8 +210,6 @@ Most of the options from the Mandrill
 .. attribute:: subaccount
 
     ``str``: the ID of one of your subaccounts to use for sending this message.
-
-    .. versionadded:: 0.7
 
 .. attribute:: google_analytics_domains
 
@@ -272,13 +247,9 @@ Most of the options from the Mandrill
 
     ``Boolean``: whether Mandrill should use an async mode optimized for bulk sending.
 
-    .. versionadded:: 0.7
-
 .. attribute:: ip_pool
 
     ``str``: name of one of your Mandrill dedicated IP pools to use for sending this message.
-
-    .. versionadded:: 0.7
 
 .. attribute:: send_at
 
@@ -314,8 +285,6 @@ Most of the options from the Mandrill
 
         Scheduled sending is a paid Mandrill feature. If you are using
         a free Mandrill account, :attr:`!send_at` won't work.
-
-    .. versionadded:: 0.7
 
 
 All the Mandrill-specific attributes listed above work with *any*
@@ -361,17 +330,11 @@ For this example, msg.mandrill_response might look like this::
 
 If an error is returned by Mandrill while sending the message then :attr:`!mandrill_response` will be set to None.
 
-.. versionadded:: 0.8
-   mandrill_response available for sent messages
-
 
 .. _djrill-exceptions:
 
 Exceptions
 ----------
-
-.. versionadded:: 0.3
-   Djrill-specific exceptions
 
 .. exception:: djrill.NotSupportedByMandrillError
 

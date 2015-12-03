@@ -11,10 +11,6 @@ Djrill includes optional support for Mandrill's webhook notifications.
 If enabled, it will send a Django signal for each event in a webhook.
 Your code can connect to this signal for further processing.
 
-.. versionadded:: 0.5
-    Webhook support
-
-
 .. warning:: Webhook Security
 
     Webhooks are ordinary urls---they're wide open to the internet.
