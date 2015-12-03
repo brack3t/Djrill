@@ -1,0 +1,24 @@
+# http://editorconfig.org
+
+root = true
+
+# Follow Django conventions for most files
+[*]
+charset = utf-8
+end_of_line = lf
+indent_size = 4
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Use 2 spaces for js and text(-like) files
+[*.{html,js,json,md,rst,txt,yml}]
+indent_size = 2
+
+# Makefiles always use tabs for indentation
+[Makefile]
+indent_style = tab
+
+# Batch files use tabs for indentation
+[*.bat]
+indent_style = tab
