@@ -18,12 +18,14 @@ Version 2.0:
 * **Breaking Changes:** please see the :ref:`upgrade guide <upgrading>`.
 * Add Django 1.9 support; drop Django 1.3, Python 2.6, and Python 3.2 support
 * Add global :setting:`MANDRILL_SETTINGS` dict that can provide defaults
-  for most Djrill message options.
+  for most Djrill message options
 * Add :exc:`djrill.NotSerializableForMandrillError`
 * Use a single HTTP connection to the Mandrill API to improve performance
   when sending multiple messages at once using :func:`~django.core.mail.send_mass_mail`.
   (You can also directly manage your own long-lived Djrill connection across multiple sends,
   by calling open and close on :ref:`Django's email backend <django:topic-email-backends>`.)
+* Add Djrill version to user-agent header when calling Mandrill API
+* Improve diagnostics in exceptions from Djrill
 * Remove DjrillAdminSite
 * Remove unintended date-to-string conversion in JSON encoding
 * Remove obsolete DjrillMessage class and DjrillBackendHTTPError
