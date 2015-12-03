@@ -1,53 +1,23 @@
+import json
+import mimetypes
+import requests
+from base64 import b64encode
+from datetime import date, datetime
+from email.mime.base import MIMEBase
+from email.utils import parseaddr
+try:
+    from urlparse import urljoin  # python 2
+except ImportError:
+    from urllib.parse import urljoin  # python 3
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.mail.backends.base import BaseEmailBackend
 from django.core.mail.message import sanitize_address, DEFAULT_ATTACHMENT_MIME_TYPE
 
-# Oops: this file has the same name as our app, and cannot be renamed.
-#from djrill import MANDRILL_API_URL, MandrillAPIError, NotSupportedByMandrillError
-from ... import MANDRILL_API_URL, MandrillAPIError, NotSupportedByMandrillError
-from ...exceptions import removed_in_djrill_2
-
-from base64 import b64encode
-from datetime import date, datetime
-from email.mime.base import MIMEBase
-from email.utils import parseaddr
-import json
-import mimetypes
-import requests
-
-
-def encode_date_for_mandrill(dt):
-    """Format a date or datetime for use as a Mandrill API date field
-
-    datetime becomes "YYYY-MM-DD HH:MM:SS"
-             converted to UTC, if timezone-aware
-             microseconds removed
-    date     becomes "YYYY-MM-DD 00:00:00"
-    anything else gets returned intact
-    """
-    if isinstance(dt, datetime):
-        dt = dt.replace(microsecond=0)
-        if dt.utcoffset() is not None:
-            dt = (dt - dt.utcoffset()).replace(tzinfo=None)
-        return dt.isoformat(' ')
-    elif isinstance(dt, date):
-        return dt.isoformat() + ' 00:00:00'
-    else:
-        return dt
-
-
-class JSONDateUTCEncoder(json.JSONEncoder):
-    """[deprecated] JSONEncoder that encodes dates in string format used by Mandrill."""
-    def default(self, obj):
-        if isinstance(obj, date):
-            removed_in_djrill_2(
-                "You've used the date '%r' as a Djrill message attribute "
-                "(perhaps in merge vars or metadata). Djrill 2.0 will require "
-                "you to explicitly convert this date to a string." % obj
-            )
-            return encode_date_for_mandrill(obj)
-        return super(JSONDateUTCEncoder, self).default(obj)
+from ..._version import __version__
+from ...exceptions import (DjrillError, MandrillAPIError, MandrillRecipientsRefused,
+                           NotSerializableForMandrillError, NotSupportedByMandrillError)
 
 
 class DjrillBackend(BaseEmailBackend):
@@ -56,103 +26,223 @@ class DjrillBackend(BaseEmailBackend):
     """
 
     def __init__(self, **kwargs):
-        """
-        Set the API key, API url and set the action url.
-        """
+        """Init options from Django settings"""
         super(DjrillBackend, self).__init__(**kwargs)
-        self.api_key = getattr(settings, "MANDRILL_API_KEY", None)
-        self.api_url = MANDRILL_API_URL
 
-        self.subaccount = getattr(settings, "MANDRILL_SUBACCOUNT", None)
+        try:
+            self.api_key = settings.MANDRILL_API_KEY
+        except AttributeError:
+            raise ImproperlyConfigured("Set MANDRILL_API_KEY in settings.py to use Djrill")
 
-        if not self.api_key:
-            raise ImproperlyConfigured("You have not set your mandrill api key "
-                "in the settings.py file.")
+        self.api_url = getattr(settings, "MANDRILL_API_URL", "https://mandrillapp.com/api/1.0")
+        if not self.api_url.endswith("/"):
+            self.api_url += "/"
 
-        self.api_send = self.api_url + "/messages/send.json"
-        self.api_send_template = self.api_url + "/messages/send-template.json"
+        self.global_settings = {}
+        try:
+            self.global_settings.update(settings.MANDRILL_SETTINGS)
+        except AttributeError:
+            pass  # no MANDRILL_SETTINGS setting
+        except (TypeError, ValueError):  # e.g., not enumerable
+            raise ImproperlyConfigured("MANDRILL_SETTINGS must be a dict or mapping")
+
+        try:
+            self.global_settings["subaccount"] = settings.MANDRILL_SUBACCOUNT
+        except AttributeError:
+            pass  # no MANDRILL_SUBACCOUNT setting
+
+        self.ignore_recipient_status = getattr(settings, "MANDRILL_IGNORE_RECIPIENT_STATUS", False)
+        self.session = None
+
+    def open(self):
+        """
+        Ensure we have a requests Session to connect to the Mandrill API.
+        Returns True if a new session was created (and the caller must close it).
+        """
+        if self.session:
+            return False  # already exists
+
+        try:
+            self.session = requests.Session()
+        except requests.RequestException:
+            if not self.fail_silently:
+                raise
+        else:
+            self.session.headers["User-Agent"] = "Djrill/%s %s" % (
+                __version__, self.session.headers.get("User-Agent", ""))
+            return True
+
+    def close(self):
+        """
+        Close the Mandrill API Session unconditionally.
+
+        (You should call this only if you called open and it returned True;
+        else someone else created the session and will clean it up themselves.)
+        """
+        if self.session is None:
+            return
+        try:
+            self.session.close()
+        except requests.RequestException:
+            if not self.fail_silently:
+                raise
+        finally:
+            self.session = None
 
     def send_messages(self, email_messages):
+        """
+        Sends one or more EmailMessage objects and returns the number of email
+        messages sent.
+        """
         if not email_messages:
             return 0
 
-        num_sent = 0
-        for message in email_messages:
-            sent = self._send(message)
+        created_session = self.open()
+        if not self.session:
+            return 0  # exception in self.open with fail_silently
 
-            if sent:
-                num_sent += 1
+        num_sent = 0
+        try:
+            for message in email_messages:
+                sent = self._send(message)
+                if sent:
+                    num_sent += 1
+        finally:
+            if created_session:
+                self.close()
 
         return num_sent
 
     def _send(self, message):
+        message.mandrill_response = None  # until we have a response
         if not message.recipients():
             return False
 
-        api_url = self.api_send
-        api_params = {
-            "key": self.api_key,
-        }
-
         try:
-            msg_dict = self._build_standard_message_dict(message)
-            self._add_mandrill_options(message, msg_dict)
-            if getattr(message, 'alternatives', None):
-                self._add_alternatives(message, msg_dict)
-            self._add_attachments(message, msg_dict)
-            api_params['message'] = msg_dict
+            payload = self.get_base_payload()
+            self.build_send_payload(payload, message)
+            response = self.post_to_mandrill(payload, message)
 
-            # check if template is set in message to send it via
-            # api url: /messages/send-template.json
-            if hasattr(message, 'template_name'):
-                api_url = self.api_send_template
-                api_params['template_name'] = message.template_name
-                api_params['template_content'] = \
-                    self._expand_merge_vars(getattr(message, 'template_content', {}))
+            # add the response from mandrill to the EmailMessage so callers can inspect it
+            message.mandrill_response = self.parse_response(response, payload, message)
+            self.validate_response(message.mandrill_response, response, payload, message)
 
-            self._add_mandrill_toplevel_options(message, api_params)
-
-        except NotSupportedByMandrillError:
+        except DjrillError:
+            # every *expected* error is derived from DjrillError;
+            # we deliberately don't silence unexpected errors
             if not self.fail_silently:
                 raise
             return False
 
+        return True
+
+    def get_base_payload(self):
+        """Return non-message-dependent payload for Mandrill send call
+
+        (The return value will be modified for the send, so must be a copy
+        of any shared state.)
+        """
+        payload = {
+            "key": self.api_key,
+        }
+        return payload
+
+    def build_send_payload(self, payload, message):
+        """Modify payload to add all message-specific options for Mandrill send call.
+
+        payload is a dict that will become the Mandrill send data
+        message is an EmailMessage, possibly with additional Mandrill-specific attrs
+
+        Can raise NotSupportedByMandrillError for unsupported options in message.
+        """
+        msg_dict = self._build_standard_message_dict(message)
+        self._add_mandrill_options(message, msg_dict)
+        if getattr(message, 'alternatives', None):
+            self._add_alternatives(message, msg_dict)
+        self._add_attachments(message, msg_dict)
+        payload.setdefault('message', {}).update(msg_dict)
+        if hasattr(message, 'template_name'):
+            payload['template_name'] = message.template_name
+            payload['template_content'] = \
+                self._expand_merge_vars(getattr(message, 'template_content', {}))
+        self._add_mandrill_toplevel_options(message, payload)
+
+    def get_api_url(self, payload, message):
+        """Return the correct Mandrill API url for sending payload
+
+        Override this to substitute your own logic for determining API endpoint.
+        """
+        if 'template_name' in payload:
+            api_method = "messages/send-template.json"
+        else:
+            api_method = "messages/send.json"
+        return urljoin(self.api_url, api_method)
+
+    def serialize_payload(self, payload, message):
+        """Return payload serialized to a json str.
+
+        Override this to substitute your own JSON serializer (e.g., to handle dates)
+        """
+        return json.dumps(payload)
+
+    def post_to_mandrill(self, payload, message):
+        """Post payload to correct Mandrill send API endpoint, and return the response.
+
+        payload is a dict to use as Mandrill send data
+        message is the original EmailMessage
+        return should be a requests.Response
+
+        Can raise NotSerializableForMandrillError if payload is not serializable
+        Can raise MandrillAPIError for HTTP errors in the post
+        """
+        api_url = self.get_api_url(payload, message)
         try:
-            api_data = json.dumps(api_params, cls=JSONDateUTCEncoder)
+            json_payload = self.serialize_payload(payload, message)
         except TypeError as err:
             # Add some context to the "not JSON serializable" message
-            if not err.args:
-                err.args = ('',)
-            err.args = (
-                err.args[0] + " in a Djrill message (perhaps it's a merge var?)."
-                              " Try converting it to a string or number first.",
-            ) + err.args[1:]
-            raise err
+            raise NotSerializableForMandrillError(
+                orig_err=err, email_message=message, payload=payload)
 
-        response = requests.post(api_url, data=api_data)
-
+        response = self.session.post(api_url, data=json_payload)
         if response.status_code != 200:
+            raise MandrillAPIError(email_message=message, payload=payload, response=response)
+        return response
 
-            # add a mandrill_response for the sake of being explicit
-            message.mandrill_response = None
+    def parse_response(self, response, payload, message):
+        """Return parsed json from Mandrill API response
 
-            if not self.fail_silently:
-                log_message = "Failed to send a message"
-                if 'to' in msg_dict:
-                    log_message += " to " + ','.join(
-                        to['email'] for to in msg_dict.get('to', []) if 'email' in to)
-                if 'from_email' in msg_dict:
-                    log_message += " from %s" % msg_dict['from_email']
-                raise MandrillAPIError(
-                    status_code=response.status_code,
-                    response=response,
-                    log_message=log_message)
-            return False
+        Can raise MandrillAPIError if response is not valid JSON
+        """
+        try:
+            return response.json()
+        except ValueError:
+            raise MandrillAPIError("Invalid JSON in Mandrill API response",
+                                   email_message=message, payload=payload, response=response)
 
-        # add the response from mandrill to the EmailMessage so callers can inspect it
-        message.mandrill_response = response.json()
+    def validate_response(self, parsed_response, response, payload, message):
+        """Validate parsed_response, raising exceptions for any problems.
 
-        return True
+        Extend this to provide your own validation checks.
+        Validation exceptions should inherit from djrill.exceptions.DjrillException
+        for proper fail_silently behavior.
+
+        The base version here checks for invalid or refused recipients.
+        """
+        if self.ignore_recipient_status:
+            return
+        try:
+            recipient_status = [item["status"] for item in parsed_response]
+        except (KeyError, TypeError):
+            raise MandrillAPIError("Invalid Mandrill API response format",
+                                   email_message=message, payload=payload, response=response)
+        # Error if *all* recipients are invalid or refused
+        # (This behavior parallels smtplib.SMTPRecipientsRefused from Django's SMTP EmailBackend)
+        if all([status in ('invalid', 'rejected') for status in recipient_status]):
+            raise MandrillRecipientsRefused(email_message=message, payload=payload, response=response)
+
+    #
+    # Payload construction
+    #
 
     def _build_standard_message_dict(self, message):
         """Create a Mandrill send message struct from a Django EmailMessage.
@@ -204,13 +294,15 @@ class DjrillBackend(BaseEmailBackend):
             'async', 'ip_pool'
         ]
         for attr in mandrill_attrs:
+            if attr in self.global_settings:
+                api_params[attr] = self.global_settings[attr]
             if hasattr(message, attr):
                 api_params[attr] = getattr(message, attr)
 
         # Mandrill attributes that require conversion:
         if hasattr(message, 'send_at'):
-            api_params['send_at'] = encode_date_for_mandrill(message.send_at)
-
+            api_params['send_at'] = self.encode_date_for_mandrill(message.send_at)
+            # setting send_at in global_settings wouldn't make much sense
 
     def _make_mandrill_to_list(self, message, recipients, recipient_type="to"):
         """Create a Mandrill 'to' field from a list of emails.
@@ -237,18 +329,26 @@ class DjrillBackend(BaseEmailBackend):
             'google_analytics_domains', 'google_analytics_campaign',
             'metadata']
 
-        if self.subaccount:
-            msg_dict['subaccount'] = self.subaccount
-
         for attr in mandrill_attrs:
+            if attr in self.global_settings:
+                msg_dict[attr] = self.global_settings[attr]
             if hasattr(message, attr):
                 msg_dict[attr] = getattr(message, attr)
 
         # Allow simple python dicts in place of Mandrill
         # [{name:name, value:value},...] arrays...
+
+        # Merge global and per message global_merge_vars
+        # (in conflicts, per-message vars win)
+        global_merge_vars = {}
+        if 'global_merge_vars' in self.global_settings:
+            global_merge_vars.update(self.global_settings['global_merge_vars'])
         if hasattr(message, 'global_merge_vars'):
+            global_merge_vars.update(message.global_merge_vars)
+        if global_merge_vars:
             msg_dict['global_merge_vars'] = \
-                self._expand_merge_vars(message.global_merge_vars)
+                self._expand_merge_vars(global_merge_vars)
+
         if hasattr(message, 'merge_vars'):
             # For testing reproducibility, we sort the recipients
             msg_dict['merge_vars'] = [
@@ -283,14 +383,16 @@ class DjrillBackend(BaseEmailBackend):
         if len(message.alternatives) > 1:
             raise NotSupportedByMandrillError(
                 "Too many alternatives attached to the message. "
-                "Mandrill only accepts plain text and html emails.")
+                "Mandrill only accepts plain text and html emails.",
+                email_message=message)
 
         (content, mimetype) = message.alternatives[0]
         if mimetype != 'text/html':
             raise NotSupportedByMandrillError(
                 "Invalid alternative mimetype '%s'. "
                 "Mandrill only accepts plain text and html emails."
-                % mimetype)
+                % mimetype,
+                email_message=message)
 
         msg_dict['html'] = content
 
@@ -343,6 +445,7 @@ class DjrillBackend(BaseEmailBackend):
 
         # b64encode requires bytes, so let's convert our content.
         try:
+            # noinspection PyUnresolvedReferences
             if isinstance(content, unicode):
                 # Python 2.X unicode string
                 content = content.encode(str_encoding)
@@ -361,25 +464,22 @@ class DjrillBackend(BaseEmailBackend):
         }
         return mandrill_attachment, is_embedded_image
 
+    @classmethod
+    def encode_date_for_mandrill(cls, dt):
+        """Format a date or datetime for use as a Mandrill API date field
 
-############################################################################################
-# Recreate this module, but with a warning on attempts to import deprecated properties.
-# This is ugly, but (surprisingly) blessed: http://stackoverflow.com/a/7668273/647002
-import sys
-import types
-
-
-class ModuleWithDeprecatedProps(types.ModuleType):
-    def __init__(self, module):
-        self._orig_module = module  # must keep a ref around, or it'll get deallocated
-        super(ModuleWithDeprecatedProps, self).__init__(module.__name__, module.__doc__)
-        self.__dict__.update(module.__dict__)
-
-    @property
-    def DjrillBackendHTTPError(self):
-        removed_in_djrill_2("DjrillBackendHTTPError will be removed in Djrill 2.0. "
-                            "Use djrill.MandrillAPIError instead.")
-        return MandrillAPIError
-
-
-sys.modules[__name__] = ModuleWithDeprecatedProps(sys.modules[__name__])
+        datetime becomes "YYYY-MM-DD HH:MM:SS"
+                 converted to UTC, if timezone-aware
+                 microseconds removed
+        date     becomes "YYYY-MM-DD 00:00:00"
+        anything else gets returned intact
+        """
+        if isinstance(dt, datetime):
+            dt = dt.replace(microsecond=0)
+            if dt.utcoffset() is not None:
+                dt = (dt - dt.utcoffset()).replace(tzinfo=None)
+            return dt.isoformat(' ')
+        elif isinstance(dt, date):
+            return dt.isoformat() + ' 00:00:00'
+        else:
+            return dt

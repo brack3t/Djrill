@@ -47,65 +47,71 @@ Djrill includes optional support for Mandrill webhooks, including inbound email.
 See the Djrill :ref:`webhooks <webhooks>` section for configuration details.
 
 
-Mandrill Subaccounts (Optional)
--------------------------------
+Other Optional Settings
+-----------------------
+
+You can optionally add any of these Djrill settings to your :file:`settings.py`.
+
+
+.. setting:: MANDRILL_IGNORE_RECIPIENT_STATUS
+
+MANDRILL_IGNORE_RECIPIENT_STATUS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Set to ``True`` to disable :exc:`djrill.MandrillRecipientsRefused` exceptions
+on invalid or rejected recipients. (Default ``False``.)
+
+.. versionadded:: 2.0
+
+
+.. setting:: MANDRILL_SETTINGS
+
+MANDRILL_SETTINGS
+~~~~~~~~~~~~~~~~~
+
+You can supply global default options to apply to all messages sent through Djrill.
+Set :setting:`!MANDRILL_SETTINGS` to a dict of these options. Example::
+
+    MANDRILL_SETTINGS = {
+        'subaccount': 'client-347',
+        'tracking_domain': 'example.com',
+        'track_opens': True,
+    }
+
+See :ref:`mandrill-send-support` for a list of available options. (Everything
+*except* :attr:`merge_vars`, :attr:`recipient_metadata`, and :attr:`send_at`
+can be used with :setting:`!MANDRILL_SETTINGS`.)
+
+Attributes set on individual EmailMessage objects will override the global
+:setting:`!MANDRILL_SETTINGS` for that message. :attr:`global_merge_vars`
+on an EmailMessage will be merged with any ``global_merge_vars`` in
+:setting:`!MANDRILL_SETTINGS` (with the ones on the EmailMessage taking
+precedence if there are conflicting var names).
+
+.. versionadded:: 2.0
+
+
+.. setting:: MANDRILL_API_URL
+
+MANDRILL_API_URL
+~~~~~~~~~~~~~~~~
+
+The base url for calling the Mandrill API. The default is
+``MANDRILL_API_URL = "https://mandrillapp.com/api/1.0"``,
+which is the secure, production version of Mandrill's 1.0 API.
+
+(It's unlikely you would need to change this.)
+
 
 .. setting:: MANDRILL_SUBACCOUNT
 
-If you are using Mandrill's `subaccounts`_ feature, you can globally set the
-subaccount for all messages sent through Djrill::
+MANDRILL_SUBACCOUNT
+~~~~~~~~~~~~~~~~~~~
 
-    MANDRILL_SUBACCOUNT = "client-347"
-
-(You can also set or override the :attr:`subaccount` on each individual message,
-with :ref:`Mandrill-specific sending options <mandrill-send-support>`.)
-
-.. versionadded:: 1.0
-   MANDRILL_SUBACCOUNT global setting
-
+Prior to Djrill 2.0, the :setting:`!MANDRILL_SUBACCOUNT` setting could
+be used to globally set the `Mandrill subaccount <subaccounts>`_.
+Although this is still supported for compatibility with existing code,
+new code should set a global subaccount in :setting:`MANDRILL_SETTINGS`
+as shown above.
 
 .. _subaccounts: http://help.mandrill.com/entries/25523278-What-are-subaccounts-
-
-
-Admin (Optional)
-----------------
-
-Djrill includes an optional Django admin interface, which allows you to:
-
-* Check the status of your Mandrill API connection
-* See stats on email senders, tags and urls
-
-If you want to enable the Djrill admin interface, edit your base :file:`urls.py`:
-
-    .. code-block:: python
-        :emphasize-lines: 4,6
-
-        ...
-        from django.contrib import admin
-
-        from djrill import DjrillAdminSite
-
-        admin.site = DjrillAdminSite()
-        admin.autodiscover()
-        ...
-
-        urlpatterns = [
-            ...
-            url(r'^admin/', include(admin.site.urls)),
-        ]
-
-If you are on **Django 1.7 or later,** you will also need to change the config used
-by the django.contrib.admin app in your :file:`settings.py`:
-
-    .. code-block:: python
-        :emphasize-lines: 4
-
-        ...
-        INSTALLED_APPS = (
-            # For Django 1.7+, use SimpleAdminConfig because we'll call autodiscover...
-            'django.contrib.admin.apps.SimpleAdminConfig',  # instead of 'django.contrib.admin'
-            ...
-            'djrill',
-            ...
-        )
-        ...

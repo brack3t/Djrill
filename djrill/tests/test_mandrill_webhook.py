@@ -1,15 +1,15 @@
-from base64 import b64encode
 import hashlib
 import hmac
 import json
+from base64 import b64encode
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
+from django.test.utils import override_settings
 
-from ..compat import b
-from ..signals import webhook_event
-from .utils import override_settings
+from djrill.compat import b
+from djrill.signals import webhook_event
 
 
 class DjrillWebhookSecretMixinTests(TestCase):

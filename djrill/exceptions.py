@@ -1,33 +1,89 @@
 import json
 from requests import HTTPError
-import warnings
 
 
-class MandrillAPIError(HTTPError):
-    """Exception for unsuccessful response from Mandrill API."""
-    def __init__(self, status_code, response=None, log_message=None, *args, **kwargs):
-        super(MandrillAPIError, self).__init__(*args, **kwargs)
-        self.status_code = status_code
-        self.response = response  # often contains helpful Mandrill info
-        self.log_message = log_message
+class DjrillError(Exception):
+    """Base class for exceptions raised by Djrill
+
+    Overrides __str__ to provide additional information about
+    Mandrill API call and response.
+    """
+
+    def __init__(self, *args, **kwargs):
+        """
+        Optional kwargs:
+          email_message: the original EmailMessage being sent
+          payload: data arg (*not* json-stringified) for the Mandrill send call
+          response: requests.Response from the send call
+        """
+        self.email_message = kwargs.pop('email_message', None)
+        self.payload = kwargs.pop('payload', None)
+        if isinstance(self, HTTPError):
+            # must leave response in kwargs for HTTPError
+            self.response = kwargs.get('response', None)
+        else:
+            self.response = kwargs.pop('response', None)
+        super(DjrillError, self).__init__(*args, **kwargs)
 
     def __str__(self):
-        message = "Mandrill API response %d" % self.status_code
-        if self.log_message:
-            message += "\n" + self.log_message
-        # Include the Mandrill response, nicely formatted, if possible
+        parts = [
+            " ".join([str(arg) for arg in self.args]),
+            self.describe_send(),
+            self.describe_response(),
+        ]
+        return "\n".join(filter(None, parts))
+
+    def describe_send(self):
+        """Return a string describing the Mandrill send in self.payload, or None"""
+        if self.payload is None:
+            return None
+        description = "Sending a message"
+        try:
+            to_emails = [to['email'] for to in self.payload['message']['to']]
+            description += " to %s" % ','.join(to_emails)
+        except KeyError:
+            pass
+        try:
+            description += " from %s" % self.payload['message']['from_email']
+        except KeyError:
+            pass
+        return description
+
+    def describe_response(self):
+        """Return a formatted string of self.response, or None"""
+        if self.response is None:
+            return None
+        description = "Mandrill API response %d:" % self.response.status_code
         try:
             json_response = self.response.json()
-            message += "\nMandrill response:\n" + json.dumps(json_response, indent=2)
+            description += "\n" + json.dumps(json_response, indent=2)
         except (AttributeError, KeyError, ValueError):  # not JSON = ValueError
             try:
-                message += "\nMandrill response: " + self.response.text
+                description += " " + self.response.text
             except AttributeError:
                 pass
-        return message
+        return description
 
 
-class NotSupportedByMandrillError(ValueError):
+class MandrillAPIError(DjrillError, HTTPError):
+    """Exception for unsuccessful response from Mandrill API."""
+
+    def __init__(self, *args, **kwargs):
+        super(MandrillAPIError, self).__init__(*args, **kwargs)
+        if self.response is not None:
+            self.status_code = self.response.status_code
+
+
+class MandrillRecipientsRefused(DjrillError):
+    """Exception for send where all recipients are invalid or rejected."""
+
+    def __init__(self, message=None, *args, **kwargs):
+        if message is None:
+            message = "All message recipients were rejected or invalid"
+        super(MandrillRecipientsRefused, self).__init__(message, *args, **kwargs)
+
+
+class NotSupportedByMandrillError(DjrillError, ValueError):
     """Exception for email features that Mandrill doesn't support.
 
     This is typically raised when attempting to send a Django EmailMessage that
@@ -43,9 +99,19 @@ class NotSupportedByMandrillError(ValueError):
     """
 
 
-class RemovedInDjrill2(DeprecationWarning):
-    """Functionality due for deprecation in Djrill 2.0"""
+class NotSerializableForMandrillError(DjrillError, TypeError):
+    """Exception for data that Djrill doesn't know how to convert to JSON.
 
+    This typically results from including something like a date or Decimal
+    in your merge_vars (or other Mandrill-specific EmailMessage option).
 
-def removed_in_djrill_2(message, stacklevel=1):
-    warnings.warn(message, category=RemovedInDjrill2, stacklevel=stacklevel + 1)
+    """
+    # inherits from TypeError for backwards compatibility with Djrill 1.x
+
+    def __init__(self, message=None, orig_err=None, *args, **kwargs):
+        if message is None:
+            message = "Don't know how to send this data to Mandrill. " \
+                      "Try converting it to a string or number first."
+        if orig_err is not None:
+            message += "\n%s" % str(orig_err)
+        super(NotSerializableForMandrillError, self).__init__(message, *args, **kwargs)

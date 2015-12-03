@@ -6,9 +6,6 @@ Sending Template Mail
 Mandrill Templates
 ------------------
 
-.. versionadded:: 0.3
-   Mandrill template support
-
 To use a *Mandrill* (MailChimp) template stored in your Mandrill account,
 set a :attr:`template_name` and (optionally) :attr:`template_content`
 on your :class:`~django.core.mail.EmailMessage` object::
@@ -75,6 +72,9 @@ which means advanced template users can include dicts and lists as merge vars
 (for templates designed to handle objects and arrays).
 See the Python :class:`json.JSONEncoder` docs for a list of allowable types.
 
+Djrill will raise :exc:`djrill.NotSerializableForMandrillError` if you attempt
+to send a message with non-json-serializable data.
+
 
 How To Use Default Mandrill Subject and From fields
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -93,15 +93,10 @@ your :class:`~django.core.mail.EmailMessage` object::
     If `True`, Djrill will omit the subject, and Mandrill will
     use the default subject from the template.
 
-    .. versionadded:: 1.1
-
 .. attribute:: use_template_from
 
     If `True`, Djrill will omit the "from" field, and Mandrill will
     use the default "from" from the template.
-
-    .. versionadded:: 1.1
-
 
 
 .. _django-templates:

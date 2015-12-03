@@ -1,3 +1,5 @@
+.. _history:
+
 Release Notes
 =============
 
@@ -7,67 +9,31 @@ Among other things, this means that minor updates
 and breaking changes will always increment the
 major version number (1.x to 2.0).
 
-Upcoming Changes in Djrill 2.0
-------------------------------
 
-Djrill 2.0 is under development and will include some breaking changes.
-Although the changes won't impact most Djrill users, the current
-version of Djrill (1.4) will try to warn you if you use things
-that will change. (Warnings appear in the console when running Django
-in debug mode.)
-
-
-**Djrill Admin site**
-
-Djrill 2.0 will remove the custom Djrill admin site. It duplicates
-information from Mandrill's dashboard, most Djrill users are unaware
-it exists, and it has caused problems tracking Django admin changes.
-
-Drill 1.4 will report a DeprecationWarning when you try to load
-the `DjrillAdminSite`. You should remove it from your code.
-
-Also, if you changed Django's :setting:`INSTALLED_APPS` setting to use
-`'django.contrib.admin.apps.SimpleAdminConfig'`, you may be able to
-switch that back to `'django.contrib.admin'` and let Django
-handle the admin.autodiscover() for you.
-
-
-**Dates in merge data and other attributes**
-
-Djrill automatically converts :attr:`send_at` date and datetime
-values to the ISO 8601 string format expected by the Mandrill API.
-
-Unintentionally, it also converts dates used in other Mandrill message
-attributes (such as :attr:`merge_vars` or :attr:`metadata`) where it
-might not be expected (or appropriate).
-
-Djrill 2.0 will remove this automatic date formatting, except
-for attributes that are inherently dates (currently only `send_at`).
-
-To assist in detecting code relying on the (undocumented) current
-behavior, Djrill 1.4 will report a DeprecationWarning for date
-or datetime values used in any Mandrill message attributes other
-than `send_at`. See :ref:`formatting-merge-data` for other options.
-
-
-**DjrillMessage class**
-
-The ``DjrillMessage`` class has not been needed since Djrill 0.2.
-You can simply set Djrill message attributes on any Django
-:class:`~django.core.mail.EmailMessage` object.
-Djrill 1.4 will report a DeprecationWarning if you are still
-using DjrillMessage.
-
-
-**DjrillBackendHTTPError**
-
-The ``DjrillBackendHTTPError`` exception was replaced in Djrill 0.3
-with :exc:`djrill.MandrillAPIError`.   Djrill 1.4 will report a
-DeprecationWarning if you are still importing DjrillBackendHTTPError.
-
-
-Change Log
+Djrill 2.x
 ----------
+
+Version 2.0:
+
+* **Breaking Changes:** please see the :ref:`upgrade guide <upgrading>`.
+* Add Django 1.9 support; drop Django 1.3, Python 2.6, and Python 3.2 support
+* Add global :setting:`MANDRILL_SETTINGS` dict that can provide defaults
+  for most Djrill message options
+* Add :exc:`djrill.NotSerializableForMandrillError`
+* Use a single HTTP connection to the Mandrill API to improve performance
+  when sending multiple messages at once using :func:`~django.core.mail.send_mass_mail`.
+  (You can also directly manage your own long-lived Djrill connection across multiple sends,
+  by calling open and close on :ref:`Django's email backend <django:topic-email-backends>`.)
+* Add Djrill version to user-agent header when calling Mandrill API
+* Improve diagnostics in exceptions from Djrill
+* Remove DjrillAdminSite
+* Remove unintended date-to-string conversion in JSON encoding
+* Remove obsolete DjrillMessage class and DjrillBackendHTTPError
+* Refactor Djrill backend and exceptions
+
+
+Djrill 1.x and Earlier
+----------------------
 
 Version 1.4:
 

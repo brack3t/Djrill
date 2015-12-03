@@ -23,6 +23,7 @@ Documentation
 
    quickstart
    installation
+   upgrading
    usage/sending_mail
    usage/templates
    usage/multiple_backends
@@ -36,9 +37,7 @@ Thanks
 ------
 
 Thanks to the MailChimp team for asking us to build this nifty little app, and to all of Djrill's
-:doc:`contributors <contributing>`. Also thanks to James Socol on Github for his django-adminplus_
-library that got us off on the right foot for the custom admin views.
+:doc:`contributors <contributing>`.
 Oh, and, of course, Kenneth Reitz for the awesome requests_ library.
 
 .. _requests: http://docs.python-requests.org
-.. _django-adminplus: https://github.com/jsocol/django-adminplus

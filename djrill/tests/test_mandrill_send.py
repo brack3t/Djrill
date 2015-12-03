@@ -2,28 +2,27 @@
 
 from __future__ import unicode_literals
 
+import json
+import os
+import re
+import six
+import unittest
 from base64 import b64decode
 from datetime import date, datetime, timedelta, tzinfo
 from decimal import Decimal
 from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
-import json
-import os
-import six
-
-try:
-    from unittest import SkipTest
-except ImportError:
-    from django.utils.unittest import SkipTest
 
 from django.core import mail
 from django.core.exceptions import ImproperlyConfigured
 from django.core.mail import make_msgid
 from django.test import TestCase
+from django.test.utils import override_settings
 
-from djrill import MandrillAPIError, NotSupportedByMandrillError
+from djrill import (MandrillAPIError, MandrillRecipientsRefused,
+                    NotSerializableForMandrillError, NotSupportedByMandrillError)
+
 from .mock_backend import DjrillBackendMockAPITestCase
-from .utils import override_settings
 
 
 def decode_att(att):
@@ -158,7 +157,7 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
                                       headers={'X-Other': 'Keep'})
         except TypeError:
             # Pre-Django 1.8
-            raise SkipTest("Django version doesn't support EmailMessage(reply_to)")
+            raise unittest.SkipTest("Django version doesn't support EmailMessage(reply_to)")
         email.send()
         self.assert_mandrill_called("/messages/send.json")
         data = self.get_api_call_data()
@@ -342,6 +341,9 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
         self.message = mail.EmailMessage('Subject', 'Text Body',
             'from@example.com', ['to@example.com'])
 
+    def assertStrContains(self, haystack, needle, msg=None):
+        six.assertRegex(self, haystack, re.escape(needle), msg)
+
     def test_tracking(self):
         # First make sure we're not setting the API param if the track_click
         # attr isn't there. (The Mandrill account option of True for html,
@@ -518,7 +520,7 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
 
     def test_send_attaches_mandrill_response(self):
         """ The mandrill_response should be attached to the message when it is sent """
-        response = [{'mandrill_response': 'would_be_here'}]
+        response = [{'email': 'to1@example.com', 'status': 'sent'}]
         self.mock_post.return_value = self.MockResponse(raw=six.b(json.dumps(response)))
         msg = mail.EmailMessage('Subject', 'Message', 'from@example.com', ['to1@example.com'],)
         sent = msg.send()
@@ -533,15 +535,211 @@ class DjrillMandrillFeatureTests(DjrillBackendMockAPITestCase):
         self.assertEqual(sent, 0)
         self.assertIsNone(msg.mandrill_response)
 
-    def test_json_serialization_warnings(self):
+    def test_send_unparsable_mandrill_response(self):
+        """If the send succeeds, but a non-JSON API response, should raise an API exception"""
+        self.mock_post.return_value = self.MockResponse(status_code=500, raw=b"this isn't json")
+        msg = mail.EmailMessage('Subject', 'Message', 'from@example.com', ['to1@example.com'],)
+        with self.assertRaises(MandrillAPIError):
+            msg.send()
+        self.assertIsNone(msg.mandrill_response)
+
+    def test_json_serialization_errors(self):
         """Try to provide more information about non-json-serializable data"""
         self.message.global_merge_vars = {'PRICE': Decimal('19.99')}
-        with self.assertRaisesMessage(
-                TypeError,
-                "Decimal('19.99') is not JSON serializable in a Djrill message (perhaps "
-                "it's a merge var?). Try converting it to a string or number first."
-        ):
+        with self.assertRaises(NotSerializableForMandrillError) as cm:
             self.message.send()
+        err = cm.exception
+        self.assertTrue(isinstance(err, TypeError))  # Djrill 1.x re-raised TypeError from json.dumps
+        self.assertStrContains(str(err), "Don't know how to send this data to Mandrill")  # our added context
+        self.assertStrContains(str(err), "Decimal('19.99') is not JSON serializable")  # original message
+
+    def test_dates_not_serialized(self):
+        """Pre-2.0 Djrill accidentally serialized dates to ISO"""
+        self.message.global_merge_vars = {'SHIP_DATE': date(2015, 12, 2)}
+        with self.assertRaises(NotSerializableForMandrillError):
+            self.message.send()
+
+
+class DjrillRecipientsRefusedTests(DjrillBackendMockAPITestCase):
+    """Djrill raises MandrillRecipientsRefused when *all* recipients are rejected or invalid"""
+
+    def test_recipients_refused(self):
+        msg = mail.EmailMessage('Subject', 'Body', 'from@example.com',
+                                ['invalid@localhost', 'reject@test.mandrillapp.com'])
+        self.mock_post.return_value = self.MockResponse(status_code=200, raw=b"""
+            [{ "email": "invalid@localhost", "status": "invalid" },
+             { "email": "reject@test.mandrillapp.com", "status": "rejected" }]""")
+        with self.assertRaises(MandrillRecipientsRefused):
+            msg.send()
+
+    def test_fail_silently(self):
+        self.mock_post.return_value = self.MockResponse(status_code=200, raw=b"""
+            [{ "email": "invalid@localhost", "status": "invalid" },
+             { "email": "reject@test.mandrillapp.com", "status": "rejected" }]""")
+        sent = mail.send_mail('Subject', 'Body', 'from@example.com',
+                              ['invalid@localhost', 'reject@test.mandrillapp.com'],
+                              fail_silently=True)
+        self.assertEqual(sent, 0)
+
+    def test_mixed_response(self):
+        """If *any* recipients are valid or queued, no exception is raised"""
+        msg = mail.EmailMessage('Subject', 'Body', 'from@example.com',
+                                ['invalid@localhost', 'valid@example.com',
+                                 'reject@test.mandrillapp.com', 'also.valid@example.com'])
+        self.mock_post.return_value = self.MockResponse(status_code=200, raw=b"""
+            [{ "email": "invalid@localhost", "status": "invalid" },
+             { "email": "valid@example.com", "status": "sent" },
+             { "email": "reject@test.mandrillapp.com", "status": "rejected" },
+             { "email": "also.valid@example.com", "status": "queued" }]""")
+        sent = msg.send()
+        self.assertEqual(sent, 1)  # one message sent, successfully, to 2 of 4 recipients
+
+    @override_settings(MANDRILL_IGNORE_RECIPIENT_STATUS=True)
+    def test_settings_override(self):
+        """Setting restores Djrill 1.x behavior"""
+        self.mock_post.return_value = self.MockResponse(status_code=200, raw=b"""
+            [{ "email": "invalid@localhost", "status": "invalid" },
+             { "email": "reject@test.mandrillapp.com", "status": "rejected" }]""")
+        sent = mail.send_mail('Subject', 'Body', 'from@example.com',
+                              ['invalid@localhost', 'reject@test.mandrillapp.com'])
+        self.assertEqual(sent, 1)  # refused message is included in sent count
+
+
+@override_settings(MANDRILL_SETTINGS={
+    'from_name': 'Djrill Test',
+    'important': True,
+    'track_opens': True,
+    'track_clicks': True,
+    'auto_text': True,
+    'auto_html': True,
+    'inline_css': True,
+    'url_strip_qs': True,
+    'tags': ['djrill'],
+    'preserve_recipients': True,
+    'view_content_link': True,
+    'subaccount': 'example-subaccount',
+    'tracking_domain': 'example.com',
+    'signing_domain': 'example.com',
+    'return_path_domain': 'example.com',
+    'google_analytics_domains': ['example.com/test'],
+    'google_analytics_campaign': ['UA-00000000-1'],
+    'metadata': ['djrill'],
+    'merge_language': 'mailchimp',
+    'global_merge_vars': {'TEST': 'djrill'},
+    'async': True,
+    'ip_pool': 'Pool1',
+    'invalid': 'invalid',
+})
+class DjrillMandrillGlobalFeatureTests(DjrillBackendMockAPITestCase):
+    """Test Djrill backend support for global ovveride Mandrill-specific features"""
+
+    def setUp(self):
+        super(DjrillMandrillGlobalFeatureTests, self).setUp()
+        self.message = mail.EmailMessage('Subject', 'Text Body',
+                                         'from@example.com', ['to@example.com'])
+
+    def test_global_options(self):
+        """Test that any global settings get passed through
+        """
+        self.message.send()
+        self.assert_mandrill_called("/messages/send.json")
+        data = self.get_api_call_data()
+        self.assertEqual(data['message']['from_name'], 'Djrill Test')
+        self.assertTrue(data['message']['important'])
+        self.assertTrue(data['message']['track_opens'])
+        self.assertTrue(data['message']['track_clicks'])
+        self.assertTrue(data['message']['auto_text'])
+        self.assertTrue(data['message']['auto_html'])
+        self.assertTrue(data['message']['inline_css'])
+        self.assertTrue(data['message']['url_strip_qs'])
+        self.assertEqual(data['message']['tags'], ['djrill'])
+        self.assertTrue(data['message']['preserve_recipients'])
+        self.assertTrue(data['message']['view_content_link'])
+        self.assertEqual(data['message']['subaccount'], 'example-subaccount')
+        self.assertEqual(data['message']['tracking_domain'], 'example.com')
+        self.assertEqual(data['message']['signing_domain'], 'example.com')
+        self.assertEqual(data['message']['return_path_domain'], 'example.com')
+        self.assertEqual(data['message']['google_analytics_domains'], ['example.com/test'])
+        self.assertEqual(data['message']['google_analytics_campaign'], ['UA-00000000-1'])
+        self.assertEqual(data['message']['metadata'], ['djrill'])
+        self.assertEqual(data['message']['merge_language'], 'mailchimp')
+        self.assertEqual(data['message']['global_merge_vars'],
+                         [{'name': 'TEST', 'content': 'djrill'}])
+        self.assertFalse('merge_vars' in data['message'])
+        self.assertFalse('recipient_metadata' in data['message'])
+        # Options at top level of api params (not in message dict):
+        self.assertTrue(data['async'])
+        self.assertEqual(data['ip_pool'], 'Pool1')
+        # Option that shouldn't be added
+        self.assertFalse('invalid' in data['message'])
+
+    def test_global_options_override(self):
+        """Test that manually settings options overrides global settings
+        """
+        self.message.from_name = "override"
+        self.message.important = False
+        self.message.track_opens = False
+        self.message.track_clicks = False
+        self.message.auto_text = False
+        self.message.auto_html = False
+        self.message.inline_css = False
+        self.message.url_strip_qs = False
+        self.message.tags = ['override']
+        self.message.preserve_recipients = False
+        self.message.view_content_link = False
+        self.message.subaccount = "override"
+        self.message.tracking_domain = "override.example.com"
+        self.message.signing_domain = "override.example.com"
+        self.message.return_path_domain = "override.example.com"
+        self.message.google_analytics_domains = ['override.example.com']
+        self.message.google_analytics_campaign = ['UA-99999999-1']
+        self.message.metadata = ['override']
+        self.message.merge_language = 'handlebars'
+        self.message.async = False
+        self.message.ip_pool = "Bulk Pool"
+        self.message.send()
+        data = self.get_api_call_data()
+        self.assertEqual(data['message']['from_name'], 'override')
+        self.assertFalse(data['message']['important'])
+        self.assertFalse(data['message']['track_opens'])
+        self.assertFalse(data['message']['track_clicks'])
+        self.assertFalse(data['message']['auto_text'])
+        self.assertFalse(data['message']['auto_html'])
+        self.assertFalse(data['message']['inline_css'])
+        self.assertFalse(data['message']['url_strip_qs'])
+        self.assertEqual(data['message']['tags'], ['override'])
+        self.assertFalse(data['message']['preserve_recipients'])
+        self.assertFalse(data['message']['view_content_link'])
+        self.assertEqual(data['message']['subaccount'], 'override')
+        self.assertEqual(data['message']['tracking_domain'], 'override.example.com')
+        self.assertEqual(data['message']['signing_domain'], 'override.example.com')
+        self.assertEqual(data['message']['return_path_domain'], 'override.example.com')
+        self.assertEqual(data['message']['google_analytics_domains'], ['override.example.com'])
+        self.assertEqual(data['message']['google_analytics_campaign'], ['UA-99999999-1'])
+        self.assertEqual(data['message']['metadata'], ['override'])
+        self.assertEqual(data['message']['merge_language'], 'handlebars')
+        self.assertEqual(data['message']['global_merge_vars'],
+                         [{'name': 'TEST', 'content': 'djrill'}])
+        # Options at top level of api params (not in message dict):
+        self.assertFalse(data['async'])
+        self.assertEqual(data['ip_pool'], 'Bulk Pool')
+
+    def test_global_merge(self):
+        # Test that global settings merge in
+        self.message.global_merge_vars = {'GREETING': "Hello"}
+        self.message.send()
+        data = self.get_api_call_data()
+        self.assertEqual(data['message']['global_merge_vars'],
+                         [{'name': "GREETING", 'content': "Hello"},
+                          {'name': 'TEST', 'content': 'djrill'}])
+
+    def test_global_merge_overwrite(self):
+        # Test that global merge settings are overwritten
+        self.message.global_merge_vars = {'TEST': "Hello"}
+        self.message.send()
+        data = self.get_api_call_data()
+        self.assertEqual(data['message']['global_merge_vars'],
+                         [{'name': 'TEST', 'content': 'Hello'}])
 
 
 @override_settings(EMAIL_BACKEND="djrill.mail.backends.djrill.DjrillBackend")

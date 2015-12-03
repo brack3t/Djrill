@@ -20,6 +20,11 @@ Djrill: Mandrill Transactional Email for Django
 Djrill integrates the `Mandrill <http://mandrill.com>`_ transactional
 email service into Django.
 
+**UPGRADING FROM DJRILL 1.x?**
+There are some **breaking changes in Djrill 2.0**. Please see the
+`upgrade instructions <http://djrill.readthedocs.org/en/latest/upgrading/>`_.
+
+
 In general, Djrill "just works" with Django's built-in `django.core.mail`
 package. It includes:
 
@@ -28,9 +33,8 @@ package. It includes:
 * Mandrill-specific extensions like tags, metadata, tracking, and MailChimp templates
 * Optional support for Mandrill inbound email and other webhook notifications,
   via Django signals
-* An optional Django admin interface
 
-Djrill is released under the BSD license. It is tested against Django 1.3--1.8
+Djrill is released under the BSD license. It is tested against Django 1.4--1.9
 (including Python 3 with Django 1.6+, and PyPy support with Django 1.5+).
 Djrill uses `semantic versioning <http://semver.org/>`_.
 

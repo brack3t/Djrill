@@ -32,10 +32,6 @@ Some notes and limitations:
     to `!True` if you want recipients to be able to see who else was included
     in the "to" list.
 
-    .. versionchanged:: 0.9
-       Previously, Djrill (and Mandrill) didn't distinguish "cc" from "to",
-       and allowed only a single "bcc" recipient.
-
 
 .. _sending-html:
 
@@ -70,12 +66,6 @@ Some notes and limitations:
     (For an example, see :meth:`~DjrillBackendTests.test_embedded_images`
     in :file:`tests/test_mandrill_send.py`.)
 
-    .. versionadded:: 0.3
-       Attachments
-
-    .. versionchanged:: 0.4
-       Special handling for embedded images
-
 .. _message-headers:
 
 **Headers**
@@ -87,11 +77,8 @@ Some notes and limitations:
             headers={'Reply-To': "reply@example.com", 'List-Unsubscribe': "..."}
         )
 
-    .. versionchanged:: 0.9
-       In earlier versions, Djrill only allowed ``Reply-To`` and ``X-*`` headers,
-       matching previous Mandrill API restrictions.
+    .. note::
 
-    .. versionchanged:: 1.4
        Djrill also supports the `reply_to` param added to
        :class:`~django.core.mail.EmailMessage` in Django 1.8.
        (If you provide *both* a 'Reply-To' header and the `reply_to` param,
@@ -106,15 +93,20 @@ Mandrill-Specific Options
 Most of the options from the Mandrill
 `messages/send API <https://mandrillapp.com/api/docs/messages.html#method=send>`_
 `message` struct can be set directly on an :class:`~django.core.mail.EmailMessage`
-(or subclass) object:
+(or subclass) object.
+
+.. note::
+
+    You can set global defaults for common options with the
+    :setting:`MANDRILL_SETTINGS` setting, to avoid having to
+    set them on every message.
+
 
 .. These attributes are in the same order as they appear in the Mandrill API docs...
 
 .. attribute:: important
 
     ``Boolean``: whether Mandrill should send this message ahead of non-important ones.
-
-    .. versionadded:: 0.7
 
 .. attribute:: track_opens
 
@@ -149,8 +141,6 @@ Most of the options from the Mandrill
     ``Boolean``: whether Mandrill should inline CSS styles in the HTML.
     Default from your Mandrill account settings.
 
-    .. versionadded:: 0.4
-
 .. attribute:: url_strip_qs
 
     ``Boolean``: whether Mandrill should ignore any query parameters when aggregating
@@ -164,8 +154,6 @@ Most of the options from the Mandrill
 .. attribute:: view_content_link
 
     ``Boolean``: set False on sensitive messages to instruct Mandrill not to log the content.
-
-    .. versionadded:: 0.7
 
 .. attribute:: tracking_domain
 
@@ -183,14 +171,10 @@ Most of the options from the Mandrill
 
     ``str``: domain Mandrill should use for the message's return-path.
 
-    .. versionadded:: 0.7
-
 .. attribute:: merge_language
 
     ``str``: the merge tag language if using merge tags -- e.g., "mailchimp" or "handlebars".
     Default from your Mandrill account settings.
-
-    .. versionadded:: 1.3
 
 .. attribute:: global_merge_vars
 
@@ -226,10 +210,6 @@ Most of the options from the Mandrill
 .. attribute:: subaccount
 
     ``str``: the ID of one of your subaccounts to use for sending this message.
-    (The subaccount on an individual message will override any global
-    :setting:`MANDRILL_SUBACCOUNT` setting.)
-
-    .. versionadded:: 0.7
 
 .. attribute:: google_analytics_domains
 
@@ -267,24 +247,47 @@ Most of the options from the Mandrill
 
     ``Boolean``: whether Mandrill should use an async mode optimized for bulk sending.
 
-    .. versionadded:: 0.7
-
 .. attribute:: ip_pool
 
     ``str``: name of one of your Mandrill dedicated IP pools to use for sending this message.
 
-    .. versionadded:: 0.7
-
 .. attribute:: send_at
 
-    ``datetime`` or ``date`` or ``str``: instructs Mandrill to delay sending this message
-    until the specified time. (Djrill allows timezone-aware Python datetimes, and converts them
-    to UTC for Mandrill. Timezone-naive datetimes are assumed to be UTC.)
+    `datetime` or `date` or ``str``: instructs Mandrill to delay sending this message
+    until the specified time. Example::
 
-    .. versionadded:: 0.7
+        msg.send_at = datetime.utcnow() + timedelta(hours=1)
+
+    Mandrill requires a UTC string in the form ``YYYY-MM-DD HH:MM:SS``.
+    Djrill will convert python dates and datetimes to this form.
+    (Dates will be given a time of 00:00:00.)
+
+    .. note:: Timezones
+
+        Mandrill assumes :attr:`!send_at` is in the UTC timezone,
+        which is likely *not* the same as your local time.
+
+        Djrill will convert timezone-*aware* datetimes to UTC for you.
+        But if you format your own string, supply a date, or a
+        *naive* datetime, you must make sure it is in UTC.
+        See the python `datetime` docs for more information.
+
+        For example, ``msg.send_at = datetime.now() + timedelta(hours=1)``
+        will try to schedule the message for an hour from the current time,
+        but *interpreted in the UTC timezone* (which isn't what you want).
+        If you're more than an hour west of the prime meridian, that will
+        be in the past (and the message will get sent immediately). If
+        you're east of there, the message might get sent quite a bit later
+        than you intended. One solution is to use `utcnow` as shown in
+        the earlier example.
+
+    .. note::
+
+        Scheduled sending is a paid Mandrill feature. If you are using
+        a free Mandrill account, :attr:`!send_at` won't work.
 
 
-These Mandrill-specific properties work with *any*
+All the Mandrill-specific attributes listed above work with *any*
 :class:`~django.core.mail.EmailMessage`-derived object, so you can use them with
 many other apps that add Django mail functionality.
 
@@ -295,13 +298,15 @@ see :class:`DjrillMandrillFeatureTests` in :file:`tests/test_mandrill_send.py` f
 
 .. _mandrill-response:
 
-Mandrill Response
------------------
+Response from Mandrill
+----------------------
 
-A ``mandrill_response`` property is added to each :class:`~django.core.mail.EmailMessage` that you
-send. This allows you to retrieve message ids, initial status information and more.
+.. attribute:: mandrill_response
 
-For an EmailMessage that is successfully sent to one or more email addresses, ``mandrill_response`` will
+Djrill adds a :attr:`!mandrill_response` attribute to each :class:`~django.core.mail.EmailMessage`
+as it sends it. This allows you to retrieve message ids, initial status information and more.
+
+For an EmailMessage that is successfully sent to one or more email addresses, :attr:`!mandrill_response` will
 be set to a ``list`` of ``dict``, where each entry has info for one email address. See the Mandrill docs for the
 `messages/send API <https://mandrillapp.com/api/docs/messages.html#method=send>`_ for full details.
 
@@ -323,10 +328,7 @@ For this example, msg.mandrill_response might look like this::
             }
         ]
 
-If an error is returned by Mandrill while sending the message then ``mandrill_response`` will be set to None.
-
-.. versionadded:: 0.8
-   mandrill_response available for sent messages
+If an error is returned by Mandrill while sending the message then :attr:`!mandrill_response` will be set to None.
 
 
 .. _djrill-exceptions:
@@ -334,14 +336,32 @@ If an error is returned by Mandrill while sending the message then ``mandrill_re
 Exceptions
 ----------
 
-.. versionadded:: 0.3
-   Djrill-specific exceptions
-
 .. exception:: djrill.NotSupportedByMandrillError
 
     If the email tries to use features that aren't supported by Mandrill, the send
     call will raise a :exc:`~!djrill.NotSupportedByMandrillError` exception (a subclass
     of :exc:`ValueError`).
+
+
+.. exception:: djrill.MandrillRecipientsRefused
+
+    If *all* recipients (to, cc, bcc) of a message are invalid or rejected by Mandrill
+    (e.g., because they are your Mandrill blacklist), the send call will raise a
+    :exc:`~!djrill.MandrillRecipientsRefused` exception.
+    You can examine the message's :attr:`mandrill_response` attribute
+    to determine the cause of the error.
+
+    If a single message is sent to multiple recipients, and *any* recipient is valid
+    (or the message is queued by Mandrill because of rate limiting or :attr:`send_at`), then
+    this exception will not be raised. You can still examine the mandrill_response
+    property after the send to determine the status of each recipient.
+
+    You can disable this exception by setting :setting:`MANDRILL_IGNORE_RECIPIENT_STATUS`
+    to True in your settings.py, which will cause Djrill to treat any non-API-error response
+    from Mandrill as a successful send.
+
+    .. versionadded:: 2.0
+       Djrill 1.x behaved as if ``MANDRILL_IGNORE_RECIPIENT_STATUS = True``.
 
 
 .. exception:: djrill.MandrillAPIError
@@ -352,3 +372,16 @@ Exceptions
     help explain what went wrong. (Tip: you can also check Mandrill's
     `API error log <https://mandrillapp.com/settings/api>`_ to view the full API
     request and error response.)
+
+
+.. exception:: djrill.NotSerializableForMandrillError
+
+    The send call will raise a :exc:`~!djrill.NotSerializableForMandrillError` exception
+    if the message has attached data which cannot be serialized to JSON for the Mandrill API.
+
+    See :ref:`formatting-merge-data` for more information.
+
+    .. versionadded:: 2.0
+       Djrill 1.x raised a generic `TypeError` in this case.
+       :exc:`~!djrill.NotSerializableForMandrillError` is a subclass of `TypeError`
+       for compatibility with existing code.
