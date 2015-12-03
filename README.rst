@@ -20,6 +20,11 @@ Djrill: Mandrill Transactional Email for Django
 Djrill integrates the `Mandrill <http://mandrill.com>`_ transactional
 email service into Django.
 
+**UPGRADING FROM DJRILL 1.x?**
+There are some **breaking changes in Djrill 2.0**. Please see the
+`upgrade instructions <http://djrill.readthedocs.org/en/latest/upgrading/>`_.
+
+
 In general, Djrill "just works" with Django's built-in `django.core.mail`
 package. It includes:
 

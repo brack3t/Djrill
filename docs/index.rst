@@ -23,6 +23,7 @@ Documentation
 
    quickstart
    installation
+   upgrading
    usage/sending_mail
    usage/templates
    usage/multiple_backends

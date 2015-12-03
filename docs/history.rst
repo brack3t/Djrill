@@ -1,3 +1,5 @@
+.. _history:
+
 Release Notes
 =============
 
@@ -8,104 +10,28 @@ and breaking changes will always increment the
 major version number (1.x to 2.0).
 
 
-Djrill 2.0 (in development)
----------------------------
+Djrill 2.x
+----------
 
-Djrill 2.0 is under development and includes some breaking changes.
-Although the changes won't impact most Djrill users, the previous
-version of Djrill (1.4) tries to warn you if you use things
-that will change. (Warnings appear in the console when running Django
-in debug mode.)
+Version 2.0:
 
-
-Breaking Changes in Djrill 2.0
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Dropped support for Django 1.3, Python 2.6, and Python 3.2
-  Although Djrill may still work with these older configurations,
-  we no longer test against them. Djrill now requires Django 1.4
-  or later and Python 2.7, 3.3, or 3.4.
-
-  If you require earlier support, Djrill 1.4 remains available.
-
-Removed DjrillAdminSite
-  Earlier versions of Djrill included a custom Django admin site.
-  The equivalent functionality is available in Mandrill's dashboard.
-
-  You should remove any references to DjrillAdminSite from your
-  :file:`urls.py`. E.g.::
-
-    .. code-block:: python
-
-        # Remove these:
-        from djrill import DjrillAdminSite
-        admin.site = DjrillAdminSite()
-
-  Also, on Django 1.7 or later if you had switched your :setting:`INSTALLED_APPS`
-  (in :file:`settings.py`) to use ``'django.contrib.admin.apps.SimpleAdminConfig'``
-  you *may* want to switch back to the default ``'django.contrib.admin'``
-  and remove the call to ``admin.autodiscover()`` in your :file:`urls.py`.
-  (Do this only if you changed to SimpleAdminConfig for Djrill, and aren't
-  creating custom admin sites for any other Django apps you use.)
-
-Added exception for invalid or rejected recipients
-  Djrill 2.0 raises a new :exc:`djrill.MandrillRecipientsRefused` exception when
-  all recipients of a message invalid or rejected by Mandrill. This parallels
-  the behavior of Django's default :setting:`SMTP email backend <EMAIL_BACKEND>`,
-  which raises :exc:`SMTPRecipientsRefused <smtplib.SMTPRecipientsRefused>` when
-  all recipients are refused.
-
-  Your email-sending code should handle this exception (along with other
-  exceptions that could occur during a send). However, if you want to retain the
-  Djrill 1.x behavior and treat invalid or rejected recipients as successful sends,
-  you can set :setting:`MANDRILL_IGNORE_RECIPIENT_STATUS` to ``True`` in your settings.py.
-
-Removed unintended date-to-string conversion
-  If your code was relying on Djrill to automatically convert date or datetime
-  values to strings in :attr:`merge_vars`, :attr:`metadata`, or other Mandrill
-  message attributes, you must now explicitly do the string conversion
-  yourself. See :ref:`formatting-merge-data` for an explanation.
-  (Djrill 1.4 reported a DeprecationWarning for this case.)
-
-  (The exception is :attr:`send_at`, which Djrill expects can be a date or
-  datetime.)
-
-Removed DjrillMessage class
-  The ``DjrillMessage`` class has not been needed since Djrill 0.2.
-  You should replace any uses of it with the standard
-  :class:`~django.core.mail.EmailMessage` class.
-
-Removed DjrillBackendHTTPError
-  This exception was deprecated in Djrill 0.3. Replace uses of it
-  with :exc:`djrill.MandrillAPIError`.
-
-Refactored Djrill backend and exceptions
-  Several internal details of ``djrill.mail.backends.DjrillBackend``
-  and Djrill's exception classes have been significantly updated for 2.0.
-  The intent is to make it easier to maintain and extend the backend
-  (including creating your own subclasses to override Djrill's default
-  behavior). As a result, though, any existing code that depended on
-  undocumented Djrill internals may need to be updated.
-
-
-Other Djrill 2.0 Changes
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-* Add Django 1.9 support; drop Django 1.3, Python 2.6, and Python 3.2
-
+* **Breaking Changes:** please see the :ref:`upgrade guide <upgrading>`.
+* Add Django 1.9 support; drop Django 1.3, Python 2.6, and Python 3.2 support
+* Add global :setting:`MANDRILL_SETTINGS` dict that can provide defaults
+  for most Djrill message options.
+* Add :exc:`djrill.NotSerializableForMandrillError`
 * Use a single HTTP connection to the Mandrill API to improve performance
   when sending multiple messages at once using :func:`~django.core.mail.send_mass_mail`.
   (You can also directly manage your own long-lived Djrill connection across multiple sends,
   by calling open and close on :ref:`Django's email backend <django:topic-email-backends>`.)
+* Remove DjrillAdminSite
+* Remove unintended date-to-string conversion in JSON encoding
+* Remove obsolete DjrillMessage class and DjrillBackendHTTPError
+* Refactor Djrill backend and exceptions
 
-* Add global :setting:`MANDRILL_SETTINGS` dict that can provide defaults
-  for most Djrill message options.
 
-* Add :exc:`djrill.NotSerializableForMandrillError`
-
-
-Older Releases
---------------
+Djrill 1.x and Earlier
+----------------------
 
 Version 1.4:
 
