@@ -300,13 +300,15 @@ see :class:`DjrillMandrillFeatureTests` in :file:`tests/test_mandrill_send.py` f
 
 .. _mandrill-response:
 
-Mandrill Response
------------------
+Response from Mandrill
+----------------------
 
-A ``mandrill_response`` property is added to each :class:`~django.core.mail.EmailMessage` that you
-send. This allows you to retrieve message ids, initial status information and more.
+.. attribute:: mandrill_response
 
-For an EmailMessage that is successfully sent to one or more email addresses, ``mandrill_response`` will
+Djrill adds a :attr:`!mandrill_response` attribute to each :class:`~django.core.mail.EmailMessage`
+as it sends it. This allows you to retrieve message ids, initial status information and more.
+
+For an EmailMessage that is successfully sent to one or more email addresses, :attr:`!mandrill_response` will
 be set to a ``list`` of ``dict``, where each entry has info for one email address. See the Mandrill docs for the
 `messages/send API <https://mandrillapp.com/api/docs/messages.html#method=send>`_ for full details.
 
@@ -328,7 +330,7 @@ For this example, msg.mandrill_response might look like this::
             }
         ]
 
-If an error is returned by Mandrill while sending the message then ``mandrill_response`` will be set to None.
+If an error is returned by Mandrill while sending the message then :attr:`!mandrill_response` will be set to None.
 
 .. versionadded:: 0.8
    mandrill_response available for sent messages
@@ -354,7 +356,7 @@ Exceptions
     If *all* recipients (to, cc, bcc) of a message are invalid or rejected by Mandrill
     (e.g., because they are your Mandrill blacklist), the send call will raise a
     :exc:`~!djrill.MandrillRecipientsRefused` exception.
-    You can examine the message's :ref:`mandrill_response property <mandrill-response>`
+    You can examine the message's :attr:`mandrill_response` attribute
     to determine the cause of the error.
 
     If a single message is sent to multiple recipients, and *any* recipient is valid
