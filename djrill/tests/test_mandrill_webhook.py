@@ -94,11 +94,14 @@ class DjrillWebhookViewTests(TestCase):
             self.assertEqual(event_type, 'send')
             self.assertEqual(data, test_event)
 
-        webhook_event.connect(my_callback)
+        try:
+            webhook_event.connect(my_callback)
+            response = self.client.post('/webhook/?secret=abc123', {
+                'mandrill_events': json.dumps([test_event])
+            })
+        finally:
+            webhook_event.disconnect(my_callback)
 
-        response = self.client.post('/webhook/?secret=abc123', {
-            'mandrill_events': json.dumps([test_event])
-        })
         self.assertEqual(response.status_code, 200)
         self.assertEqual(self.signal_received_count, 1)
 
@@ -113,10 +116,13 @@ class DjrillWebhookViewTests(TestCase):
             self.assertEqual(event_type, 'whitelist_add')  # synthesized event_type
             self.assertEqual(data, test_event)
 
-        webhook_event.connect(my_callback)
+        try:
+            webhook_event.connect(my_callback)
+            response = self.client.post('/webhook/?secret=abc123', {
+                'mandrill_events': json.dumps([test_event])
+            })
+        finally:
+            webhook_event.disconnect(my_callback)
 
-        response = self.client.post('/webhook/?secret=abc123', {
-            'mandrill_events': json.dumps([test_event])
-        })
         self.assertEqual(response.status_code, 200)
         self.assertEqual(self.signal_received_count, 1)
