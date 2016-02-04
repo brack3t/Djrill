@@ -79,6 +79,21 @@ class DjrillWebhookView(DjrillWebhookSecretMixin, DjrillWebhookSignatureMixin, V
 
         for event in data:
             webhook_event.send(
-                sender=None, event_type=event['event'], data=event)
+                sender=None, event_type=self.get_event_type(event), data=event)
 
         return HttpResponse()
+
+    def get_event_type(self, event):
+        try:
+            # Message event: https://mandrill.zendesk.com/hc/en-us/articles/205583307
+            # Inbound event: https://mandrill.zendesk.com/hc/en-us/articles/205583207
+            event_type = event['event']
+        except KeyError:
+            try:
+                # Sync event: https://mandrill.zendesk.com/hc/en-us/articles/205583297
+                # Synthesize an event_type like "whitelist_add" or "blacklist_change"
+                event_type = "%s_%s" % (event['type'], event['action'])
+            except KeyError:
+                # Unknown future event format
+                event_type = None
+        return event_type

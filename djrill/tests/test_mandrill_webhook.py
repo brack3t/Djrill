@@ -101,3 +101,22 @@ class DjrillWebhookViewTests(TestCase):
         })
         self.assertEqual(response.status_code, 200)
         self.assertEqual(self.signal_received_count, 1)
+
+    def test_webhook_sync_event(self):
+        # Mandrill sync events use a different format from other events
+        # https://mandrill.zendesk.com/hc/en-us/articles/205583297-Sync-Event-Webhook-format
+        self.signal_received_count = 0
+        test_event = {"type": "whitelist", "action": "add"}
+
+        def my_callback(sender, event_type, data, **kwargs):
+            self.signal_received_count += 1
+            self.assertEqual(event_type, 'whitelist_add')  # synthesized event_type
+            self.assertEqual(data, test_event)
+
+        webhook_event.connect(my_callback)
+
+        response = self.client.post('/webhook/?secret=abc123', {
+            'mandrill_events': json.dumps([test_event])
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.signal_received_count, 1)

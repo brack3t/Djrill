@@ -15,6 +15,8 @@ Djrill 2.x
 
 Version 2.1 (in development):
 
+* Handle Mandrill rejection whitelist/blacklist sync event webhooks
+
 
 Version 2.0:
 

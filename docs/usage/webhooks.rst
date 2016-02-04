@@ -138,6 +138,15 @@ Examples:
                 data['msg']['subject']
             )
 
+    @receiver(webhook_event)
+    def handle_whitelist_sync(sender, event_type, data, **kwargs):
+        if event_type == 'whitelist_add' or event_type == 'whitelist_remove':
+            print "Rejection whitelist update: %s email %s (%s)" % (
+                data['action'],
+                data['reject']['email'],
+                data['reject']['reason']
+            )
+
 
 Note that your webhook_event signal handlers will be called for all Mandrill
 webhook callbacks, so you should always check the `event_type` param as shown
@@ -147,11 +156,11 @@ Mandrill batches up multiple events into a single webhook call.
 Djrill will invoke your signal handler once for each event in the batch.
 
 The available fields in the `data` param are described in Mandrill's documentation:
-`sent-message webhooks`_ and `inbound webhooks`_.
+`sent-message webhooks`_, `inbound webhooks`_, and `whitelist/blacklist sync webooks`_.
 
 .. _Django signal: https://docs.djangoproject.com/en/stable/topics/signals/
 .. _inbound webhooks:
     http://help.mandrill.com/entries/22092308-What-is-the-format-of-inbound-email-webhooks-
 .. _sent-message webhooks: http://help.mandrill.com/entries/21738186-Introduction-to-Webhooks
-
-
+.. _whitelist/blacklist sync webooks:
+    https://mandrill.zendesk.com/hc/en-us/articles/205583297-Sync-Event-Webhook-format
