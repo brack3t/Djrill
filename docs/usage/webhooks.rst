@@ -114,7 +114,11 @@ Webhook Notifications
 
 Once you've enabled webhooks, Djrill will send a ``djrill.signals.webhook_event``
 custom `Django signal`_ for each Mandrill event it receives.
-You can connect to this signal for further processing.
+You can connect your own receiver function to this signal for further processing.
+
+Be sure to read Django's `listening to signals`_ docs for information on defining
+and connecting signal receivers.
+
 Examples:
 
 .. code-block:: python
@@ -161,6 +165,8 @@ The available fields in the `data` param are described in Mandrill's documentati
 .. _Django signal: https://docs.djangoproject.com/en/stable/topics/signals/
 .. _inbound webhooks:
     http://help.mandrill.com/entries/22092308-What-is-the-format-of-inbound-email-webhooks-
+.. _listening to signals:
+    https://docs.djangoproject.com/en/stable/topics/signals/#listening-to-signals
 .. _sent-message webhooks: http://help.mandrill.com/entries/21738186-Introduction-to-Webhooks
 .. _whitelist/blacklist sync webooks:
     https://mandrill.zendesk.com/hc/en-us/articles/205583297-Sync-Event-Webhook-format

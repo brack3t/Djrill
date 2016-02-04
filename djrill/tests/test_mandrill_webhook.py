@@ -95,7 +95,7 @@ class DjrillWebhookViewTests(TestCase):
             self.assertEqual(data, test_event)
 
         try:
-            webhook_event.connect(my_callback)
+            webhook_event.connect(my_callback, weak=False)  # local callback func, so don't use weak ref
             response = self.client.post('/webhook/?secret=abc123', {
                 'mandrill_events': json.dumps([test_event])
             })
@@ -117,7 +117,7 @@ class DjrillWebhookViewTests(TestCase):
             self.assertEqual(data, test_event)
 
         try:
-            webhook_event.connect(my_callback)
+            webhook_event.connect(my_callback, weak=False)  # local callback func, so don't use weak ref
             response = self.client.post('/webhook/?secret=abc123', {
                 'mandrill_events': json.dumps([test_event])
             })
