@@ -20,7 +20,16 @@ Djrill: Mandrill Transactional Email for Django
 Djrill integrates the `Mandrill <http://mandrill.com>`_ transactional
 email service into Django.
 
-**UPGRADING FROM DJRILL 1.x?**
+**SWITCHING AWAY FROM MANDRILL?**
+Check out `django-anymail <https://github.com/anymail/django-anymail>`_ 
+for a Djrill fork that supports Mailgun, Postmark and SendGrid.
+
+**STAYING WITH MANDRILL?**
+Djrill is seeking a maintainer. Please read about 
+`the future of Djrill <https://github.com/brack3t/Djrill/issues/111>`_.
+
+
+Upgrading from Djrill 1.x?
 There are some **breaking changes in Djrill 2.0**. Please see the
 `upgrade instructions <http://djrill.readthedocs.org/en/latest/upgrading/>`_.
 
