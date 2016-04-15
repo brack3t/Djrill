@@ -1,3 +1,3 @@
-VERSION = (2, 1, 'dev0')  # Remove the 'dev' component in release branches
+VERSION = (2, 1, 0)
 __version__ = '.'.join([str(x) for x in VERSION])  # major.minor.patch or major.minor.devN
 __minor_version__ = '.'.join([str(x) for x in VERSION[:2]])  # Sphinx's X.Y "version"

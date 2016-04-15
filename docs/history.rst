@@ -13,9 +13,12 @@ major version number (1.x to 2.0).
 Djrill 2.x
 ----------
 
-Version 2.1 (in development):
+Version 2.1:
 
 * Handle Mandrill rejection whitelist/blacklist sync event webhooks
+* This is likely the final release of Djrill (other than
+  any critical security updates). See GitHub for more on the
+  `future of Djrill <https://github.com/brack3t/Djrill/issues/111>`_.
 
 
 Version 2.0:
