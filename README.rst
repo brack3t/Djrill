@@ -17,6 +17,9 @@ Djrill: Mandrill Transactional Email for Django
 
 .. This shared-intro section is also included in docs/index.rst
 
+Djrill integrates the `Mandrill <http://mandrill.com>`_ transactional
+email service into Django.
+
   **PROJECT STATUS: INACTIVE**
 
   As of April, 2016, Djrill is no longer actively maintained (other
@@ -30,9 +33,6 @@ Djrill: Mandrill Transactional Email for Django
   a Djrill fork that supports Mailgun, Postmark, SendGrid, and other
   transactional ESPs (including limited support for Mandrill).
 
-
-Djrill integrates the `Mandrill <http://mandrill.com>`_ transactional
-email service into Django.
 
 In general, Djrill "just works" with Django's built-in `django.core.mail`
 package. It includes:
