@@ -213,7 +213,7 @@ class DjrillBackendTests(DjrillBackendMockAPITestCase):
             to=['to1@example.com'],
         )
         # Slight modification from the Django unicode docs:
-        # http://django.readthedocs.org/en/latest/ref/unicode.html#email
+        # https://django.readthedocs.io/en/latest/ref/unicode.html#email
         msg.attach("Une pièce jointe.html", '<p>\u2019</p>', mimetype='text/html')
 
         msg.send()
