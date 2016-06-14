@@ -56,7 +56,7 @@ Djrill uses `semantic versioning <http://semver.org/>`_.
 
 **Resources**
 
-* Full documentation: https://djrill.readthedocs.org/en/latest/
+* Full documentation: https://djrill.readthedocs.io/en/latest/
 * Package on PyPI: https://pypi.python.org/pypi/djrill
 * Project on Github: https://github.com/brack3t/Djrill
 
@@ -125,5 +125,5 @@ Djrill 1-2-3
 .. END quickstart
 
 
-See the `full documentation <https://djrill.readthedocs.org/en/latest/>`_
+See the `full documentation <https://djrill.readthedocs.io/en/latest/>`_
 for more features and options.

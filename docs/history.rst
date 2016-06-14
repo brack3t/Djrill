@@ -120,7 +120,7 @@ Version 0.4:
 * New Mandrill :attr:`inline_css` option is supported
 * Remove limitations on attachment types, to track Mandrill change
 * Documentation is now available on
-  `djrill.readthedocs.org <https://djrill.readthedocs.org>`_
+  `djrill.readthedocs.org <https://djrill.readthedocs.io>`_
 
 
 Version 0.3:
