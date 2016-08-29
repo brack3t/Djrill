@@ -1,4 +1,3 @@
-Djrill is maintained by its users. Your contributions are encouraged!
-
-Please see [Contributing](https://djrill.readthedocs.io/en/latest/contributing/)
-in the Djrill documentation for more information.
+The Djrill package is no longer maintained (as of April, 2016).
+See the notice at the top of [the GitHub repository](https://github.com/brack3t/Djrill)
+readme for more info.
